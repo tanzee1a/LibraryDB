@@ -1,4 +1,3 @@
-
 import React from 'react'
 import './homepage.css'
 
@@ -6,7 +5,7 @@ function homepage() {
 
   return (
     <div>
-      This is the home page
+      This is our home page
     </div>
   )
 }
