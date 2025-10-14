@@ -5,6 +5,7 @@ import Notifications from './pages/notifications/notification.jsx'
 import Profile from './pages/profile_page/profile.jsx'
 import Catalog from './pages/catalog_page/catalog.jsx'
 import './App.css'
+import AccountDashboard from './account_dashboard/AccountDashboard';
 
 function App() {
 
@@ -18,9 +19,11 @@ function App() {
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/catalog" element={<Catalog />} />
+        <Route path="/account" element={<AccountDashboard />} />
         {/* ADMIN */}
       </Routes>
     </BrowserRouter>
+    
   )
 }
 
