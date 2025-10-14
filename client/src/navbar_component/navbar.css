@@ -1,0 +1,46 @@
+/*general*/
+body {
+    font-family:"Sora", sans-serif;
+    color: white;
+}
+
+/*transition*/
+
+
+/*nav bar*/
+nav, .nav-links{
+    display: flex;
+}
+nav {
+    justify-content: space-around;
+    align-items: center;
+    height: 17vh;   
+    
+}
+
+.nav-links {
+    gap: 2rem;
+    list-style: none;
+    font-size: 1.5rem;
+}
+
+a{
+    color: #000;
+    text-decoration: none;
+    text-decoration-color: #fff;
+}
+
+a:hover{
+    text-decoration: underline;
+}
+
+.logo {
+    font-family: "sora", sans-serif;
+    font-size: 3rem;
+    color: white;
+}
+
+.logo:hover{
+    cursor: pointer;
+}
+
