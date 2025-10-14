@@ -6,7 +6,7 @@ import Profile from './pages/profile_page/profile.jsx'
 import Catalog from './pages/catalog_page/catalog.jsx'
 import Navbar from './navbar_component/navbar.jsx'
 import './App.css'
-import AccountDashboard from './account_dashboard/AccountDashboard';
+import AccountDashboard from './pages/account_dashboard/AccountDashboard.jsx';
 
 function App() {
 
