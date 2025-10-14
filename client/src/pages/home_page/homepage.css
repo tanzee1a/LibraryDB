@@ -3,7 +3,6 @@
     flex-direction: column; /* stack items vertically */
     align-items: center; /* center image and text horizontally */
     text-align: center;
-    margin-top: 2rem;
   }
   
   .library-image {
