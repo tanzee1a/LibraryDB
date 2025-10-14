@@ -4,10 +4,11 @@ import './homepage.css'
 function homepage() {
 
   return (
-    <div>
-    This is the home page
+    <div className="home-container">
+      <img src="/assets/library_image.jpg" alt="Library" className="library-image" />
+      <p className="home-text">This is the home page</p>
     </div>
-  )
+  );
 }
 
 export default homepage

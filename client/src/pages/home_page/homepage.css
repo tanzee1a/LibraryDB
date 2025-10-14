@@ -1,6 +1,21 @@
-
-.main_box{
-    background-color: rgba(0, 0, 0, 0.294);
-    border-radius: 1.5rem;
-    padding: 20rem;
-}
+.home-container {
+    display: flex;
+    flex-direction: column; /* stack items vertically */
+    align-items: center; /* center image and text horizontally */
+    text-align: center;
+    margin-top: 2rem;
+  }
+  
+  .library-image {
+    width: 80%; /* make it large but responsive */
+    max-width: 800px; /* don’t let it stretch too far */
+    height: auto; /* maintain aspect ratio */
+    border-radius: 10px; /* optional: smooth corners */
+    margin-bottom: 1rem; /* spacing between image and text */
+  }
+  
+  .home-text {
+    font-size: 1.5rem;
+    color: white; /* or any color that fits your theme */
+  }
+  
