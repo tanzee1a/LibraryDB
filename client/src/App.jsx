@@ -55,7 +55,14 @@ function App() {
             </div>
           </>
         } />
-
+        <Route path="/account" element={
+        <>
+          <Navbar />
+          <div className="main-content">
+            <AccountDashboard />
+          </div>
+        </>
+        } />
         {/* ADMIN */}
       </Routes>
     </>
