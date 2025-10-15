@@ -5,6 +5,7 @@ function catalog() {
 
   return (
     <div>
+      <Navbar/>
       This is our catalog page
     </div>
   )
