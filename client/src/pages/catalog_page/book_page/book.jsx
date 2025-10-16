@@ -1,16 +1,16 @@
 import React from 'react'
-import './catalog.css'
+import './book.css'
 import Navbar from '../../navbar_component/navbar.jsx'
 
 
-function catalog() {
+function book() {
 
   return (
     <div>
       <Navbar/>
-      This is our catalog page
+      This is our books page
     </div>
   )
 }
 
-export default catalog
+export default book

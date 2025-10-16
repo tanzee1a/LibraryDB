@@ -1,16 +1,16 @@
 import React from 'react'
-import './catalog.css'
+import './movie.css'
 import Navbar from '../../navbar_component/navbar.jsx'
 
 
-function catalog() {
+function movie() {
 
   return (
     <div>
       <Navbar/>
-      This is our catalog page
+      This is our movies page
     </div>
   )
 }
 
-export default catalog
+export default movie

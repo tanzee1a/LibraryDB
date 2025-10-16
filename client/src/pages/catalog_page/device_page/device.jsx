@@ -1,16 +1,16 @@
 import React from 'react'
-import './catalog.css'
+import './device.css'
 import Navbar from '../../navbar_component/navbar.jsx'
 
 
-function catalog() {
+function device() {
 
   return (
     <div>
       <Navbar/>
-      This is our catalog page
+      This is our devices page
     </div>
   )
 }
 
-export default catalog
+export default device
