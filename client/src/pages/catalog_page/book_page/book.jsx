@@ -1,6 +1,6 @@
 import React from 'react'
 import './book.css'
-import Navbar from '../../navbar_component/navbar.jsx'
+import Navbar from '../../../navbar_component/navbar.jsx'
 
 
 function book() {
@@ -8,7 +8,7 @@ function book() {
   return (
     <div>
       <Navbar/>
-      This is our books page
+      <h1> This is our books page</h1>
     </div>
   )
 }

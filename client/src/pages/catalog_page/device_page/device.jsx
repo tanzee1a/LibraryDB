@@ -1,6 +1,6 @@
 import React from 'react'
 import './device.css'
-import Navbar from '../../navbar_component/navbar.jsx'
+import Navbar from '../../../navbar_component/navbar.jsx'
 
 
 function device() {
@@ -8,7 +8,7 @@ function device() {
   return (
     <div>
       <Navbar/>
-      This is our devices page
+      <h1> This is our devices page</h1>
     </div>
   )
 }
