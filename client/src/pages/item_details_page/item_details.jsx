@@ -1,16 +1,14 @@
-import React from 'react'
 import './item_details.css'
+import Navbar from '../../navbar_component/navbar.jsx'
 
-function item_details() {
+function ItemDetails() {
 
   return (
-    <>
-    <Navbar />
-    <div>
-      This is our item details page
+    <div className="home-container">
+      <Navbar/>
+      <p className="home-text">This is the item details page</p>
     </div>
-    </>
   )
 }
 
-export default item_details
+export default ItemDetails

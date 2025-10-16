@@ -4,8 +4,9 @@ import Login from './pages/login_page/login.jsx'
 import Notifications from './pages/notifications/notification.jsx'
 import Profile from './pages/profile_page/profile.jsx'
 import Catalog from './pages/catalog_page/catalog.jsx'
-import './App.css'
+import ItemDetails from './pages/item_details_page/item_details.jsx'
 import AccountDashboard from './pages/account_dashboard/AccountDashboard.jsx';
+import './App.css'
 
 function App() {
 
@@ -18,6 +19,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/item-details" element={<ItemDetails />} />
         <Route path="/catalog" element={<Catalog />} />
         <Route path="/account" element={<AccountDashboard />} />
         {/* ADMIN */}
