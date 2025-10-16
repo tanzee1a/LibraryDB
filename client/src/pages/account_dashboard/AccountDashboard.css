@@ -1,8 +1,54 @@
 .dashboard-container {
-  padding: 20px;
+  background-color: #121212;
+  color: #e0e0e0;
+  padding: 2rem;
+  min-height: 100vh;
   font-family: sans-serif;
-  background-color: #f4f4f9;
-  border: 1px solid #ddd;
+}
+
+.dashboard-layout {
+  display: flex;
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.dashboard-left {
+  flex: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.dashboard-right {
+  flex: 1;
+}
+
+.dashboard-section {
+  background-color: #1e1e1e;
+  border: 1px solid #333;
   border-radius: 8px;
-  margin: 20px;
+  padding: 1.5rem;
+}
+
+.dashboard-section h3 {
+  margin-top: 0;
+  color: #ffffff;
+  border-bottom: 1px solid #444;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.dashboard-section ul {
+  list-style: none;
+  padding: 0;
+}
+
+.dashboard-section li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #2c2c2c;
+}
+
+.dashboard-section li:last-child {
+  border-bottom: none;
 }
