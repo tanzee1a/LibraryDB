@@ -1,6 +1,6 @@
 import React from 'react'
-import './device.css'
-import Navbar from '../../../navbar_component/navbar.jsx'
+import '../../styles/device.css'
+import Navbar from '../navbar_component/navbar.jsx'
 
 
 function device() {

@@ -1,6 +1,6 @@
 import React from 'react';
-import './AccountDashboard.css';
-import Navbar from '../../navbar_component/navbar.jsx';
+import '../../styles/AccountDashboard.css';
+import Navbar from '../navbar_component/navbar.jsx';
 import UserProfile from './UserProfile';
 import Fines from './Fines';
 import Loans from './Loans';

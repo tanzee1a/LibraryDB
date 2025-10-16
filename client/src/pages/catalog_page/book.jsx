@@ -1,6 +1,6 @@
 import React from 'react'
-import './book.css'
-import Navbar from '../../../navbar_component/navbar.jsx'
+import '../../styles/book.css'
+import Navbar from '../navbar_component/navbar.jsx'
 
 
 function book() {

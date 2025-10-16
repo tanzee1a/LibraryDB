@@ -1,6 +1,6 @@
 import React from 'react'
-import './catalog.css'
-import Navbar from '../../navbar_component/navbar.jsx'
+import '../../styles/catalog.css'
+import Navbar from '../navbar_component/navbar.jsx'
 
 function catalog() {
 

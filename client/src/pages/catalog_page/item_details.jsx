@@ -1,5 +1,5 @@
-import './item_details.css'
-import Navbar from '../../navbar_component/navbar.jsx'
+import '../../styles/item_details.css'
+import Navbar from '../navbar_component/navbar.jsx'
 
 function ItemDetails() {
 
