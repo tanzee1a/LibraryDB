@@ -8,7 +8,9 @@ function device() {
   return (
     <div>
       <Navbar/>
-      <h1> This is our devices page</h1>
+      <main className='main-content'>
+        <h1> This is our devices page </h1>
+      </main>
     </div>
   )
 }

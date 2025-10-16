@@ -8,7 +8,9 @@ function book() {
   return (
     <div>
       <Navbar/>
-      <h1> This is our books page</h1>
+      <main className='main-content'>
+        <h1> This is our book page </h1>
+      </main>
     </div>
   )
 }

@@ -31,8 +31,6 @@ function App() {
         <Route path="/books" element={<BookCatalog />} />
         <Route path="/movies" element={<MovieCatalog />} />
         <Route path="/devices" element={<DeviceCatalog />} />
-
-
         {/* ADMIN */}
       </Routes>
     </BrowserRouter>

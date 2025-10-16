@@ -1,5 +1,12 @@
-.main_box{
+.main-content{
     background-color: rgba(0, 0, 0, 0.294);
     border-radius: 1.5rem;
     padding: 20rem;
+}
+
+.category-layer {
+    background-color: rgba(0, 0, 0, 0.294); /* A slightly lighter background for the layer */
+    border-radius: 1rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem; /* Adds space between the layers */
 }
