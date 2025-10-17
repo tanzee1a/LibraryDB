@@ -1,5 +1,5 @@
 import React from 'react'
-import '../../styles/movie.css'
+import './movie.css'
 import Navbar from '../navbar_component/navbar.jsx'
 
 

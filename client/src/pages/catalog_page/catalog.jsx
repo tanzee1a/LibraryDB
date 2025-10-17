@@ -1,5 +1,5 @@
 import React from 'react'
-import '../../styles/catalog.css'
+import './catalog.css'
 import Navbar from '../navbar_component/navbar.jsx'
 
 function catalog() {

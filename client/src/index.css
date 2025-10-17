@@ -21,3 +21,11 @@ body {
   min-width: 320px;
   min-height: 100vh;
 }
+
+.page-container {
+  display: flex;
+  flex-direction: column; /* stack items vertically */
+  align-items: center; /* center image and text horizontally */
+  text-align: center;
+  padding-top: 50px;
+}

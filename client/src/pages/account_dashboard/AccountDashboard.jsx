@@ -1,5 +1,5 @@
 import React from 'react';
-import '../../styles/AccountDashboard.css';
+import './AccountDashboard.css';
 import Navbar from '../navbar_component/navbar.jsx';
 import UserProfile from './UserProfile';
 import Fines from './Fines';

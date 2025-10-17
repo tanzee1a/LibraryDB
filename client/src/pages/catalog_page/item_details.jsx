@@ -1,12 +1,53 @@
-import '../../styles/item_details.css'
+import './item_details.css'
 import Navbar from '../navbar_component/navbar.jsx'
 
 function ItemDetails() {
 
   return (
-    <div className="home-container">
+    <div>
       <Navbar/>
-      <p className="home-text">This is the item details page</p>
+      <div className="page-container">
+        <p className="home-text">This is the item details page</p>
+
+        <p className="home-text">This is the item details page</p>
+
+        <p className="home-text">This is the item details page</p>
+
+        <p className="home-text">This is the item details page</p>
+
+        <p className="home-text">This is the item details page</p>
+
+        <p className="home-text">This is the item details page</p>
+
+        <p className="home-text">This is the item details page</p>
+
+        <p className="home-text">This is the item details page</p>
+
+        <p className="home-text">This is the item details page</p>
+
+        <p className="home-text">This is the item details page</p>
+
+        <p className="home-text">This is the item details page</p>
+
+        <p className="home-text">This is the item details page</p>
+
+        <p className="home-text">This is the item details page</p>
+
+        <p className="home-text">This is the item details page</p>
+
+        <p className="home-text">This is the item details page</p>
+
+        <p className="home-text">This is the item details page</p>
+
+        <p className="home-text">This is the item details page</p>
+
+        <p className="home-text">This is the item details page</p>
+
+        <p className="home-text">This is the item details page</p>
+
+        <p className="home-text">This is the item details page</p>
+
+      </div>
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import '../../styles/navbar.css'
+import './navbar.css'
 
 const Navbar = () => {
     return (
@@ -18,4 +18,4 @@ const Navbar = () => {
     );
 };
 
-export default Navbar;
+export default Navbar
