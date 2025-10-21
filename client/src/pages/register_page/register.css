@@ -2,6 +2,7 @@ body {
     margin: 0; 
     background: #76a6e9; 
     font-family: Calibri, sans-serif;
+    min-height: 100vh;
   }
   
   .auth-wrapper {
