@@ -6,12 +6,15 @@ body {
   }
   
   .auth-wrapper {
-    min-height: 100vh;
     display: flex;
-    justify-content: center;
+    flex-direction: column;  /* so header sits above form */
     align-items: center;
-    background: #9fc6fd;
-    padding: 20px;
+    justify-content: center;
+    padding: 4rem;
+    border-radius: 1rem;
+    box-shadow: 0 14px 40px rgba(83, 83, 83, 0.2);
+    max-width: 450px;
+    background-color: #616f90; /* keep transparent background */
   }
   .inner-box {
     background: rgb(255, 255, 255); 
@@ -26,14 +29,6 @@ body {
     margin: 10px auto;  /* center */
   }
   
-  .card {
-    background: rgb(123, 171, 242);
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.1);
-    width: 100%;
-    max-width: 400px;
-  }
   
   h1 {
     margin-bottom: 20px;
@@ -42,9 +37,10 @@ body {
   }
   
   label {
+    color: black;
     display: block;
     margin: 12px 0 6px;
-    font-weight: 500;
+    font-weight: 700;
   }
   
   input {
@@ -53,23 +49,28 @@ body {
     border: 1px solid #ddd;
     border-radius: 8px;
     font-size: 1rem;
+    background-color: white;
   }
   
   button {
     width: 100%;
     margin-top: 20px;
     padding: 12px;
-    background: #6d90de;
+    background:linear-gradient(180deg, #4f4d4d, #4f4c4c);
     color: white;
     font-size: 1rem;
     font-weight: 600;
     border: none;
-    border-radius: 8px;
+    border-radius: 0.5rem;
+    transition: transform 0.05s, box-shadow 0.15s;
+    box-shadow: 0 4px 14px rgba(28, 27, 27);
     cursor: pointer;
   }
   
   button:hover {
-    background: #637dc3;
+    box-shadow: 0 8px 20px rgba(107, 104, 104, 0.45);
+    transform: translateY(-1px);
+    background-color: #8a8a8a;
   }
   
   .error {
@@ -92,5 +93,5 @@ body {
     margin-top: 16px;
     text-align: center;
     font-size: 0.9rem;
-    color: #6b7280;
+    color: #4f4c4c;
   }

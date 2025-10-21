@@ -1,11 +1,14 @@
 import React from 'react'
 import './login.css'
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom';
+
 
 function login() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigate();
 
   console.log(email, password)
 
@@ -57,7 +60,13 @@ function login() {
           </div>
           <div className = 'LoginPage_Button'>
             <button type = "submit" className= 'login_button'>Login</button>
-            <button className='login_button'>Register</button>
+            <button 
+              type="button" 
+              className='login_button' 
+              onClick={() => navigate('/register')}
+            >
+              Register
+            </button>
           </div>
   
 
