@@ -72,8 +72,57 @@ async function holdItem(req, res, id) {
     }
 }
 
+// @desc Get all active loans for the current user
+// @route GET /api/my-loans
+async function getMyLoans(req, res) {
+    try {
+        const test_user_id = 's123456'; // Uses your test user
+        const loans = await Loan.findLoansByUserId(test_user_id);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify(loans));
+    } catch (error) {
+        console.error("Error in getMyLoans:", error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ message: 'Could not fetch loans', error: error.message }));
+    }
+}
+
+// @desc Get loan history for the current user
+// @route GET /api/my-history
+async function getMyHistory(req, res) {
+    try {
+        const test_user_id = 's123456'; 
+        const history = await Loan.findLoanHistoryByUserId(test_user_id);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify(history));
+    } catch (error) {
+        console.error("Error in getMyHistory:", error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ message: 'Could not fetch history', error: error.message }));
+    }
+}
+
+// @desc Get waitlist for the current user
+// @route GET /api/my-waitlist
+async function getMyWaitlist(req, res) {
+    try {
+        const test_user_id = 's123456'; 
+        const waitlist = await Loan.findWaitlistByUserId(test_user_id);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify(waitlist));
+    } catch (error) {
+        console.error("Error in getMyWaitlist:", error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ message: 'Could not fetch waitlist', error: error.message }));
+    }
+}
+
+
 module.exports = {
     borrowItem,
     returnItem,
-    holdItem
+    holdItem,
+    getMyLoans,
+    getMyHistory,
+    getMyWaitlist
 };

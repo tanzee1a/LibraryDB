@@ -151,8 +151,66 @@ async function holdItem(itemId, userId) {
     }
 }
 
+async function findLoansByUserId(userId) {
+    const sql = `
+        SELECT 
+            b.borrow_id, 
+            b.item_id,
+            b.return_date AS dueDate,  -- This assumes 'return_date' is the DUES DATE
+            COALESCE(bk.title, m.title, d.model) AS title 
+        FROM BORROW b
+        JOIN ITEM i ON b.item_id = i.item_id
+        LEFT JOIN BOOK bk ON i.item_id = bk.item_id AND i.category = 'BOOK'
+        LEFT JOIN MOVIE m ON i.item_id = m.item_id AND i.category = 'MOVIE'
+        LEFT JOIN DEVICE d ON i.item_id = d.item_id AND i.category = 'DEVICE'
+        WHERE b.user_id = ? AND b.status = 'On Loan';
+    `;
+    const [rows] = await db.query(sql, [userId]);
+    return rows;
+}
+
+async function findLoanHistoryByUserId(userId) {
+    const sql = `
+        SELECT 
+            b.borrow_id, 
+            b.item_id,
+            b.return_date,
+            COALESCE(bk.title, m.title, d.model) AS title
+        FROM BORROW b
+        JOIN ITEM i ON b.item_id = i.item_id
+        LEFT JOIN BOOK bk ON i.item_id = bk.item_id AND i.category = 'BOOK'
+        LEFT JOIN MOVIE m ON i.item_id = m.item_id AND i.category = 'MOVIE'
+        LEFT JOIN DEVICE d ON i.item_id = d.item_id AND i.category = 'DEVICE'
+        WHERE b.user_id = ? AND b.status = 'Returned';
+    `;
+    const [rows] = await db.query(sql, [userId]);
+    return rows;
+}
+
+async function findWaitlistByUserId(userId) {
+    const sql = `
+        SELECT 
+            w.waitlist_id, 
+            w.item_id,
+            w.start_date,
+            COALESCE(bk.title, m.title, d.model) AS title
+        FROM WAITLIST w
+        JOIN ITEM i ON w.item_id = i.item_id
+        LEFT JOIN BOOK bk ON i.item_id = bk.item_id AND i.category = 'BOOK'
+        LEFT JOIN MOVIE m ON i.item_id = m.item_id AND i.category = 'MOVIE'
+        LEFT JOIN DEVICE d ON i.item_id = d.item_id AND i.category = 'DEVICE'
+        WHERE w.user_id = ?;
+    `;
+    const [rows] = await db.query(sql, [userId]);
+    return rows;
+}
+
+
 module.exports = {
     borrowItem,
     returnItem,
-    holdItem
+    holdItem,
+    findLoansByUserId,
+    findLoanHistoryByUserId,
+    findWaitlistByUserId 
 };

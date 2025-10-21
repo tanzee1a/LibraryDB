@@ -1,6 +1,6 @@
 const http = require('http');
 const { getItems, getItem, createBook, deleteItem, updateBook, createMovie, updateMovie, createDevice, updateDevice } = require('./controllers/itemController');
-const { borrowItem, returnItem, holdItem } = require('./controllers/loanController');
+const { borrowItem, returnItem, holdItem, getMyLoans, getMyHistory,getMyWaitlist } = require('./controllers/loanController');
 
 const server = http.createServer((req, res) => {
     if(req.url === '/api/items' && req.method === 'GET') {
@@ -50,6 +50,17 @@ const server = http.createServer((req, res) => {
     else if (req.url.match(/\/api\/hold\/([a-zA-Z0-9-]+)/) && req.method === 'POST') {
         const id = req.url.split('/')[3];
         holdItem(req, res, id);
+    }
+    else if (req.url === '/api/my-loans' && req.method === 'GET') {
+        getMyLoans(req, res);
+    }
+    // Get My Loan History
+    else if (req.url === '/api/my-history' && req.method === 'GET') {
+        getMyHistory(req, res);
+    }
+    // Get My Waitlist
+    else if (req.url === '/api/my-waitlist' && req.method === 'GET') {
+        getMyWaitlist(req, res);
     }
      // Generic delete for item
     else if(req.url.match(/\/api\/items\/([a-zA-Z0-9-]+)/) && req.method === 'DELETE') {
