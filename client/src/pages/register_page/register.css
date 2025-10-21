@@ -1,9 +1,9 @@
-body {
+/* body {
     margin: 0; 
     background: #76a6e9; 
     font-family: Calibri, sans-serif;
     min-height: 100vh;
-  }
+  } */
   
   .auth-wrapper {
     display: flex;
@@ -30,7 +30,7 @@ body {
   }
   
   
-  h1 {
+  /* h1 {
     margin-bottom: 20px;
     text-align: center;
     color: white;
@@ -71,7 +71,7 @@ body {
     box-shadow: 0 8px 20px rgba(107, 104, 104, 0.45);
     transform: translateY(-1px);
     background-color: #8a8a8a;
-  }
+  } */
   
   .error {
     margin-top: 5px;
