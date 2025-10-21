@@ -1,3 +1,4 @@
+import { IoPersonCircleOutline } from "react-icons/io5";
 import './navbar.css'
 
 const Navbar = () => {
@@ -11,7 +12,7 @@ const Navbar = () => {
                 <li><a href="item-details">Item Details (2BR)</a></li>
                 <li><a href="catalog">Catalog</a></li>
                 <li><a href="login">Login</a></li>
-                <li><a href="account">Profile</a></li>
+                <li><a href="account" id="profile-icon"><IoPersonCircleOutline /></a></li>
                 </ul>
             </nav>
         </div>

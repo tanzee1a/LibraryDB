@@ -1,5 +1,52 @@
-.main_box{
-    background-color: rgba(0, 0, 0, 0.294);
-    border-radius: 1.5rem;
-    padding: 20rem;
+.item-details-container {
+  display: flex;
+  gap: 3rem;
+  margin: 2rem;
+}
+
+.thumbnail-section {
+  padding-right: 2rem;
+}
+
+.thumbnail {
+  width: 20rem;
+  height: auto;
+  object-fit: cover;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.details-section {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.details-section p {
+  margin: 0;
+}
+
+.item-title {
+  margin: 0;
+}
+
+
+.item-author {
+  font-size: 1.1rem;
+}
+.item-author-name {
+  color: #0055dd;
+  font-weight: bold;
+}
+
+.divider {
+  width: 100%;
+  border: none;
+  border-top: 1px solid #ccc;
+  margin: 0.5rem 0;
+  padding-bottom: 1rem;
+}
+
+.additional-info {
+  display: flex;
+  margin: 0.3rem 0;
 }

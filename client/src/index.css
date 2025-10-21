@@ -3,9 +3,8 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  color: black;
+  background-color: white;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -23,9 +22,7 @@ body {
 }
 
 .page-container {
-  display: flex;
-  flex-direction: column; /* stack items vertically */
-  align-items: center; /* center image and text horizontally */
-  text-align: center;
   padding-top: 50px;
+  padding-left: 1rem;
+  padding-right: 1rem;
 }
