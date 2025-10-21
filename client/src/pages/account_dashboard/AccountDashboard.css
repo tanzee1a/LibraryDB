@@ -1,7 +1,11 @@
 .dashboard-container {
+  padding-top: 70px;
+  padding-left: 2rem;
+  padding-right: 2rem;
+  padding-bottom: 2rem;
+
   background-color: #121212;
   color: #e0e0e0;
-  padding: 2rem;
   min-height: 100vh;
   font-family: sans-serif;
 }
