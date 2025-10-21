@@ -9,6 +9,7 @@ import MovieCatalog from './pages/catalog_page/movie.jsx'
 import DeviceCatalog from './pages/catalog_page/device.jsx'
 import ItemDetails from './pages/catalog_page/item_details.jsx'
 import AccountDashboard from './pages/account_dashboard/AccountDashboard.jsx';
+import Register from './pages/register_page/register .jsx';
 import './App.css'
 
 function App() {
@@ -27,6 +28,7 @@ function App() {
         <Route path="/account" element={<AccountDashboard />} />
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/catalog" element={<Catalog />} />
