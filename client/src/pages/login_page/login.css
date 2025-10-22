@@ -1,4 +1,4 @@
-html, body, #root {
+/* html, body, #root {
     height: 100%;
     width: 100%;
     margin: 0;
@@ -11,6 +11,7 @@ html, body, #root {
     align-items: center;       /* vertically */
     min-height: 100vh;         /* fill the full screen */
   }
+*/
 
 .Login_Page {
     display: flex;

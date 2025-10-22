@@ -7,9 +7,14 @@ function homepage() {
   return (
     <div>
       <Navbar/>
-      <div className="page-container">
-        <img src="/assets/library_image.jpg" alt="Library" className="library-image" />
-        <p className="home-text">This is the home page</p>
+      <div className="page-container homepage-container">
+        <div className="homepage-content">
+          <div className="home-title">
+            <h1>Search the world's knowledge</h1>
+            <p>Access a world of stories, ideas, and innovation — right here.</p>
+          </div>
+          <input type="text" placeholder="Curiosity starts here..." className="search-bar" />
+        </div>
       </div>
     </div>
   );

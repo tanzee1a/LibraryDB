@@ -1,11 +1,11 @@
 import './item_details.css'
 import Navbar from '../navbar/navbar.jsx'
-import thumbnail from '../../assets/sample_thumbnail.jpeg';
+import thumbnail from '../../assets/book_thumbnail.jpeg';
 import { FaRegFileAlt } from "react-icons/fa";
 import { IoMdGlobe } from "react-icons/io";
 import { IoBookOutline, IoCalendarClearOutline, IoBarcodeOutline } from "react-icons/io5";
 
-function ItemDetails() {
+function BookDetails() {
 
   return (
     <div>
@@ -29,7 +29,11 @@ function ItemDetails() {
             <h1 className="item-title">The Dallergut Dream-making district : a novel</h1>
             <p className="item-author">by <span className='item-author-name'>James West</span></p>
             <hr className="divider" />
-            <p>This small, portable book presents a unique perspective on the human body for artists to study and implement in their drawing work. In this book, artist and teacher Michel Lauricella simplifies the human body into basic shapes and forms, offering profound insight for artists of all kinds, sparking the imagination and improving one’s observational abilities. Rather than going the traditional route of memorizing a repertoire of poses, Lauricella instead stresses learning this small collection of forms, which can then be combined and shaped into the more complex and varied forms and postures we see in the living body. Geared toward artists of all levels—from beginners through professionals—this handy, pocket-sized book will help spark your imagination and creativity. Whether your interest is in figure drawing, fine arts, fashion design, game design, or creating comic book or manga art, you will find this helpful book filled with actionable insights.</p>
+            <p className='item-description'>
+              {`This small, portable book presents a unique perspective on the human body for artists to study and implement in their drawing work. In this book, artist and teacher Michel Lauricella simplifies the human body into basic shapes and forms, offering profound insight for artists of all kinds, sparking the imagination and improving one’s observational abilities. Rather than going the traditional route of memorizing a repertoire of poses, Lauricella instead stresses learning this small collection of forms, which can then be combined and shaped into the more complex and varied forms and postures we see in the living body.
+
+            Geared toward artists of all levels—from beginners through professionals—this handy, pocket-sized book will help spark your imagination and creativity. Whether your interest is in figure drawing, fine arts, fashion design, game design, or creating comic book or manga art, you will find this helpful book filled with actionable insights.`}
+            </p>
             <hr className="divider" />
             <ul className="additional-info">
               <li>
@@ -59,6 +63,9 @@ function ItemDetails() {
               </li>
             </ul>
             <hr className="divider" />
+            <div className="tags-section">
+              <p className="tags-title"><strong>Tags:</strong> Fantasy, Fiction, Adult</p>
+            </div>
           </div>
         </div>
       </div>
@@ -66,4 +73,4 @@ function ItemDetails() {
   )
 }
 
-export default ItemDetails
+export default BookDetails

@@ -1,12 +1,34 @@
-.library-image {
-  width: 80%; /* make it large but responsive */
-  max-width: 800px; /* don’t let it stretch too far */
-  height: auto; /* maintain aspect ratio */
-  border-radius: 10px; /* optional: smooth corners */
-  margin-bottom: 1rem; /* spacing between image and text */
+.homepage-container {
+  background-image: url('../../assets/library_background.jpg');
+  background-size: cover;
+  background-repeat: no-repeat; 
+  background-position: center;
+  height: 100vh;
 }
 
-.home-text {
-  font-size: 1.5rem;
-  color: white; /* or any color that fits your theme */
+.homepage-content {
+  text-align: center;
+  margin-top: 35vh;
+}
+
+.home-title h1{
+  font-size: 3rem;
+  color: black;
+  margin: 0;
+}
+
+.home-title p {
+  font-size: 1.2rem;
+  color: black;
+  margin: 0;
+  margin-bottom: 2rem;
+}
+.search-bar {
+  width: 50rem;
+  padding: 1rem;
+  font-size: 1rem;
+  border: 1px solid var(--darker-tertiary-color);
+  border-radius: 50px;
+  background: white;
+  color: black;
 }
