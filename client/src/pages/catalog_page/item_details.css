@@ -5,6 +5,8 @@
 }
 
 .thumbnail-section {
+  display: flex;
+  flex-direction: column;
   padding-right: 2rem;
 }
 
@@ -14,6 +16,30 @@
   object-fit: cover;
   border: 1px solid #ddd;
   border-radius: 8px;
+}
+
+.availability-info {
+  display: grid;
+  grid-template-columns: auto 1fr; /* two columns: label + number */
+  column-gap: 0.5rem; /* small space between them */
+  row-gap: 0.2rem;
+  align-items: center;
+  text-align: left;
+  width: 100%;
+  max-width: 20rem; /* matches thumbnail width */
+  margin: 1rem 0;
+}
+
+.availability-info p {
+  display: contents; /* removes extra wrapping effect of <p> */
+}
+
+.availability-info strong {
+  justify-self: start;
+}
+
+.availability-info span {
+  justify-self: start;
 }
 
 .details-section {
@@ -48,5 +74,76 @@
 
 .additional-info {
   display: flex;
-  margin: 0.3rem 0;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.5rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  padding-top: 1rem;
+}
+
+.additional-info li {
+  display: grid;
+  grid-template-rows: 1.2rem 2.5rem auto; /* fixed height for name & icon */
+  align-items: center;
+  justify-items: center;
+  text-align: center;
+  width: 10rem; /* overall card width */
+  padding: 0.5rem;
+  border-radius: 8px;
+}
+
+.info-name {
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.2rem;
+  height: 1.2rem; /* fixed height */
+  padding-bottom: 2rem;
+}
+
+.info-icon {
+  font-size: 2rem;
+  line-height: 2.5rem;
+  height: 2.5rem; /* fixed height to align icons */
+}
+
+.info-detail {
+  font-weight: bold;
+  font-size: 0.95rem;
+  max-width: 120px; /* controls wrapping width */
+  word-wrap: break-word;
+  white-space: normal;
+}
+
+
+.action-button {
+  width: 100%;
+  max-width: 20rem; /* same as thumbnail */
+  height: 2.8rem; /* consistent button height */
+  padding: 0.5rem 0;
+  margin-top: 0.6rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s ease;
+}
+
+.borrow-button {
+  background-color: var(--secondary-color);
+  color: white;
+}
+
+.borrow-button:hover {
+  background-color: var(--darker-secondary-color);
+}
+
+.hold-button {
+  background-color: var(--teriary-color);
+  color: #333;
+}
+
+.hold-button:hover {
+  background-color: var(--darker-teriary-color);
 }

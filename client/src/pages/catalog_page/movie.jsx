@@ -1,6 +1,6 @@
 import React from 'react'
 import './movie.css'
-import Navbar from '../navbar_component/navbar.jsx'
+import Navbar from '../navbar/navbar.jsx'
 
 
 function movie() {
