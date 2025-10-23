@@ -14,8 +14,8 @@ import { BsTicketPerforated } from "react-icons/bs";
 
 import sampleData from '../../assets/sample_data.json'
 
-function ItemDetails({ category = "BOOK" }) {
-  const [selectedCategory, setSelectedCategory] = useState(category);
+function ItemDetails({ isStaff }) {
+  const [selectedCategory, setSelectedCategory] = useState("BOOK");
   const item = sampleData.data.find(entry => entry.category === selectedCategory);
   const thumbnail =
     selectedCategory === "BOOK"
@@ -119,7 +119,6 @@ function ItemDetails({ category = "BOOK" }) {
 
   return (
     <div>
-      <Navbar/>
       <div className="page-container">
         <div className="category-switch">
           <button
@@ -144,6 +143,9 @@ function ItemDetails({ category = "BOOK" }) {
         <div className="item-details-container">
           <div className="thumbnail-section">
             <img src={thumbnail} alt="Item thumbnail" className="thumbnail" />
+            { isStaff && (
+              <button className="action-button secondary-button">Edit</button>
+            )}
             <div className="availability-info">
               <p><strong>Holds:</strong> <span>{item.holds}</span></p>
               <p><strong>Available:</strong> <span>{item.available}</span></p>
