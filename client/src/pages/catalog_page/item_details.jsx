@@ -1,5 +1,6 @@
 import './item_details.css';
 import Navbar from '../navbar/navbar.jsx';
+import { useState } from 'react';
 
 import bookThumbnail from '../../assets/book_thumbnail.jpeg';
 import mediaThumbnail from '../../assets/media_thumbnail.jpg';
@@ -14,16 +15,17 @@ import { BsTicketPerforated } from "react-icons/bs";
 import sampleData from '../../assets/sample_data.json'
 
 function ItemDetails({ category = "BOOK" }) {
-  const item = sampleData.data.find(entry => entry.category === category);
+  const [selectedCategory, setSelectedCategory] = useState(category);
+  const item = sampleData.data.find(entry => entry.category === selectedCategory);
   const thumbnail =
-    category === "BOOK"
+    selectedCategory === "BOOK"
       ? bookThumbnail
-      : category === "MEDIA"
+      : selectedCategory === "MEDIA"
       ? mediaThumbnail
       : deviceThumbnail;
 
   const renderAdditionalInfo = () => {
-    switch (category) {
+    switch (selectedCategory) {
       case "BOOK":
         return (
           <>
@@ -105,10 +107,10 @@ function ItemDetails({ category = "BOOK" }) {
   };
 
   const creatorInfo = (() => {
-    if (category === "BOOK" && Array.isArray(item.authors) && item.authors.length > 0) {
+    if (selectedCategory === "BOOK" && Array.isArray(item.authors) && item.authors.length > 0) {
       return { label: "written by", names: item.authors.join(", ") };
     }
-    if (category === "MEDIA" && Array.isArray(item.directors) && item.directors.length > 0) {
+    if (selectedCategory === "MEDIA" && Array.isArray(item.directors) && item.directors.length > 0) {
       return { label: "directed by", names: item.directors.join(", ") };
     }
     return null;
@@ -119,6 +121,26 @@ function ItemDetails({ category = "BOOK" }) {
     <div>
       <Navbar/>
       <div className="page-container">
+        <div className="category-switch">
+          <button
+            className={`switch-button ${selectedCategory === "BOOK" ? "active" : ""}`}
+            onClick={() => setSelectedCategory("BOOK")}
+          >
+            Book
+          </button>
+          <button
+            className={`switch-button ${selectedCategory === "MEDIA" ? "active" : ""}`}
+            onClick={() => setSelectedCategory("MEDIA")}
+          >
+            Media
+          </button>
+          <button
+            className={`switch-button ${selectedCategory === "DEVICE" ? "active" : ""}`}
+            onClick={() => setSelectedCategory("DEVICE")}
+          >
+            Device
+          </button>
+        </div>
         <div className="item-details-container">
           <div className="thumbnail-section">
             <img src={thumbnail} alt="Item thumbnail" className="thumbnail" />
