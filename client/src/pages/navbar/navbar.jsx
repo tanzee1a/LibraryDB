@@ -88,10 +88,10 @@ const Navbar = () => {
                         <div class="dropdown-menu-contents">
                             <div class="category-column">
                                 <p>Device Types</p>
-                                <a href="#">Tablets</a>
-                                <a href="#">Phones</a>
                                 <a href="#">Laptops</a>
-                                <a href="#">Desktops</a>
+                                <a href="#">Tablets</a>
+                                <a href="#">Cameras</a>
+                                <a href="#">Headphones</a>
                             </div>
 
                             <div class="category-column">
@@ -100,14 +100,6 @@ const Navbar = () => {
                                 <a href="#">Windows</a>
                                 <a href="#">Linux</a>
                                 <a href="#">ChromeOS</a>
-                            </div>
-
-                            <div class="category-column">
-                            <p>Form Factor</p>
-                            <a href="#">Compact</a>
-                            <a href="#">Portable</a>
-                            <a href="#">Desktop</a>
-                            <a href="#">Workstation</a>
                             </div>
                         </div>
                     </div>

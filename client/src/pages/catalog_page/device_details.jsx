@@ -2,7 +2,7 @@ import './item_details.css'
 import Navbar from '../navbar/navbar.jsx'
 import thumbnail from '../../assets/device_thumbnail.jpeg';
 import { MdDevicesOther } from "react-icons/md";
-import { IoResizeOutline} from "react-icons/io5";
+import { TbBuildingFactory2 } from "react-icons/tb";
 import { BsGear } from "react-icons/bs";
 
 function MediaDetails() {
@@ -26,7 +26,6 @@ function MediaDetails() {
 
           <div className="details-section">
             <h1 className="item-title">MacBook Air 14inch</h1>
-            <p className="item-author">from <span className='item-author-name'>Apple</span></p>
             <hr className="divider" />
             <p className="item-description">
               {`10-Core CPU
@@ -47,6 +46,11 @@ function MediaDetails() {
             <hr className="divider" />
             <ul className="additional-info">
               <li>
+                <span className="info-name">Manufacturer</span>
+                <span className="info-icon"><TbBuildingFactory2 /></span>
+                <span className="info-detail">Apple</span>
+              </li>
+              <li>
                 <span className="info-name">Software</span>
                 <span className="info-icon"><BsGear /></span>
                 <span className="info-detail">macOS</span>
@@ -55,11 +59,6 @@ function MediaDetails() {
                 <span className="info-name">Device Type</span>
                 <span className="info-icon"><MdDevicesOther /></span>
                 <span className="info-detail">Laptop</span>
-              </li>
-              <li>
-                <span className="info-name">Form Factor</span>
-                <span className="info-icon"><IoResizeOutline /></span>
-                <span className="info-detail">Portable</span>
               </li>
             </ul>
             <hr className="divider" />

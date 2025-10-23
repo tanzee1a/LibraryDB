@@ -2,7 +2,7 @@ import './item_details.css'
 import Navbar from '../navbar/navbar.jsx'
 import thumbnail from '../../assets/media_thumbnail.jpg';
 import { IoMdGlobe } from "react-icons/io";
-import { IoInformationCircleOutline, IoTimerOutline } from "react-icons/io5";
+import { IoInformationCircleOutline, IoTimerOutline, IoCalendarClearOutline } from "react-icons/io5";
 import { BsTicketPerforated } from "react-icons/bs";
 function MediaDetails() {
 
@@ -26,7 +26,6 @@ function MediaDetails() {
     
           <div className="details-section">
             <h1 className="item-title">Jurassic World Rebirth</h1>
-            <p className="item-author">by <span className='item-author-name'>Scarlett Johansson (Actor), Jeff Goldblum (Actor)</span></p>
             <hr className="divider" />
             <p className='item-description'>{`This small, portable book presents a unique perspective on the human body for artists to study and implement in their drawing work. In this book, artist and teacher Michel Lauricella simplifies the human body into basic shapes and forms, offering profound insight for artists of all kinds, sparking the imagination and improving one’s observational abilities. Rather than going the traditional route of memorizing a repertoire of poses, Lauricella instead stresses learning this small collection of forms, which can then be combined and shaped into the more complex and varied forms and postures we see in the living body.
             
@@ -34,6 +33,11 @@ function MediaDetails() {
             </p>
             <hr className="divider" />
             <ul className="additional-info">
+              <li>
+                <span className="info-name">Release Year</span>
+                <span className="info-icon"><IoCalendarClearOutline /></span>
+                <span className="info-detail">2020</span>
+              </li>
               <li>
                 <span className="info-name">Runtime</span>
                 <span className="info-icon"><IoTimerOutline /></span>
