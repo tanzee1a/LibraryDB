@@ -11,9 +11,10 @@ const Navbar = () => {
                 <li><a href="/" className="logo">LBRY
                 {/* <img className="navbar-logo" src={Logo} alt="" /> */}
                 </a></li>
-                <li><a href="book-details">Book Details (2BR)</a></li>
-                <li><a href="media-details">Media Details (2BR)</a></li>
-                <li><a href="device-details">Device Details (2BR)</a></li>
+                <li><a href="book-details">BookDetails</a></li>
+                <li><a href="media-details">MediaDetails</a></li>
+                <li><a href="device-details">DeviceDetails</a></li>
+                <li><a href="search-results">SearchResults</a></li>
                 <li class="dropdown">
                 <a href="#">Books</a>
                 <div class="dropdown-menu">
@@ -111,8 +112,9 @@ const Navbar = () => {
                   <div class="dropdown-menu">
                         <div class="dropdown-menu-contents">
                             <div class="category-column">
+                                    <IoSearch />
                                 <input type="text" class="search-input" placeholder="Search the entire library..." />
-                                <hr className="divider divider--tight" />
+                                <p>Quick Links</p>
                                 <a href="#">Books</a>
                                 <a href="#">Movies</a>
                                 <a href="#">Devices</a>

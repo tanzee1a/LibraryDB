@@ -110,9 +110,11 @@
 .search-input {
   width: 50vw;
   padding: 0.5rem;
+  margin-bottom: 1rem;
   font-size: 1rem;
   border: 1px solid var(--navbar-background-color);
   border-radius: 5px;
   background: var(--navbar-background-color);
   color: var(--primary-background-color);
 }
+
