@@ -1,17 +1,12 @@
-/* html, body, #root {
-    height: 100%;
-    width: 100%;
-    margin: 0;
-    padding: 0;
-  }
-  
-  #root {
-    display: flex;
-    justify-content: center;   /* horizontally */
-    align-items: center;       /* vertically */
-    min-height: 100vh;         /* fill the full screen */
-  }
-*/
+
+.Login_Page_Wrapper {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f8fafc; /* optional */
+}
 
 .Login_Page {
     display: flex;

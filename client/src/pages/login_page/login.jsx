@@ -2,6 +2,7 @@ import React from 'react'
 import './login.css'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom';
+import Navbar from '../navbar/navbar';
 
 
 function login() {
@@ -24,6 +25,8 @@ function login() {
 
 
   return (
+    <div className= "Login_Page_Wrapper">
+      <Navbar/>
     <div className = "Login_Page">
       <h1 className='welcome'> Welcome To The Login Page</h1>
       <div className = "Login_Container">
@@ -73,6 +76,7 @@ function login() {
         </form>
 
       </div>
+    </div>
     </div>
   )
 }

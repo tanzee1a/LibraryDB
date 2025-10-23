@@ -1,6 +1,8 @@
 import React from 'react'
 import './register.css'
 import { useState } from "react";
+import Navbar from '../navbar/navbar';
+
 
 export default function Register() {
   const [email, setEmail] = useState("");
@@ -44,44 +46,57 @@ export default function Register() {
   };
 
   return (
-    <div className="auth-wrapper">
-      <form className="card" onSubmit={handleSubmit} noValidate>
-        <h1>User Registration</h1>
+    <div>
+    <Navbar/>
+   // 1. Full-page Centering Wrapper
+   <div className="register-page-container">
+   {/* 2. Main Dark Box Wrapper */}
+   <form className="auth-wrapper" onSubmit={handleSubmit} noValidate>
+     <h1>User Registration</h1>
 
-        {successMsg && <div className="notice ok">{successMsg}</div>}
+     {successMsg && <div className="notice ok">{successMsg}</div>}
 
-        <div className="inner-box">
-            <label htmlFor="email">Email </label>
-            <input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                maxLength={100}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-            />
-            {errors.email && <div className="error">{errors.email}</div>}
+     {/* 3. The inner white form container (className="card" matches the padding/shadow) */}
+     <div className="card">
 
-            <label htmlFor="password">Password</label>
-            <input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                minLength={8}
-                maxLength={12}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-            />
-            {errors.password && <div className="error">{errors.password}</div>}
+         {/* Input Wrapper 1: Email (Using Form_Entries for the flex/border styling) */}
+         <div className="Form_Entries">
+             <label htmlFor="email">Email </label>
+             <input
+                 id="email"
+                 type="email"
+                 placeholder="you@example.com"
+                 maxLength={100}
+                 value={email}
+                 onChange={(e) => setEmail(e.target.value)}
+                 required
+             />
+         </div>
+         {errors.email && <div className="error">{errors.email}</div>}
 
-            <button type="submit">Register</button>
-        </div>
-        <p className="muted">
-          Already have an account? <a href="/login"> Log in</a>
-        </p>
-      </form>
-    </div>
-  );
+         {/* Input Wrapper 2: Password (Using Form_Entries for the flex/border styling) */}
+         <div className="Form_Entries">
+             <label htmlFor="password">Password</label>
+             <input
+                 id="password"
+                 type="password"
+                 placeholder="••••••••"
+                 minLength={8}
+                 maxLength={12}
+                 value={password}
+                 onChange={(e) => setPassword(e.target.value)}
+                 required
+             />
+         </div>
+         {errors.password && <div className="error">{errors.password}</div>}
+
+         <button type="submit">Register</button>
+     </div>
+     <p className="muted">
+       Already have an account? <a href="/login"> Log in</a>
+     </p>
+   </form>
+ </div>
+ </div>
+);
 }
