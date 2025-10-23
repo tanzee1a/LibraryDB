@@ -44,10 +44,6 @@
           "options": ["Action & Adventure", "Comedy", "Drama", "Horror"]
         },
         {
-          "name": "Collections",
-          "options": ["New Releases", "Award Winners", "Classics", "Box Sets"]
-        },
-        {
           "name": "Formats",
           "options": ["DVD", "Blu-ray", "4K Ultra HD", "Digital"]
         }
@@ -75,7 +71,7 @@
       "thumbnail": "bookThumbnail",
       "title": "The Dreaming City",
       "description": "This small, portable book presents a unique perspective on the human body for artists to study and implement in their drawing work. In this book, artist and teacher Michel Lauricella simplifies the human body into basic shapes and forms, offering profound insight for artists of all kinds, sparking the imagination and improving one’s observational abilities. Rather than going the traditional route of memorizing a repertoire of poses, Lauricella instead stresses learning this small collection of forms, which can then be combined and shaped into the more complex and varied forms and postures we see in the living body.\n\nGeared toward artists of all levels—from beginners through professionals—this handy, pocket-sized book will help spark your imagination and creativity. Whether your interest is in figure drawing, fine arts, fashion design, game design, or creating comic book or manga art, you will find this helpful book filled with actionable insights.",
-      "author": "Jane Smith",
+      "authors": ["John Doe", "Emily Johnson"],
       "pages": 320,
       "language": "English",
       "publisher": "Fiction House",
@@ -92,6 +88,7 @@
       "thumbnail": "mediaThumbnail",
       "title": "The Great Adventure",
       "description": "This small, portable book presents a unique perspective on the human body for artists to study and implement in their drawing work. In this book, artist and teacher Michel Lauricella simplifies the human body into basic shapes and forms, offering profound insight for artists of all kinds, sparking the imagination and improving one’s observational abilities. Rather than going the traditional route of memorizing a repertoire of poses, Lauricella instead stresses learning this small collection of forms, which can then be combined and shaped into the more complex and varied forms and postures we see in the living body.\n\nGeared toward artists of all levels—from beginners through professionals—this handy, pocket-sized book will help spark your imagination and creativity. Whether your interest is in figure drawing, fine arts, fashion design, game design, or creating comic book or manga art, you will find this helpful book filled with actionable insights.",
+      "directors": ["John Doe", "Emily Johnson"],
       "format": "DVD",
       "language": "English",
       "rating": "PG-13",
@@ -104,7 +101,7 @@
     },
     {
       "id": 3,
-      "category": "DEVICES",
+      "category": "DEVICE",
       "thumbnail": "deviceThumbnail",
       "title": "MacBook Pro 16”",
       "description": "This small, portable book presents a unique perspective on the human body for artists to study and implement in their drawing work. In this book, artist and teacher Michel Lauricella simplifies the human body into basic shapes and forms, offering profound insight for artists of all kinds, sparking the imagination and improving one’s observational abilities. Rather than going the traditional route of memorizing a repertoire of poses, Lauricella instead stresses learning this small collection of forms, which can then be combined and shaped into the more complex and varied forms and postures we see in the living body.\n\nGeared toward artists of all levels—from beginners through professionals—this handy, pocket-sized book will help spark your imagination and creativity. Whether your interest is in figure drawing, fine arts, fashion design, game design, or creating comic book or manga art, you will find this helpful book filled with actionable insights.",

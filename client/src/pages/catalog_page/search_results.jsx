@@ -35,6 +35,7 @@ function SearchResults() {
                 {filters.map((filter) => (
                     <div key={filter.category} className="filter-category">
                         <h3>{filter.category}</h3>
+                        <hr className='divider divider--tight' />
                         <ul>
                             {filter.topics.map((topic) => (
                                 <li key={topic.name}>
@@ -87,7 +88,7 @@ function SearchResults() {
                                         </div>
                                         )}
 
-                                        {item.category === "DEVICES" && (
+                                        {item.category === "DEVICE" && (
                                         <div className="result-details">
                                             <p><strong>Manufacturer:</strong> {item.manufacturer}</p>
                                             <p><strong>Software:</strong> {item.software}</p>
@@ -97,7 +98,11 @@ function SearchResults() {
                                         <div className="availability-status">
                                             <p><strong>Holds:</strong> <span>{item.holds}</span></p>
                                             <p><strong>Available:</strong> <span>{item.available}</span></p>
-                                            <p><strong>Earliest Available:</strong> <span>{item.earliestAvailable}</span></p>
+                                            {
+                                                item.available == 0 && (
+                                                <p><strong>Earliest Available:</strong> <span>{item.earliestAvailable}</span></p>
+                                                )
+                                            }
                                         </div>
 
                                     </div>

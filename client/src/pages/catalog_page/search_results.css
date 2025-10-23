@@ -30,10 +30,6 @@
     border-right: 1px solid var(--darker-tertiary-color);
 }
 
-.filter-section h3 {
-    margin-bottom: 0.5rem;
-}
-
 .filter-section ul {
     list-style-type: none;
     padding: 0;

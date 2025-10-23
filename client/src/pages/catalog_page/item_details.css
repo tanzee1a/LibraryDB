@@ -55,6 +55,7 @@
 }
 
 .item-author {
+  font-style: italic;
   font-size: 1.1rem;
 }
 .item-author-name {
@@ -67,6 +68,10 @@
   border: none;
   border-top: 1px solid #ccc;
   margin: 1.5rem 0;
+}
+
+.divider--tight {
+  margin: 10px 0;
 }
 
 .item-description {
