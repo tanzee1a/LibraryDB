@@ -11,7 +11,7 @@ function homepage() {
         <div className="homepage-content">
           <div className="home-title">
             <h1>Search the world's knowledge</h1>
-            <p>Access a world of stories, ideas, and innovation — right here.</p>
+            <p>Access a world of stories, ideas, and innovation — all in one place.</p>
           </div>
           <input type="text" placeholder="Curiosity starts here..." className="search-bar" />
         </div>

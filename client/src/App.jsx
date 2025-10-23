@@ -5,6 +5,7 @@ import Notifications from './pages/notifications/notification.jsx'
 import BookDetails from './pages/catalog_page/book_details.jsx'
 import MediaDetails from './pages/catalog_page/media_details.jsx'
 import DeviceDetails from './pages/catalog_page/device_details.jsx'
+import SearchResults from './pages/catalog_page/search_results.jsx'
 import AccountDashboard from './pages/account_dashboard/AccountDashboard.jsx';
 import Register from './pages/register_page/register.jsx';
 import './App.css'
@@ -22,6 +23,7 @@ function App() {
         <Route path="/book-details" element={<BookDetails />} />
         <Route path="/media-details" element={<MediaDetails />} />
         <Route path="/device-details" element={<DeviceDetails />} />
+        <Route path="/search-results" element={<SearchResults />} />
         <Route path="/account" element={<AccountDashboard />} />
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<Login />} />

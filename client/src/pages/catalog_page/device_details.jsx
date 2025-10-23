@@ -4,8 +4,11 @@ import thumbnail from '../../assets/device_thumbnail.jpeg';
 import { MdDevicesOther } from "react-icons/md";
 import { TbBuildingFactory2 } from "react-icons/tb";
 import { BsGear } from "react-icons/bs";
+import sampleData from '../../assets/sample_data.json'
 
-function MediaDetails() {
+function DeviceDetails() {
+  const device = sampleData.data.find(item => item.id === 3);
+
   return (
     <div>
       <Navbar/>
@@ -14,56 +17,43 @@ function MediaDetails() {
           <div className="thumbnail-section">
             <img src={thumbnail} alt="Device thumbnail" className="thumbnail" />
             <div className="availability-info">
-              <p><strong>Holds:</strong> <span>0</span></p>
-              <p><strong>Available:</strong> <span>0</span></p>
-              <p><strong>Earliest Available:</strong> <span>1 day(s)</span></p>
+              <p><strong>Holds:</strong> <span>{device.holds}</span></p>
+              <p><strong>Available:</strong> <span>{device.available}</span></p>
+              <p><strong>Earliest Available:</strong> <span>{device.earliestAvailable}</span></p>
 
             </div>
-
-            <button className="action-button borrow-button">Borrow</button>
-            <button className="action-button hold-button">Place Hold</button>
+            {device.available > 0 ? (
+              <button className="action-button primary-button">Borrow</button>
+            ) : (
+              <button className="action-button secondary-button">Place Hold</button>
+            )}
           </div>
 
           <div className="details-section">
-            <h1 className="item-title">MacBook Air 14inch</h1>
+            <h1 className="item-title">{device.title}</h1>
             <hr className="divider" />
-            <p className="item-description">
-              {`10-Core CPU
-            8-Core GPU
-            16GB Unified Memory
-            256GB SSD Storage
-            16-core Neural Engine
-            13.6-inch Liquid Retina display with True Tone²
-            12MP Center Stage camera
-            MagSafe 3 charging port
-            Two Thunderbolt 4 ports
-            Support for up to two external displays
-            Magic Keyboard with Touch ID
-            Force Touch trackpad
-            30W USB-C Power Adapter
-            Apple Intelligence Footnote`}
-            </p>
+            <p className='item-description'>{device.description}</p>
             <hr className="divider" />
             <ul className="additional-info">
               <li>
                 <span className="info-name">Manufacturer</span>
                 <span className="info-icon"><TbBuildingFactory2 /></span>
-                <span className="info-detail">Apple</span>
+                <span className="info-detail">{device.manufacturer}</span>
               </li>
               <li>
                 <span className="info-name">Software</span>
                 <span className="info-icon"><BsGear /></span>
-                <span className="info-detail">macOS</span>
+                <span className="info-detail">{device.software}</span>
               </li>
               <li>
                 <span className="info-name">Device Type</span>
                 <span className="info-icon"><MdDevicesOther /></span>
-                <span className="info-detail">Laptop</span>
+                <span className="info-detail">{device.device_type}</span>
               </li>
             </ul>
             <hr className="divider" />
             <div className="tags-section">
-              <p className="tags-title"><strong>Tags:</strong> Apple, Macbook, macOS</p>
+              <p className="tags-title"><strong>Tags:</strong> {device.tags.join(", ")}</p>
             </div>
           </div>
         </div>
@@ -72,4 +62,4 @@ function MediaDetails() {
   )
 }
 
-export default MediaDetails
+export default DeviceDetails

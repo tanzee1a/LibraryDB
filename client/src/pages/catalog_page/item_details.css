@@ -1,7 +1,7 @@
 .item-details-container {
   display: flex;
   gap: 3rem;
-  margin: 5rem 0 2rem 2rem;
+  margin: 2rem;
 }
 
 .thumbnail-section {
@@ -69,12 +69,6 @@
   margin: 1.5rem 0;
 }
 
-.divider--tight {
-  margin-top: 0;
-  margin-bottom: 2rem;
-  border-top: 1px solid var(--darker-tertiary-color);
-}
-
 .item-description {
     white-space: pre-line;
 }
@@ -82,7 +76,7 @@
 .additional-info {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: space-evenly;
   gap: 1.5rem;
   list-style: none;
   padding: 0;
@@ -96,7 +90,6 @@
   align-items: center;
   justify-items: center;
   text-align: center;
-  width: 10rem;
   padding: 0.5rem;
   border-radius: 8px;
 }
@@ -128,7 +121,7 @@
   max-width: 20rem;
   height: 2.8rem;
   padding: 0.5rem 0;
-  margin-top: 0.6rem;
+  margin-bottom: 0.6rem;
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -136,21 +129,21 @@
   transition: all 0.2s ease;
 }
 
-.borrow-button {
+.primary-button {
   background-color: var(--secondary-color);
   color: white;
 }
 
-.borrow-button:hover {
+.action-button:hover {
   background-color: var(--darker-secondary-color);
 }
 
-.hold-button {
+.secondary-button {
   background-color: var(--tertiary-color);
   color: #333;
 }
 
-.hold-button:hover {
+.secondary-button:hover {
   background-color: var(--darker-tertiary-color);
 }
 

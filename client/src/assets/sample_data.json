@@ -1,0 +1,120 @@
+{
+  "filters": [
+    {
+      "category": "Books",
+      "topics": [
+        {
+          "name": "Popular & Trending",
+          "options": [
+            "Romance",
+            "Mystery, Thriller & Suspense",
+            "Science Fiction & Fantasy",
+            "Teen & Young Adult"
+          ]
+        },
+        {
+          "name": "Literature & Culture",
+          "options": ["Fiction", "Diversity & Inclusion", "History", "Nonfiction"]
+        },
+        {
+          "name": "Learning & Growth",
+          "options": [
+            "Self-Help",
+            "Education & Teaching",
+            "Reference",
+            "Test Preparation"
+          ]
+        },
+        {
+          "name": "Lifestyle & Creativity",
+          "options": [
+            "Arts & Photography",
+            "Cookbooks, Food & Wine",
+            "Crafts, Hobbies & Home",
+            "Health, Fitness & Dieting"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "Media",
+      "topics": [
+        {
+          "name": "Genres",
+          "options": ["Action & Adventure", "Comedy", "Drama", "Horror"]
+        },
+        {
+          "name": "Collections",
+          "options": ["New Releases", "Award Winners", "Classics", "Box Sets"]
+        },
+        {
+          "name": "Formats",
+          "options": ["DVD", "Blu-ray", "4K Ultra HD", "Digital"]
+        }
+      ]
+    },
+    {
+      "category": "Devices",
+      "topics": [
+        {
+          "name": "Device Types",
+          "options": ["Laptops", "Tablets", "Cameras", "Headphones"]
+        },
+        {
+          "name": "Operating Systems",
+          "options": ["macOS", "Windows", "Linux", "ChromeOS"]
+        }
+      ]
+    }
+  ],
+
+  "data": [
+    {
+      "id": 1,
+      "category": "BOOK",
+      "thumbnail": "bookThumbnail",
+      "title": "The Dreaming City",
+      "description": "This small, portable book presents a unique perspective on the human body for artists to study and implement in their drawing work. In this book, artist and teacher Michel Lauricella simplifies the human body into basic shapes and forms, offering profound insight for artists of all kinds, sparking the imagination and improving one’s observational abilities. Rather than going the traditional route of memorizing a repertoire of poses, Lauricella instead stresses learning this small collection of forms, which can then be combined and shaped into the more complex and varied forms and postures we see in the living body.\n\nGeared toward artists of all levels—from beginners through professionals—this handy, pocket-sized book will help spark your imagination and creativity. Whether your interest is in figure drawing, fine arts, fashion design, game design, or creating comic book or manga art, you will find this helpful book filled with actionable insights.",
+      "author": "Jane Smith",
+      "pages": 320,
+      "language": "English",
+      "publisher": "Fiction House",
+      "publicationDate": "2021",
+      "isbn": "123-4567890123",
+      "tags": ["Fiction", "Fantasy", "Adventure"],
+      "available": 3,
+      "holds": 1,
+      "earliestAvailable": "2 day(s)"
+    },
+    {
+      "id": 2,
+      "category": "MEDIA",
+      "thumbnail": "mediaThumbnail",
+      "title": "The Great Adventure",
+      "description": "This small, portable book presents a unique perspective on the human body for artists to study and implement in their drawing work. In this book, artist and teacher Michel Lauricella simplifies the human body into basic shapes and forms, offering profound insight for artists of all kinds, sparking the imagination and improving one’s observational abilities. Rather than going the traditional route of memorizing a repertoire of poses, Lauricella instead stresses learning this small collection of forms, which can then be combined and shaped into the more complex and varied forms and postures we see in the living body.\n\nGeared toward artists of all levels—from beginners through professionals—this handy, pocket-sized book will help spark your imagination and creativity. Whether your interest is in figure drawing, fine arts, fashion design, game design, or creating comic book or manga art, you will find this helpful book filled with actionable insights.",
+      "format": "DVD",
+      "language": "English",
+      "rating": "PG-13",
+      "release_year": "2020",
+      "runtime": "2h 15m",
+      "tags": ["Fiction", "Fantasy", "Adventure"],
+      "available": 0,
+      "holds": 2,
+      "earliestAvailable": "3 day(s)"
+    },
+    {
+      "id": 3,
+      "category": "DEVICES",
+      "thumbnail": "deviceThumbnail",
+      "title": "MacBook Pro 16”",
+      "description": "This small, portable book presents a unique perspective on the human body for artists to study and implement in their drawing work. In this book, artist and teacher Michel Lauricella simplifies the human body into basic shapes and forms, offering profound insight for artists of all kinds, sparking the imagination and improving one’s observational abilities. Rather than going the traditional route of memorizing a repertoire of poses, Lauricella instead stresses learning this small collection of forms, which can then be combined and shaped into the more complex and varied forms and postures we see in the living body.\n\nGeared toward artists of all levels—from beginners through professionals—this handy, pocket-sized book will help spark your imagination and creativity. Whether your interest is in figure drawing, fine arts, fashion design, game design, or creating comic book or manga art, you will find this helpful book filled with actionable insights.",
+      "manufacturer": "Apple",
+      "software": "macOS",
+      "device_type": "Laptop",
+      "tags": ["Apple", "macOS", "Laptop"],
+      "available": 1,
+      "holds": 0,
+      "earliestAvailable": "1 day(s)"
+    }
+  ]
+}
