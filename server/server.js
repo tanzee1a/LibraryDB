@@ -1,9 +1,21 @@
 const http = require('http');
 const { getItems, getItem, createBook, deleteItem, updateBook, createMovie, updateMovie, createDevice, updateDevice } = require('./controllers/itemController');
 const { borrowItem, returnItem, holdItem, getMyLoans, getMyHistory,getMyWaitlist } = require('./controllers/loanController');
+const { registerUser, loginUser } = require('./controllers/loginRegisterController');
+
 
 const server = http.createServer((req, res) => {
-    if(req.url === '/api/items' && req.method === 'GET') {
+    res.setHeader('Access-Control-Allow-Origin', '*'); // allow requests from any origin
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+    // Handle preflight OPTIONS requests
+    if (req.method === 'OPTIONS') {
+        res.writeHead(200);
+        res.end();
+        return;
+    }
+    else if(req.url === '/api/items' && req.method === 'GET') {
         getItems(req, res);
     } 
     // route finds any item by its ID
@@ -67,6 +79,14 @@ const server = http.createServer((req, res) => {
         const id = req.url.split('/')[3];
         deleteItem(req, res, id);
     } 
+    //register
+    else if (req.url === '/api/register' && req.method === 'POST') {
+        registerUser(req, res);
+    }
+    //login
+    else if (req.url === '/api/login' && req.method === 'POST') {
+        loginUser(req, res);
+    }
     else {
         res.writeHead(404, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({message: 'Route not found'}));

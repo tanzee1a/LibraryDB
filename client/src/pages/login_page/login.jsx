@@ -13,15 +13,28 @@ function login() {
 
   console.log(email, password)
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    console.log("Attempted to log in")
-
-
-    // add the routing to the backend and send the email and password;
-
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('http://localhost:5000/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+        localStorage.setItem('token', data.token);
+        navigate('/dashboard'); // redirect
+      } else {
+        alert(data.message || 'Login failed');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error connecting to server');
+    }
   }
-
 
 
   return (

@@ -1,16 +1,16 @@
-import React from 'react'
-import './register.css'
-import { useState } from "react";
-import Navbar from '../navbar/navbar';
-
+import React, { useState } from "react";
+import Navbar from "../navbar/navbar";
+import "./register.css";
 
 export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [errors, setErrors] = useState({});
   const [successMsg, setSuccessMsg] = useState("");
 
-  // validate input
+  // Input validation
   const validate = () => {
     const e = {};
 
@@ -33,70 +33,117 @@ export default function Register() {
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setSuccessMsg("");
+    setErrors({});
 
     if (!validate()) return;
 
-    // simulation
-    setSuccessMsg("Registration successful!");
-    setEmail("");
-    setPassword("");
+    try {
+      const response = await fetch("http://localhost:5000/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          password,
+          firstName,
+          lastName
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSuccessMsg("Registration successful! You can now log in.");
+        setEmail("");
+        setPassword("");
+        setFirstName("");
+        setLastName("");
+      } else {
+        alert(data.message || "Registration failed");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error connecting to server");
+    }
   };
 
   return (
     <div>
-    <Navbar/>
-   // 1. Full-page Centering Wrapper
-   <div className="register-page-container">
-   {/* 2. Main Dark Box Wrapper */}
-   <form className="auth-wrapper" onSubmit={handleSubmit} noValidate>
-     <h1>User Registration</h1>
+      <Navbar />
+      <div className="register-page-container">
+        <form className="auth-wrapper" onSubmit={handleSubmit} noValidate>
+          <h1>User Registration</h1>
 
-     {successMsg && <div className="notice ok">{successMsg}</div>}
+          {successMsg && <div className="notice ok">{successMsg}</div>}
 
-     {/* 3. The inner white form container (className="card" matches the padding/shadow) */}
-     <div className="card">
+          <div className="card">
+            {/* Email */}
+            <div className="Form_Entries">
+              <label htmlFor="email">Email</label>
+              <input
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                maxLength={100}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            {errors.email && <div className="error">{errors.email}</div>}
 
-         {/* Input Wrapper 1: Email (Using Form_Entries for the flex/border styling) */}
-         <div className="Form_Entries">
-             <label htmlFor="email">Email </label>
-             <input
-                 id="email"
-                 type="email"
-                 placeholder="you@example.com"
-                 maxLength={100}
-                 value={email}
-                 onChange={(e) => setEmail(e.target.value)}
-                 required
-             />
-         </div>
-         {errors.email && <div className="error">{errors.email}</div>}
+            {/* Password */}
+            <div className="Form_Entries">
+              <label htmlFor="password">Password</label>
+              <input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                minLength={8}
+                maxLength={12}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            {errors.password && <div className="error">{errors.password}</div>}
 
-         {/* Input Wrapper 2: Password (Using Form_Entries for the flex/border styling) */}
-         <div className="Form_Entries">
-             <label htmlFor="password">Password</label>
-             <input
-                 id="password"
-                 type="password"
-                 placeholder="••••••••"
-                 minLength={8}
-                 maxLength={12}
-                 value={password}
-                 onChange={(e) => setPassword(e.target.value)}
-                 required
-             />
-         </div>
-         {errors.password && <div className="error">{errors.password}</div>}
+            {/* First Name */}
+            <div className="Form_Entries">
+              <label htmlFor="firstName">First Name</label>
+              <input
+                id="firstName"
+                type="text"
+                placeholder="John"
+                maxLength={50}
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+              />
+            </div>
 
-         <button type="submit">Register</button>
-     </div>
-     <p className="muted">
-       Already have an account? <a href="/login"> Log in</a>
-     </p>
-   </form>
- </div>
- </div>
-);
+            {/* Last Name */}
+            <div className="Form_Entries">
+              <label htmlFor="lastName">Last Name</label>
+              <input
+                id="lastName"
+                type="text"
+                placeholder="Doe"
+                maxLength={50}
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+              />
+            </div>
+
+            <button type="submit">Register</button>
+          </div>
+
+          <p className="muted">
+            Already have an account? <a href="/login">Log in</a>
+          </p>
+        </form>
+      </div>
+    </div>
+  );
 }
