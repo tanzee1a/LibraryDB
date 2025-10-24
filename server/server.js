@@ -1,95 +1,133 @@
 const http = require('http');
-const { getItems, getItem, createBook, deleteItem, updateBook, createMovie, updateMovie, createDevice, updateDevice } = require('./controllers/itemController');
-const { borrowItem, returnItem, holdItem, getMyLoans, getMyHistory,getMyWaitlist } = require('./controllers/loanController');
-const { registerUser, loginUser } = require('./controllers/loginRegisterController');
 
+// Import controllers
+const { 
+    getItems, getItem, 
+    createBook, updateBook, 
+    createMovie, updateMovie, 
+    createDevice, updateDevice,
+    deleteItem 
+} = require('./controllers/itemController');
+
+const { 
+    requestPickup, pickupHold, returnItem, markLost, placeWaitlistHold, 
+    getMyLoans, getMyHistory, getMyHolds, getMyWaitlist, getMyFines,
+    payFine, waiveFine
+} = require('./controllers/loanController');
+
+const { registerUser, loginUser } = require('./controllers/loginRegisterController');
+const { saveItem, unsaveItem, getMyWishlist } = require('./controllers/wishlistController');
 
 const server = http.createServer((req, res) => {
-    res.setHeader('Access-Control-Allow-Origin', '*'); // allow requests from any origin
+    // --- CORS Headers ---
+    // IMPORTANT: Replace '*' with your Vercel URL in production for security
+    res.setHeader('Access-Control-Allow-Origin', '*'); 
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-    // Handle preflight OPTIONS requests
+    // Handle CORS preflight requests
     if (req.method === 'OPTIONS') {
-        res.writeHead(200);
+        res.writeHead(204); // Use 204 No Content for OPTIONS
         res.end();
         return;
     }
-    else if(req.url === '/api/items' && req.method === 'GET') {
-        getItems(req, res);
-    } 
-    // route finds any item by its ID
-    else if(req.url.match(/\/api\/items\/([a-zA-Z0-9-]+)/) && req.method === 'GET') {
-        const id = req.url.split('/')[3];
-        getItem(req, res, id);
-    } 
-    // route for creating a BOOK
-    else if (req.url === '/api/items/book' && req.method === 'POST' ) {
-        createBook(req,res);
-    } // update book
-    else if(req.url.match(/\/api\/items\/book\/([a-zA-Z0-9-]+)/) && req.method === 'PUT') {
-        const id = req.url.split('/')[4]; // Note: The ID is at index 4 now
-        updateBook(req, res, id);
-    } // Create movie
-    else if (req.url === '/api/items/movie' && req.method === 'POST' ) {
-        createMovie(req,res);
-    } 
-    // Update movie
-    else if(req.url.match(/\/api\/items\/movie\/([a-zA-Z0-9-]+)/) && req.method === 'PUT') {
-        const id = req.url.split('/')[4]; 
-        updateMovie(req, res, id);
-    }
-    // Create device
-    else if (req.url === '/api/items/device' && req.method === 'POST' ) {
-        createDevice(req,res);
-    } 
-    // Update device
-    else if(req.url.match(/\/api\/items\/device\/([a-zA-Z0-9-]+)/) && req.method === 'PUT') {
-        const id = req.url.split('/')[4]; 
-        updateDevice(req, res, id);
-    }
-    // Borrow an item
-    else if (req.url.match(/\/api\/borrow\/([a-zA-Z0-9-]+)/) && req.method === 'POST') {
-        const id = req.url.split('/')[3];
-        borrowItem(req, res, id);
-    }
-    // Return an item
-    else if (req.url.match(/\/api\/return\/([a-zA-Z0-9-]+)/) && req.method === 'POST') {
-        const id = req.url.split('/')[3];
-        returnItem(req, res, id);
 
-    } // hold item
-    else if (req.url.match(/\/api\/hold\/([a-zA-Z0-9-]+)/) && req.method === 'POST') {
-        const id = req.url.split('/')[3];
-        holdItem(req, res, id);
-    }
-    else if (req.url === '/api/my-loans' && req.method === 'GET') {
-        getMyLoans(req, res);
-    }
-    // Get My Loan History
-    else if (req.url === '/api/my-history' && req.method === 'GET') {
-        getMyHistory(req, res);
-    }
-    // Get My Waitlist
-    else if (req.url === '/api/my-waitlist' && req.method === 'GET') {
-        getMyWaitlist(req, res);
-    }
-     // Generic delete for item
-    else if(req.url.match(/\/api\/items\/([a-zA-Z0-9-]+)/) && req.method === 'DELETE') {
-        const id = req.url.split('/')[3];
-        deleteItem(req, res, id);
-    } 
-    //register
-    else if (req.url === '/api/register' && req.method === 'POST') {
-        registerUser(req, res);
-    }
-    //login
-    else if (req.url === '/api/login' && req.method === 'POST') {
-        loginUser(req, res);
-    }
-    else {
-        res.writeHead(404, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({message: 'Route not found'}));
+    // --- Routing ---
+    try {
+        // --- Item Routes ---
+        if (req.url === '/api/items' && req.method === 'GET') {
+            getItems(req, res);
+        } else if (req.url.match(/^\/api\/items\/([a-zA-Z0-9-]+)$/) && req.method === 'GET') {
+            const id = req.url.split('/')[3];
+            getItem(req, res, id);
+        } else if (req.url === '/api/items/book' && req.method === 'POST') {
+            createBook(req, res);
+        } else if (req.url.match(/^\/api\/items\/book\/([a-zA-Z0-9-]+)$/) && req.method === 'PUT') {
+            const id = req.url.split('/')[4];
+            updateBook(req, res, id);
+        } else if (req.url === '/api/items/movie' && req.method === 'POST') {
+            createMovie(req, res);
+        } else if (req.url.match(/^\/api\/items\/movie\/([a-zA-Z0-9-]+)$/) && req.method === 'PUT') {
+            const id = req.url.split('/')[4];
+            updateMovie(req, res, id);
+        } else if (req.url === '/api/items/device' && req.method === 'POST') {
+            createDevice(req, res);
+        } else if (req.url.match(/^\/api\/items\/device\/([a-zA-Z0-9-]+)$/) && req.method === 'PUT') {
+            const id = req.url.split('/')[4];
+            updateDevice(req, res, id);
+        } else if (req.url.match(/^\/api\/items\/([a-zA-Z0-9-]+)$/) && req.method === 'DELETE') {
+            const id = req.url.split('/')[3];
+            deleteItem(req, res, id);
+        }
+
+        // --- Loan/Hold/Waitlist Routes ---
+        else if (req.url.match(/^\/api\/request\/([a-zA-Z0-9-]+)$/) && req.method === 'POST') {
+            const itemId = req.url.split('/')[3];
+            requestPickup(req, res, itemId); // User requests pickup
+        } else if (req.url.match(/^\/api\/holds\/([0-9]+)\/pickup$/) && req.method === 'POST') {
+            const holdId = req.url.split('/')[3];
+            pickupHold(req, res, holdId); // Staff checks out hold
+        } else if (req.url.match(/^\/api\/return\/([A-Za-z0-9-]+)$/) && req.method === 'POST') {
+            const borrowId = req.url.split('/')[3];
+            returnItem(req, res, borrowId); // Staff returns item
+        } else if (req.url.match(/^\/api\/borrows\/([A-Za-z0-9-]+)\/lost$/) && req.method === 'POST') {
+            const borrowId = req.url.split('/')[3];
+            markLost(req, res, borrowId); // Staff marks lost
+        } else if (req.url.match(/^\/api\/waitlist\/([a-zA-Z0-9-]+)$/) && req.method === 'POST') {
+            const itemId = req.url.split('/')[3];
+            placeWaitlistHold(req, res, itemId); // User waitlists unavailable item
+        }
+
+        // --- User Data Routes ---
+        else if (req.url === '/api/my-loans' && req.method === 'GET') {
+            getMyLoans(req, res);
+        } else if (req.url === '/api/my-history' && req.method === 'GET') {
+            getMyHistory(req, res);
+        } else if (req.url === '/api/my-holds' && req.method === 'GET') { // Added holds
+            getMyHolds(req, res);
+        } else if (req.url === '/api/my-waitlist' && req.method === 'GET') {
+            getMyWaitlist(req, res);
+        } else if (req.url === '/api/my-fines' && req.method === 'GET') { // Added fines
+            getMyFines(req, res);
+        } 
+        
+        // --- Fine Management Routes (Staff) ---
+         else if (req.url.match(/^\/api\/fines\/([0-9]+)\/pay$/) && req.method === 'POST') {
+            const fineId = req.url.split('/')[3];
+            payFine(req, res, fineId);
+        } else if (req.url.match(/^\/api\/fines\/([0-9]+)\/waive$/) && req.method === 'POST') {
+            const fineId = req.url.split('/')[3];
+            waiveFine(req, res, fineId);
+        }
+
+        // --- Wishlist Routes ---
+        else if (req.url.match(/^\/api\/wishlist\/([a-zA-Z0-9-]+)$/) && req.method === 'POST') {
+            const itemId = req.url.split('/')[3];
+            saveItem(req, res, itemId);
+        } else if (req.url.match(/^\/api\/wishlist\/([a-zA-Z0-9-]+)$/) && req.method === 'DELETE') {
+            const itemId = req.url.split('/')[3];
+            unsaveItem(req, res, itemId);
+        } else if (req.url === '/api/my-wishlist' && req.method === 'GET') {
+            getMyWishlist(req, res);
+        }
+
+        // --- Auth Routes ---
+        else if (req.url === '/api/register' && req.method === 'POST') {
+            registerUser(req, res);
+        } else if (req.url === '/api/login' && req.method === 'POST') {
+            loginUser(req, res);
+        } 
+        
+        // --- Not Found ---
+        else {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ message: 'Route not found' }));
+        }
+    } catch (error) {
+        // Generic server error handler
+        console.error("Unhandled error in server:", error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ message: 'Internal Server Error' }));
     }
 });
 

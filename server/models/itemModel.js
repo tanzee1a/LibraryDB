@@ -1,39 +1,83 @@
 const db = require('../config/db'); 
 
+// --- Helper: Find or Create Author ID ---
+// (We need this because the frontend sends names, but the DB needs IDs)
+async function findOrCreateAuthorId(conn, authorName) {
+  // Simple split for now, assumes "First Last"
+  const names = authorName.trim().split(' ');
+  const firstName = names[0];
+  const lastName = names.length > 1 ? names[names.length - 1] : null;
+
+  // Check if author exists
+  let [rows] = await conn.query(
+    'SELECT author_id FROM AUTHOR WHERE first_name = ? AND last_name <=> ?', 
+    [firstName, lastName]
+  );
+
+  if (rows.length > 0) {
+    return rows[0].author_id; // Return existing ID
+  } else {
+    // Insert new author
+    const [result] = await conn.query(
+      'INSERT INTO AUTHOR (first_name, last_name) VALUES (?, ?)', 
+      [firstName, lastName]
+    );
+    return result.insertId; // Return new ID
+  }
+}
+
+// --- Helper: Find or Create Director ID ---
+// (Similar logic for directors)
+async function findOrCreateDirectorId(conn, directorName) {
+  const names = directorName.trim().split(' ');
+  const firstName = names[0];
+  const lastName = names.length > 1 ? names[names.length - 1] : null;
+  let [rows] = await conn.query(
+    'SELECT director_id FROM DIRECTOR WHERE first_name = ? AND last_name <=> ?',
+    [firstName, lastName]
+    );
+  if (rows.length > 0) return rows[0].director_id;
+  const [result] = await conn.query(
+    'INSERT INTO DIRECTOR (first_name, last_name) VALUES (?, ?)',
+    [firstName, lastName]
+    );
+  return result.insertId;
+}
+
+// --- Helper: Find or Create Tag ID ---
+async function findOrCreateTagId(conn, tagName) {
+  tagName = tagName.trim();
+  let [rows] = await conn.query('SELECT tag_id FROM TAG WHERE tag_name = ?', [tagName]);
+  if (rows.length > 0) return rows[0].tag_id;
+  const [result] = await conn.query('INSERT INTO TAG (tag_name) VALUES (?)', [tagName]);
+  return result.insertId;
+}
+
+
+// --- FIND ALL ITEMS (Basic for now) ---
 async function findAll() {
-    const sql = 'SELECT * FROM ITEM';
+    const sql = 'SELECT * FROM ITEM'; // Keep it simple for now
     const [rows] = await db.query(sql);
     return rows;
 }
 
-// Find item by ID
+// --- FIND ITEM BY ID (Basic for now) ---
 async function findById(id) {
     const sql = 'SELECT * FROM ITEM WHERE item_id = ?';
     const [rows] = await db.query(sql, [id]);
-    return rows[0];
+    // TODO: Later, enhance this to JOIN with Book/Movie/Device details
+    return rows[0]; 
 }
 
-// Delete Item
+// --- DELETE ITEM (Simpler now due to CASCADE) ---
 async function remove(id) {
-    const conn = await db.getConnection();
-    try {
-        await conn.beginTransaction();
-        // Delete from all potential child tables
-        await conn.query('DELETE FROM BOOK WHERE item_id = ?', [id]);
-        await conn.query('DELETE FROM MOVIE WHERE item_id = ?', [id]);
-        await conn.query('DELETE FROM DEVICE WHERE item_id = ?', [id]);
-        // Now delete from the parent ITEM table
-        await conn.query('DELETE FROM ITEM WHERE item_id = ?', [id]);
-        await conn.commit();
-    } catch (error) {
-        await conn.rollback();
-        console.error(error);
-        throw error;
-    } finally {
-        conn.release();
-    }
+    // Because your Foreign Keys use ON DELETE CASCADE, 
+    // deleting from ITEM automatically deletes from children (BOOK, MOVIE, DEVICE, etc.)
+    const sql = 'DELETE FROM ITEM WHERE item_id = ?';
+    await db.query(sql, [id]);
 }
 
+// --- CREATE BOOK (Updated for new schema) ---
 async function createBook(bookData) {
     const conn = await db.getConnection();
     try {
@@ -41,40 +85,42 @@ async function createBook(bookData) {
 
         // 1. Insert into ITEM
         const itemSql = `
-            INSERT INTO ITEM (item_id, available, on_hold, loaned_out, category)
-            VALUES (?, ?, 0, 0, 'BOOK')
+            INSERT INTO ITEM (item_id, available, category, description, thumbnail_url, shelf_location)
+            VALUES (?, ?, 'BOOK', ?, ?, ?) 
         `;
-        await conn.query(itemSql, [bookData.item_id, bookData.quantity]);
+        await conn.query(itemSql, [
+            bookData.item_id, bookData.quantity, bookData.description, 
+            bookData.thumbnail_url, bookData.shelf_location // Note: shelf_location is now in ITEM
+        ]);
 
         // 2. Insert into BOOK
         const bookSql = `
-            INSERT INTO BOOK (item_id, title, description, publisher, published_year, shelf_location)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO BOOK (isbn_13, item_id, title, publisher, published_date, language_id, page_number)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         `;
         await conn.query(bookSql, [
-            bookData.item_id, bookData.title, bookData.description,
-            bookData.publisher, bookData.published_year, bookData.shelf_location
+            bookData.isbn_13, bookData.item_id, bookData.title, bookData.publisher, 
+            bookData.published_date, bookData.language_id, bookData.page_number
         ]);
 
-        // 3. Insert into BOOK_AUTHOR (Loop)
+        // 3. Handle Authors (Find or Create IDs, then Insert into BOOK_AUTHOR)
         if (bookData.authors && bookData.authors.length > 0) {
-            const authorSql = 'INSERT INTO BOOK_AUTHOR (item_id, author_name) VALUES ?';
-            const authorValues = bookData.authors.map(author => [bookData.item_id, author]);
-            await conn.query(authorSql, [authorValues]);
+            const authorIds = await Promise.all(
+              bookData.authors.map(name => findOrCreateAuthorId(conn, name))
+            );
+            const authorSql = 'INSERT INTO BOOK_AUTHOR (item_id, author_id) VALUES ?';
+            const authorValues = authorIds.map(authorId => [bookData.item_id, authorId]);
+            if (authorValues.length > 0) await conn.query(authorSql, [authorValues]);
         }
         
-        // 4. Insert into BOOK_GENRE (Loop)
-        if (bookData.genres && bookData.genres.length > 0) {
-            const genreSql = 'INSERT INTO BOOK_GENRE (item_id, genre_name) VALUES ?';
-            const genreValues = bookData.genres.map(genre => [bookData.item_id, genre]);
-            await conn.query(genreSql, [genreValues]);
-        }
-
-        // 5. Insert into BOOK_TAG (Loop)
+        // 4. Handle Tags (Find or Create IDs, then Insert into ITEM_TAG)
         if (bookData.tags && bookData.tags.length > 0) {
-            const tagSql = 'INSERT INTO BOOK_TAG (item_id, tag_name) VALUES ?';
-            const tagValues = bookData.tags.map(tag => [bookData.item_id, tag]);
-            await conn.query(tagSql, [tagValues]);
+            const tagIds = await Promise.all(
+              bookData.tags.map(name => findOrCreateTagId(conn, name))
+            );
+            const tagSql = 'INSERT INTO ITEM_TAG (item_id, tag_id) VALUES ?';
+            const tagValues = tagIds.map(tagId => [bookData.item_id, tagId]);
+            if (tagValues.length > 0) await conn.query(tagSql, [tagValues]);
         }
         
         await conn.commit();
@@ -89,49 +135,57 @@ async function createBook(bookData) {
     }
 }
 
+// --- UPDATE BOOK (Updated for new schema) ---
 async function updateBook(id, bookData) {
     const conn = await db.getConnection();
     try {
         await conn.beginTransaction();
 
         // 1. Update ITEM
-        const itemSql = 'UPDATE ITEM SET available = ? WHERE item_id = ?';
-        await conn.query(itemSql, [bookData.quantity, id]);
+        const itemSql = `
+          UPDATE ITEM 
+          SET available = ?, description = ?, thumbnail_url = ?, shelf_location = ?
+          WHERE item_id = ?
+        `;
+        // Note: We only update 'available' based on 'quantity' now.
+        // on_hold/loaned_out are managed by borrow/return/hold logic.
+        await conn.query(itemSql, [
+            bookData.quantity, bookData.description, bookData.thumbnail_url, 
+            bookData.shelf_location, id
+        ]);
 
         // 2. Update BOOK
         const bookSql = `
             UPDATE BOOK
-            SET title = ?, description = ?, publisher = ?, 
-                published_year = ?, shelf_location = ?
+            SET isbn_13 = ?, title = ?, publisher = ?, published_date = ?, 
+                language_id = ?, page_number = ?
             WHERE item_id = ?
         `;
         await conn.query(bookSql, [
-            bookData.title, bookData.description, bookData.publisher,
-            bookData.published_year, bookData.shelf_location, id
+            bookData.isbn_13, bookData.title, bookData.publisher, bookData.published_date,
+            bookData.language_id, bookData.page_number, id
         ]);
 
-        // 3. Update Authors (Delete all, then re-insert)
+        // 3. Update Authors (Delete all, Find or Create, Re-insert)
         await conn.query('DELETE FROM BOOK_AUTHOR WHERE item_id = ?', [id]);
         if (bookData.authors && bookData.authors.length > 0) {
-            const authorSql = 'INSERT INTO BOOK_AUTHOR (item_id, author_name) VALUES ?';
-            const authorValues = bookData.authors.map(author => [id, author]);
-            await conn.query(authorSql, [authorValues]);
+           const authorIds = await Promise.all(
+              bookData.authors.map(name => findOrCreateAuthorId(conn, name))
+            );
+            const authorSql = 'INSERT INTO BOOK_AUTHOR (item_id, author_id) VALUES ?';
+            const authorValues = authorIds.map(authorId => [id, authorId]);
+             if (authorValues.length > 0) await conn.query(authorSql, [authorValues]);
         }
 
-        // 4. Update Genres (Delete all, then re-insert)
-        await conn.query('DELETE FROM BOOK_GENRE WHERE item_id = ?', [id]);
-        if (bookData.genres && bookData.genres.length > 0) {
-            const genreSql = 'INSERT INTO BOOK_GENRE (item_id, genre_name) VALUES ?';
-            const genreValues = bookData.genres.map(genre => [id, genre]);
-            await conn.query(genreSql, [genreValues]);
-        }
-
-        // 5. Update Tags (Delete all, then re-insert)
-        await conn.query('DELETE FROM BOOK_TAG WHERE item_id = ?', [id]);
+        // 4. Update Tags (Delete all, Find or Create, Re-insert)
+        await conn.query('DELETE FROM ITEM_TAG WHERE item_id = ?', [id]);
         if (bookData.tags && bookData.tags.length > 0) {
-            const tagSql = 'INSERT INTO BOOK_TAG (item_id, tag_name) VALUES ?';
-            const tagValues = bookData.tags.map(tag => [id, tag]);
-            await conn.query(tagSql, [tagValues]);
+            const tagIds = await Promise.all(
+              bookData.tags.map(name => findOrCreateTagId(conn, name))
+            );
+            const tagSql = 'INSERT INTO ITEM_TAG (item_id, tag_id) VALUES ?';
+            const tagValues = tagIds.map(tagId => [id, tagId]);
+             if (tagValues.length > 0) await conn.query(tagSql, [tagValues]);
         }
 
         await conn.commit();
@@ -146,7 +200,8 @@ async function updateBook(id, bookData) {
     }
 }
 
-// Add to itemModel.js
+
+// --- CREATE MOVIE (Updated for new schema) ---
 async function createMovie(movieData) {
     const conn = await db.getConnection();
     try {
@@ -154,39 +209,44 @@ async function createMovie(movieData) {
 
         // 1. Insert into ITEM
         const itemSql = `
-            INSERT INTO ITEM (item_id, available, on_hold, loaned_out, category)
-            VALUES (?, ?, 0, 0, 'MOVIE')
+            INSERT INTO ITEM (item_id, available, category, description, thumbnail_url, shelf_location)
+            VALUES (?, ?, 'MOVIE', ?, ?, ?)
         `;
-        await conn.query(itemSql, [movieData.item_id, movieData.quantity]);
+        await conn.query(itemSql, [
+            movieData.item_id, movieData.quantity, movieData.description, 
+            movieData.thumbnail_url, movieData.shelf_location 
+        ]);
 
         // 2. Insert into MOVIE
         const movieSql = `
-            INSERT INTO MOVIE (item_id, title, description)
-            VALUES (?, ?, ?)
+            INSERT INTO MOVIE (movie_id, item_id, title, language_id, format_id, runtime, rating_id, release_year)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `;
+        // Note: movie_id needs to be provided or generated (using UPC?)
         await conn.query(movieSql, [
-            movieData.item_id, movieData.title, movieData.description
+             movieData.movie_id, // You need a unique movie ID here (e.g., UPC)
+             movieData.item_id, movieData.title, movieData.language_id, movieData.format_id, 
+             movieData.runtime, movieData.rating_id, movieData.release_year
         ]);
 
-        // 3. Insert into MOVIE_DIRECTOR (Loop)
+        // 3. Handle Directors (Find or Create IDs, Insert into MOVIE_DIRECTOR)
         if (movieData.directors && movieData.directors.length > 0) {
-            const directorSql = 'INSERT INTO MOVIE_DIRECTOR (item_id, director_name) VALUES ?';
-            const directorValues = movieData.directors.map(director => [movieData.item_id, director]);
-            await conn.query(directorSql, [directorValues]);
+            const directorIds = await Promise.all(
+              movieData.directors.map(name => findOrCreateDirectorId(conn, name))
+            );
+            const directorSql = 'INSERT INTO MOVIE_DIRECTOR (movie_id, director_id) VALUES ?';
+            const directorValues = directorIds.map(directorId => [movieData.movie_id, directorId]);
+             if (directorValues.length > 0) await conn.query(directorSql, [directorValues]);
         }
         
-        // 4. Insert into MOVIE_GENRE (Loop)
-        if (movieData.genres && movieData.genres.length > 0) {
-            const genreSql = 'INSERT INTO MOVIE_GENRE (item_id, genre) VALUES ?';
-            const genreValues = movieData.genres.map(genre => [movieData.item_id, genre]);
-            await conn.query(genreSql, [genreValues]);
-        }
-
-        // 5. Insert into MOVIE_TAG (Loop)
+        // 4. Handle Tags (Find or Create IDs, Insert into ITEM_TAG)
         if (movieData.tags && movieData.tags.length > 0) {
-            const tagSql = 'INSERT INTO MOVIE_TAG (item_id, tag) VALUES ?';
-            const tagValues = movieData.tags.map(tag => [movieData.item_id, tag]);
-            await conn.query(tagSql, [tagValues]);
+             const tagIds = await Promise.all(
+              movieData.tags.map(name => findOrCreateTagId(conn, name))
+            );
+            const tagSql = 'INSERT INTO ITEM_TAG (item_id, tag_id) VALUES ?';
+            const tagValues = tagIds.map(tagId => [movieData.item_id, tagId]);
+             if (tagValues.length > 0) await conn.query(tagSql, [tagValues]);
         }
         
         await conn.commit();
@@ -201,43 +261,55 @@ async function createMovie(movieData) {
     }
 }
 
+// --- UPDATE MOVIE (Updated for new schema) ---
 async function updateMovie(id, movieData) {
     const conn = await db.getConnection();
     try {
         await conn.beginTransaction();
 
         // 1. Update ITEM
-        const itemSql = 'UPDATE ITEM SET available = ? WHERE item_id = ?';
-        await conn.query(itemSql, [movieData.quantity, id]);
-
-        // 2. Update MOVIE
-        const movieSql = 'UPDATE MOVIE SET title = ?, description = ? WHERE item_id = ?';
-        await conn.query(movieSql, [
-            movieData.title, movieData.description, id
+        const itemSql = `
+          UPDATE ITEM 
+          SET available = ?, description = ?, thumbnail_url = ?, shelf_location = ?
+          WHERE item_id = ?
+        `;
+        await conn.query(itemSql, [
+            movieData.quantity, movieData.description, movieData.thumbnail_url, 
+            movieData.shelf_location, id
         ]);
 
-        // 3. Update Directors (Delete all, then re-insert)
-        await conn.query('DELETE FROM MOVIE_DIRECTOR WHERE item_id = ?', [id]);
+        // 2. Update MOVIE
+        const movieSql = `
+            UPDATE MOVIE
+            SET movie_id = ?, title = ?, language_id = ?, format_id = ?, 
+                runtime = ?, rating_id = ?, release_year = ?
+            WHERE item_id = ?
+        `;
+        await conn.query(movieSql, [
+            movieData.movie_id, movieData.title, movieData.language_id, movieData.format_id, 
+            movieData.runtime, movieData.rating_id, movieData.release_year, id
+        ]);
+        
+        // 3. Update Directors (Delete all, Find or Create, Re-insert)
+        await conn.query('DELETE FROM MOVIE_DIRECTOR WHERE movie_id = ?', [movieData.movie_id]);
         if (movieData.directors && movieData.directors.length > 0) {
-            const directorSql = 'INSERT INTO MOVIE_DIRECTOR (item_id, director_name) VALUES ?';
-            const directorValues = movieData.directors.map(director => [id, director]);
-            await conn.query(directorSql, [directorValues]);
+            const directorIds = await Promise.all(
+              movieData.directors.map(name => findOrCreateDirectorId(conn, name))
+            );
+            const directorSql = 'INSERT INTO MOVIE_DIRECTOR (movie_id, director_id) VALUES ?';
+            const directorValues = directorIds.map(directorId => [movieData.movie_id, directorId]);
+             if (directorValues.length > 0) await conn.query(directorSql, [directorValues]);
         }
 
-        // 4. Update Genres (Delete all, then re-insert)
-        await conn.query('DELETE FROM MOVIE_GENRE WHERE item_id = ?', [id]);
-        if (movieData.genres && movieData.genres.length > 0) {
-            const genreSql = 'INSERT INTO MOVIE_GENRE (item_id, genre) VALUES ?';
-            const genreValues = movieData.genres.map(genre => [id, genre]);
-            await conn.query(genreSql, [genreValues]);
-        }
-
-        // 5. Update Tags (Delete all, then re-insert)
-        await conn.query('DELETE FROM MOVIE_TAG WHERE item_id = ?', [id]);
+        // 4. Update Tags (Delete all, Find or Create, Re-insert)
+        await conn.query('DELETE FROM ITEM_TAG WHERE item_id = ?', [id]);
         if (movieData.tags && movieData.tags.length > 0) {
-            const tagSql = 'INSERT INTO MOVIE_TAG (item_id, tag) VALUES ?';
-            const tagValues = movieData.tags.map(tag => [id, tag]);
-            await conn.query(tagSql, [tagValues]);
+            const tagIds = await Promise.all(
+              movieData.tags.map(name => findOrCreateTagId(conn, name))
+            );
+            const tagSql = 'INSERT INTO ITEM_TAG (item_id, tag_id) VALUES ?';
+            const tagValues = tagIds.map(tagId => [id, tagId]);
+             if (tagValues.length > 0) await conn.query(tagSql, [tagValues]);
         }
 
         await conn.commit();
@@ -252,7 +324,7 @@ async function updateMovie(id, movieData) {
     }
 }
 
-// Add to itemModel.js
+// --- CREATE DEVICE (Updated for new schema) ---
 async function createDevice(deviceData) {
     const conn = await db.getConnection();
     try {
@@ -260,21 +332,33 @@ async function createDevice(deviceData) {
 
         // 1. Insert into ITEM
         const itemSql = `
-            INSERT INTO ITEM (item_id, available, on_hold, loaned_out, category)
-            VALUES (?, ?, 0, 0, 'DEVICE')
+            INSERT INTO ITEM (item_id, available, category, description, thumbnail_url, shelf_location)
+            VALUES (?, ?, 'DEVICE', ?, ?, ?)
         `;
-        await conn.query(itemSql, [deviceData.item_id, deviceData.quantity]);
+        await conn.query(itemSql, [
+            deviceData.item_id, deviceData.quantity, deviceData.description, 
+            deviceData.thumbnail_url, deviceData.shelf_location
+        ]);
 
         // 2. Insert into DEVICE
         const deviceSql = `
-            INSERT INTO DEVICE (item_id, serial_number, manufacturer, model, description, type)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO DEVICE (item_id, manufacturer, device_name, device_type)
+            VALUES (?, ?, ?, ?)
         `;
         await conn.query(deviceSql, [
-            deviceData.item_id, deviceData.serial_number, deviceData.manufacturer,
-            deviceData.model, deviceData.description, deviceData.type
+            deviceData.item_id, deviceData.manufacturer, deviceData.device_name, deviceData.device_type
         ]);
         
+         // 3. Handle Tags (Find or Create IDs, Insert into ITEM_TAG)
+        if (deviceData.tags && deviceData.tags.length > 0) {
+             const tagIds = await Promise.all(
+              deviceData.tags.map(name => findOrCreateTagId(conn, name))
+            );
+            const tagSql = 'INSERT INTO ITEM_TAG (item_id, tag_id) VALUES ?';
+            const tagValues = tagIds.map(tagId => [deviceData.item_id, tagId]);
+             if (tagValues.length > 0) await conn.query(tagSql, [tagValues]);
+        }
+
         await conn.commit();
         return { item_id: deviceData.item_id, ...deviceData };
 
@@ -287,26 +371,43 @@ async function createDevice(deviceData) {
     }
 }
 
+// --- UPDATE DEVICE (Updated for new schema) ---
 async function updateDevice(id, deviceData) {
     const conn = await db.getConnection();
     try {
         await conn.beginTransaction();
 
         // 1. Update ITEM
-        const itemSql = 'UPDATE ITEM SET available = ? WHERE item_id = ?';
-        await conn.query(itemSql, [deviceData.quantity, id]);
+        const itemSql = `
+          UPDATE ITEM 
+          SET available = ?, description = ?, thumbnail_url = ?, shelf_location = ?
+          WHERE item_id = ?
+        `;
+        await conn.query(itemSql, [
+            deviceData.quantity, deviceData.description, deviceData.thumbnail_url, 
+            deviceData.shelf_location, id
+        ]);
 
         // 2. Update DEVICE
         const deviceSql = `
             UPDATE DEVICE
-            SET serial_number = ?, manufacturer = ?, model = ?, 
-                description = ?, type = ?
+            SET manufacturer = ?, device_name = ?, device_type = ?
             WHERE item_id = ?
         `;
         await conn.query(deviceSql, [
-            deviceData.serial_number, deviceData.manufacturer, deviceData.model,
-            deviceData.description, deviceData.type, id
+            deviceData.manufacturer, deviceData.device_name, deviceData.device_type, id
         ]);
+
+        // 3. Update Tags (Delete all, Find or Create, Re-insert)
+        await conn.query('DELETE FROM ITEM_TAG WHERE item_id = ?', [id]);
+        if (deviceData.tags && deviceData.tags.length > 0) {
+            const tagIds = await Promise.all(
+              deviceData.tags.map(name => findOrCreateTagId(conn, name))
+            );
+            const tagSql = 'INSERT INTO ITEM_TAG (item_id, tag_id) VALUES ?';
+            const tagValues = tagIds.map(tagId => [id, tagId]);
+             if (tagValues.length > 0) await conn.query(tagSql, [tagValues]);
+        }
         
         await conn.commit();
         return { item_id: id, ...deviceData };
@@ -319,6 +420,7 @@ async function updateDevice(id, deviceData) {
         conn.release();
     }
 }
+
 
 module.exports = {
     findAll,
