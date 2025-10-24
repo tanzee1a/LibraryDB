@@ -95,11 +95,11 @@ async function createBook(bookData) {
 
         // 2. Insert into BOOK
         const bookSql = `
-            INSERT INTO BOOK (isbn_13, item_id, title, publisher, published_date, language_id, page_number)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO BOOK ( item_id, title, publisher, published_date, language_id, page_number)
+            VALUES (?, ?, ?, ?, ?, ?)
         `;
         await conn.query(bookSql, [
-            bookData.isbn_13, bookData.item_id, bookData.title, bookData.publisher, 
+            bookData.item_id, bookData.title, bookData.publisher, 
             bookData.published_date, bookData.language_id, bookData.page_number
         ]);
 
@@ -157,12 +157,12 @@ async function updateBook(id, bookData) {
         // 2. Update BOOK
         const bookSql = `
             UPDATE BOOK
-            SET isbn_13 = ?, title = ?, publisher = ?, published_date = ?, 
+            SET title = ?, publisher = ?, published_date = ?, 
                 language_id = ?, page_number = ?
             WHERE item_id = ?
         `;
         await conn.query(bookSql, [
-            bookData.isbn_13, bookData.title, bookData.publisher, bookData.published_date,
+            bookData.title, bookData.publisher, bookData.published_date,
             bookData.language_id, bookData.page_number, id
         ]);
 

@@ -45,7 +45,6 @@ async function createBook(req, res){
         const body = await getPostData(req);
         const { 
             item_id, 
-            isbn_13, // New
             title, 
             description, // Now in ITEM table
             publisher, 
@@ -60,12 +59,12 @@ async function createBook(req, res){
         } = JSON.parse(body);
         
         // Basic validation
-        if (!item_id || !isbn_13 || !title || !published_date || !page_number || !quantity) {
+        if (!item_id || !title || !published_date || !page_number || !quantity) {
              throw new Error('Missing required book fields');
         }
 
         const bookData = {
-            item_id, isbn_13, title, description, publisher, published_date, 
+            item_id, title, description, publisher, published_date, 
             shelf_location, language_id, page_number, quantity, authors, tags, thumbnail_url
         };
 
@@ -175,17 +174,17 @@ async function updateBook(req, res, id){
        
         const body = await getPostData(req);
         const { 
-            isbn_13, title, description, publisher, published_date, shelf_location, 
+            title, description, publisher, published_date, shelf_location, 
             language_id, page_number, quantity, authors, tags, thumbnail_url
         } = JSON.parse(body);
 
         // Basic validation
-        if (!isbn_13 || !title || !published_date || !page_number || quantity === undefined) {
+        if ( !title || !published_date || !page_number || quantity === undefined) {
              throw new Error('Missing required book fields for update');
         }
             
         const bookData = {
-            isbn_13, title, description, publisher, published_date, shelf_location, 
+            title, description, publisher, published_date, shelf_location, 
             language_id, page_number, quantity, authors, tags, thumbnail_url
         };
 
