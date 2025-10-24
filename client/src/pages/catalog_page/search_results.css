@@ -18,6 +18,23 @@
     font-size: 1rem;
 }
 
+.search-result-search-bar-container {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    width: 100%;
+    max-width: 700px;
+    align-items: center;
+}
+
+.add-new-button {
+    border: none;
+    padding: 0.6rem;
+    border-radius: 20px;
+    justify-content: center;
+    align-items: center;
+}
+
 .search-results-contents {
     display: flex;
     gap: 2rem;
@@ -60,12 +77,12 @@
     font-size: 1.2rem;
 }
 .result-title a {
-    color: var(--primary-color);
+    color: var(--secondary-color);
     text-decoration: none;
 }
 
 .result-title a:hover {
-    color: var(--secondary-color);
+    color: var(--darker-secondary-color);
 }
 
 .result-text-info {

@@ -1,5 +1,6 @@
 {
-  "filters": [
+  "item_categories": ["BOOK", "MEDIA", "DEVICE"],
+  "item_filters": [
     {
       "category": "Books",
       "topics": [
@@ -112,6 +113,216 @@
       "available": 1,
       "holds": 0,
       "earliestAvailable": "1 day(s)"
+    }
+  ],
+  "role_filters": [
+    {
+      "category": "Roles",
+      "options": ["Patron", "Staff", "Admin"]
+      
+    }
+  ],
+  "users": [
+    {
+      "user_id": 1,
+      "email": "alex.johnson@student.university.edu",
+      "role": "Patron",
+      "first_name": "Alex",
+      "last_name": "Johnson",
+      "current_borrows": 2,
+      "active_holds": 1,
+      "outstanding_fines": 5.00
+    },
+    {
+      "user_id": 2,
+      "email": "maria.gonzalez@faculty.university.edu",
+      "role": "Staff",
+      "first_name": "Maria",
+      "last_name": "Gonzalez",
+      "current_borrows": 1,
+      "active_holds": 0,
+      "outstanding_fines": 0
+    },
+    {
+      "user_id": 3,
+      "email": "thomas.nguyen@library.org",
+      "role": "Patron",
+      "first_name": "Thomas",
+      "last_name": "Nguyen",
+      "current_borrows": 3,
+      "active_holds": 1,
+      "outstanding_fines": 15.00
+    }
+  ],
+  "user_filters": [
+    {
+      "category": "Borrow",
+      "topics": [
+        {
+          "name": "Status",
+          "options": ["Loaned Out", "Pending", "Returned", "Lost", "Ready for Pickup"]
+        }
+      ]
+    },
+    {
+      "category": "Holds",
+      "topics": [
+        {
+          "name": "Status",
+          "options": ["Active", "Fulfilled", "Canceled"]
+        }
+      ]
+    },
+    {
+      "category": "Fines",
+      "topics": [
+        {
+          "name": "Status",
+          "options": ["Paid", "Awaiting Payment", "Canceled"]
+        }
+      ]
+    }
+  ],
+  "borrows": [
+    {
+      "borrow_id": 1,
+      "borrow_date": "2025-09-10",
+      "return_date": "2025-09-24",
+      "status_id": "Returned",
+      "user_id": 1,
+      "item_id": 101,
+      "item": {
+        "item_id": 101,
+        "item_category": "BOOK",
+        "title": "The Dreaming City",
+        "thumbnail": "bookThumbnail"
+      }
+    },
+    {
+      "borrow_id": 2,
+      "borrow_date": "2025-10-01",
+      "return_date": null,
+      "status_id": "Loaned Out",
+      "user_id": 2,
+      "item_id": 204,
+      "item": {
+        "item_id": 204,
+        "item_category": "MEDIA",
+        "title": "The Great Adventure",
+        "thumbnail": "mediaThumbnail"
+      }
+    },
+    {
+      "borrow_id": 3,
+      "borrow_date": null,
+      "return_date": null,
+      "status_id": "Pending",
+      "user_id": 1,
+      "item_id": 307,
+      "item": {
+        "item_id": 307,
+        "item_category": "DEVICE",
+        "title": "MacBook Pro 16”",
+        "thumbnail": "deviceThumbnail"
+      }
+    },
+    {
+      "borrow_id": 4,
+      "borrow_date": "2025-10-01",
+      "return_date": null,
+      "status_id": "Lost",
+      "user_id": 1,
+      "item_id": 307,
+      "item": {
+        "item_id": 307,
+        "item_category": "BOOK",
+        "title": "The Dreaming City",
+        "thumbnail": "deviceThumbnail"
+      }
+    },
+    {
+      "borrow_id": 5,
+      "borrow_date": null,
+      "return_date": null,
+      "status_id": "Ready for Pickup",
+      "user_id": 1,
+      "item_id": 307,
+      "item": {
+        "item_id": 307,
+        "item_category": "MEDIA",
+        "title": "The Great Adventure",
+        "thumbnail": "deviceThumbnail"
+      }
+    }
+  ],
+  "holds": [
+    {
+      "hold_id": 1,
+      "requested_date": "2025-09-15",
+      "request_completed_date": null,
+      "status_id": "Active",
+      "item_id": 101,
+      "item": {
+        "item_id": 101,
+        "item_category": "BOOK",
+        "title": "The Dreaming City",
+        "thumbnail": "bookThumbnail"
+      }
+    },
+    {
+      "hold_id": 2,
+      "requested_date": "2025-08-05",
+      "request_completed_date": "2025-08-20",
+      "status_id": "Canceled",
+      "item_id": 205,
+      "item": {
+        "item_id": 205,
+        "item_category": "MEDIA",
+        "title": "The Great Adventure",
+        "thumbnail": "mediaThumbnail"
+      }
+    },
+    {
+      "hold_id": 3,
+      "requested_date": "2025-06-11",
+      "request_completed_date": null,
+      "status_id": "Fulfilled",
+      "item_id": 309,
+      "item": {
+        "item_id": 309,
+        "item_category": "DEVICE",
+        "title": "MacBook Pro 16”",
+        "thumbnail": "deviceThumbnail"
+      }
+    }
+  ],
+  "fines": [
+    {
+      "fine_id": 1,
+      "borrow_id": 1,
+      "user_id": 1,
+      "date_issued": "2025-09-25",
+      "amount": 2.50,
+      "date_paid": "2025-09-30",
+      "status_id": "Paid"
+    },
+    {
+      "fine_id": 2,
+      "borrow_id": 2,
+      "user_id": 1,
+      "date_issued": "2025-07-20",
+      "amount": 15.00,
+      "date_paid": null,
+      "status_id": "Awaiting Payment"
+    },
+    {
+      "fine_id": 3,
+      "borrow_id": 3,
+      "user_id": 2,
+      "date_issued": "2025-08-01",
+      "amount": 5.00,
+      "date_paid": "2025-08-05",
+      "status_id": "Canceled"
     }
   ]
 }

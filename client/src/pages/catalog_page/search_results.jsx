@@ -1,12 +1,14 @@
 import './search_results.css'
-import Navbar from '../navbar/navbar.jsx'
 import bookThumbnail from '../../assets/book_thumbnail.jpeg'
 import mediaThumbnail from '../../assets/media_thumbnail.jpg'
 import deviceThumbnail from '../../assets/device_thumbnail.jpeg'
 import sampleData from '../../assets/sample_data.json'
+import { useState } from 'react'
 
-function SearchResults() {
-    const filters = sampleData.filters;
+import { FaPlus } from "react-icons/fa"
+
+function SearchResults({ isStaff }) {
+    const filters = sampleData.item_filters;
 
     const mockResults = sampleData.data.map(item => ({
     ...item,
@@ -17,18 +19,94 @@ function SearchResults() {
         ? mediaThumbnail
         : deviceThumbnail,
     }));
-    
 
     const multipleMockResults = [...mockResults, ...mockResults, ...mockResults];
 
+    const [showAddItemSheet, setShowAddItemSheet] = useState(false);
+    const [newItem, setNewItem] = useState({
+        title: '',
+        description: '',
+        thumbnail_url: '',
+        shelf_location: '',
+        tags: '',
+        item_category: 'BOOK', // default
+        authors: '',
+        publisher: '',
+        publication_date: '',
+        language: '',
+        page_number: '',
+        isbn: '',
+        directors: '',
+        release_year: '',
+        runtime: '',
+        format: '',
+        rating: '',
+        manufacturer: '',
+        device_type: ''
+    });
+
+    function handleItemInputChange(e) {
+        const { name, value } = e.target;
+        setNewItem(prev => ({ ...prev, [name]: value }));
+    }
+
+    function handleAddItemSubmit(e) {
+        e.preventDefault();
+        console.log("New Item Added:", newItem);
+        // send `newItem` to backend or state
+        setShowAddItemSheet(false);
+    }
+
+    const renderItemDetails = (item) => {
+        switch(item.item_category) {
+            case "BOOK":
+                return (
+                    <div className="result-details">
+                        <p><strong>Authors:</strong> {item.authors.join(', ')}</p>
+                        <p><strong>Publisher:</strong> {item.publisher}</p>
+                        <p><strong>Year:</strong> {item.publicationDate}</p>
+                        <p><strong>ISBN:</strong> {item.isbn}</p>
+                    </div>
+                )
+            case "MEDIA":
+                return (
+                    <div className="result-details">
+                        <p><strong>Directors:</strong> {item.directors.join(', ')}</p>
+                        <p><strong>Format:</strong> {item.format}</p>
+                        <p><strong>Rating:</strong> {item.rating}</p>
+                        <p><strong>Release Year:</strong> {item.release_year}</p>
+                    </div>
+                )
+            case "DEVICE":
+                return (
+                    <div className="result-details">
+                        <p><strong>Manufacturer:</strong> {item.manufacturer}</p>
+                        <p><strong>Software:</strong> {item.software}</p>
+                        <p><strong>Device Type:</strong> {item.device_type}</p>
+                    </div>
+                )
+            default:
+                return null;
+        }
+    }
+
   return (
     <div>
-      <Navbar/>
       <div className="page-container">
         <div className='search-result-page-container'>
             <div className="search-result-header">
                 <h1>Find your perfect discovery.</h1>
-                <input type="text" placeholder="Search..." className="search-result-search-bar" />
+                <div className="search-result-search-bar-container">
+                    { isStaff && (
+                        <button
+                            className="action-circle-button primary-button"
+                            onClick={() => setShowAddItemSheet(true)}
+                        >
+                            <FaPlus />
+                        </button>
+                    )}
+                    <input type="text" placeholder="Search..." className="search-result-search-bar" />
+                </div>
             </div>
             <div className="search-results-contents">
             <div className="filter-section">
@@ -54,7 +132,7 @@ function SearchResults() {
                         </ul>
                     </div>
                     ))}
-                </div>
+            </div>
                 <div className="search-results-list">
                     {multipleMockResults.map((item) => {
                         return (
@@ -65,36 +143,12 @@ function SearchResults() {
                                 </div>
                                 <div className='result-text-info'>
                                     <h3 className="result-title">
-                                    <a href={`/${item.category.toLowerCase()}-details`} className="result-link">
+                                    <a href={`/item/${item.id}`} className="result-link">
                                         {item.title}
                                     </a>
                                     </h3>
                                     <div className="result-description">
-                                        {item.category === "BOOK" && (
-                                        <div className="result-details">
-                                            <p><strong>Author:</strong> {item.author}</p>
-                                            <p><strong>Publisher:</strong> {item.publisher}</p>
-                                            <p><strong>Year:</strong> {item.publicationDate}</p>
-                                            <p><strong>ISBN:</strong> {item.isbn}</p>
-                                        </div>
-                                        )}
-
-                                        {item.category === "MEDIA" && (
-                                        <div className="result-details">
-                                            <p><strong>Format:</strong> {item.format}</p>
-                                            <p><strong>Rating:</strong> {item.rating}</p>
-                                            <p><strong>Release Year:</strong> {item.release_year}</p>
-                                            <p><strong>Runtime:</strong> {item.runtime}</p>
-                                        </div>
-                                        )}
-
-                                        {item.category === "DEVICE" && (
-                                        <div className="result-details">
-                                            <p><strong>Manufacturer:</strong> {item.manufacturer}</p>
-                                            <p><strong>Software:</strong> {item.software}</p>
-                                            <p><strong>Device Type:</strong> {item.device_type}</p>
-                                        </div>
-                                        )}
+                                        {renderItemDetails(item)}
                                         <div className="availability-status">
                                             <p><strong>Holds:</strong> <span>{item.holds}</span></p>
                                             <p><strong>Available:</strong> <span>{item.available}</span></p>
@@ -123,6 +177,96 @@ function SearchResults() {
             </div>
         </div>
       </div>
+        {showAddItemSheet && (
+            <div className="sheet-overlay" onClick={() => setShowAddItemSheet(false)}>
+                <div className="sheet-container" onClick={(e) => e.stopPropagation()}>
+                <h2>Add New Item</h2>
+                <form onSubmit={handleAddItemSubmit}>
+                    {/* --- Common fields --- */}
+                    <label>
+                    Title:
+                    <input type="text" name="title" value={newItem.title} onChange={handleItemInputChange} required />
+                    </label>
+                    <label>
+                    Description:
+                    <textarea name="description" value={newItem.description} onChange={handleItemInputChange} required />
+                    </label>
+                    <label>
+                    Thumbnail URL:
+                    <input type="text" name="thumbnail_url" value={newItem.thumbnail_url} onChange={handleItemInputChange} />
+                    </label>
+                    <label>
+                    Shelf Location:
+                    <input type="text" name="shelf_location" value={newItem.shelf_location} onChange={handleItemInputChange} />
+                    </label>
+                    <label>
+                    Tags:
+                    <input type="text" name="tags" value={newItem.tags} onChange={handleItemInputChange} />
+                    </label>
+
+                    {/* --- Item Category --- */}
+                    <label>
+                    Item Type:
+                    <select name="item_category" value={newItem.item_category} onChange={handleItemInputChange}>
+                        <option value="BOOK">Book</option>
+                        <option value="MEDIA">Media</option>
+                        <option value="DEVICE">Device</option>
+                    </select>
+                    </label>
+
+                    {/* --- Conditional Fields --- */}
+                    {newItem.item_category === 'BOOK' && (
+                    <>
+                        <label>Authors: <input type="text" name="authors" value={newItem.authors} onChange={handleItemInputChange} /></label>
+                        <label>Publisher: <input type="text" name="publisher" value={newItem.publisher} onChange={handleItemInputChange} /></label>
+                        <label>Published Date: <input type="date" name="publication_date" value={newItem.publication_date} onChange={handleItemInputChange} /></label>
+                        <label>Language: <input type="text" name="language" value={newItem.language} onChange={handleItemInputChange} /></label>
+                        <label>Page Number: <input type="number" name="page_number" value={newItem.page_number} onChange={handleItemInputChange} /></label>
+                        <label>ISBN: <input type="text" name="isbn" value={newItem.isbn} onChange={handleItemInputChange} /></label>
+                    </>
+                    )}
+
+                    {newItem.item_category === 'MEDIA' && (
+                    <>
+                        <label>Directors: <input type="text" name="directors" value={newItem.directors} onChange={handleItemInputChange} /></label>
+                        <label>Release Year: <input type="number" name="release_year" value={newItem.release_year} onChange={handleItemInputChange} /></label>
+                        <label>Runtime (mins): <input type="number" name="runtime" value={newItem.runtime} onChange={handleItemInputChange} /></label>
+                        <label>Language: <input type="text" name="language" value={newItem.language} onChange={handleItemInputChange} /></label>
+                        <label>Format: <input type="text" name="format" value={newItem.format} onChange={handleItemInputChange} /></label>
+                        <label>Rating: <input type="text" name="rating" value={newItem.rating} onChange={handleItemInputChange} /></label>
+                    </>
+                    )}
+
+                    {newItem.item_category === 'DEVICE' && (
+                    <>
+                        <label>Manufacturer: <input type="text" name="manufacturer" value={newItem.manufacturer} onChange={handleItemInputChange} /></label>
+                        <label>Device Type:
+                        <select name="device_type" value={newItem.device_type} onChange={handleItemInputChange}>
+                            <option value="">Select...</option>
+                            <option value="Laptop">Laptop</option>
+                            <option value="Tablet">Tablet</option>
+                            <option value="Headphones">Headphones</option>
+                            <option value="Camera">Camera</option>
+                        </select>
+                        </label>
+                    </>
+                    )}
+
+                    {/* --- Actions --- */}
+                    <div className="sheet-actions">
+                    <button type="submit" className="action-button primary-button">Add Item</button>
+                    <button
+                        type="button"
+                        className="action-button secondary-button"
+                        onClick={() => setShowAddItemSheet(false)}
+                    >
+                        Cancel
+                    </button>
+                    </div>
+                </form>
+                </div>
+            </div>
+        )}
     </div>
   )
 }
