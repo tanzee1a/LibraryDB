@@ -11,7 +11,6 @@ import Wishlist from './Wishlist';
 const AccountDashboard = () => {
   return (
   <>
-      <Navbar />
       <div className="dashboard-container">
         {/* 2. Create the main layout container */}
         <div className="dashboard-layout">

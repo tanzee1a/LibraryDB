@@ -1,5 +1,4 @@
 import './item_details.css';
-import Navbar from '../navbar/navbar.jsx';
 import { useState } from 'react';
 
 import bookThumbnail from '../../assets/book_thumbnail.jpeg';

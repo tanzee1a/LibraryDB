@@ -3,7 +3,7 @@ import { IoSearch, IoPersonCircleOutline } from "react-icons/io5"
 import sampleData from '../../assets/sample_data.json'
 
 const Navbar = ({ isStaff, setIsStaff }) => {
-    const filters = sampleData.filters;
+    const filters = sampleData.item_filters;
 
     const userNavbar = () => {
         return (
@@ -12,8 +12,8 @@ const Navbar = ({ isStaff, setIsStaff }) => {
                 <li><a href="/" className="logo">LBRY
                 {/* <img className="navbar-logo" src={Logo} alt="" /> */}
                 </a></li>
-                <li><a href="item-details">ItemDetails</a></li>
-                <li><a href="search-results">SearchResults</a></li>
+                <li><a href="/item-details">ItemDetails</a></li>
+                <li><a href="/search-results">SearchResults</a></li>
                 {filters.map(filter => (
                 <li key={filter.category} className="dropdown">
                     <a href="#">{filter.category}</a>
@@ -56,7 +56,7 @@ const Navbar = ({ isStaff, setIsStaff }) => {
                         <div className="dropdown-menu-contents">
                             <div className="category-column">
                                 <p>Profile</p>
-                                <a href="login">Log in</a>
+                                <a href="/login">Log in</a>
                                 <a href="#">Your Borrows</a>
                                 <a href="#">Your Holds</a>
                                 <a href="#">Account</a>
@@ -76,10 +76,10 @@ const Navbar = ({ isStaff, setIsStaff }) => {
                 <li><a href="/" className="logo">LBRY
                 {/* <img className="navbar-logo" src={Logo} alt="" /> */}
                 </a></li>
-                <li><a href="manage-users">Users</a></li>
-                <li><a href="manage-items">Items</a></li>
-                <li><a href="manage-holds">Holds</a></li>
-                <li><a href="manage-fines">Fines</a></li>
+                <li><a href="/manage-users">Users</a></li>
+                <li><a href="/search-results">Items</a></li>
+                <li><a href="/manage-holds">Holds</a></li>
+                <li><a href="/manage-fines">Fines</a></li>
                 <li className="dropdown">
                 <button className="nav-icon">
                     <IoSearch />
@@ -105,7 +105,7 @@ const Navbar = ({ isStaff, setIsStaff }) => {
                         <div className="dropdown-menu-contents">
                             <div className="category-column">
                                 <p>Profile</p>
-                                <a href="login">Log in</a>
+                                <a href="/login">Log in</a>
                                 <a href="#">Your Borrows</a>
                                 <a href="#">Your Holds</a>
                                 <a href="#">Account</a>

@@ -1,12 +1,9 @@
-import React from 'react'
 import './homepage.css'
-import Navbar from '../navbar/navbar.jsx'
 
 function homepage() {
 
   return (
     <div>
-      <Navbar/>
       <div className="page-container homepage-container">
         <div className="homepage-content">
           <div className="home-title">

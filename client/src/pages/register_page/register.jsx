@@ -71,7 +71,6 @@ export default function Register() {
 
   return (
     <div>
-      <Navbar />
       <div className="register-page-container">
         <form className="auth-wrapper" onSubmit={handleSubmit} noValidate>
           <h1>User Registration</h1>
