@@ -8,7 +8,7 @@ function staff_page() {
       <ul>
         <li><button>Manage Fines</button></li>
         <li><button>Manage Users</button></li>
-        <li><button>AMnage Items</button></li>
+        <li><button>Manage Items</button></li>
       </ul>
     </div>
   )

@@ -1,0 +1,34 @@
+import React from 'react'
+import './pay_fine_user.css'
+
+function pay_fine_user() {
+  return (
+        <div>
+        <h1>Pay Off Your Fine</h1>
+        <div>
+            <div>
+                <label for="borrowID">Borrowed Item's ID: </label>
+                <input type="text" id="borrowID" name="borrowID" required></input>
+            </div>
+            /* May want to use current date instead 
+            <div>
+                <label for="date">Date Payed Off: </label>
+            </div><div>
+                <input type="date" id="date" name="date" required></input>
+            </div>
+            */
+            <div>
+                <p>Theoretical cerdit card info entry or something</p> 
+                <input type="text" id="payAmount" name="payAmount" required></input>
+            </div>
+
+            <div>
+                <input type="submit" id="submit" value="newFine"></input>
+            </div>
+        </div>
+    </div>
+  )
+}
+
+
+export default pay_fine_user

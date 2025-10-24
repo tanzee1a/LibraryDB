@@ -1,7 +1,7 @@
 import React from 'react'
 import './new_item_form.css'
 
-function staff_page() {
+function new_item_form() {
   return (
     <div>
         <h1>Add New Item</h1>
@@ -28,11 +28,11 @@ function staff_page() {
             <form>
                 <div>
                     <label for="bTitle">Title:</label>
-                    <input type="text" id="bTitle" name="bTitle"></input>
+                    <input type="text" id="bTitle" name="bTitle" required></input>
                 </div>
                 <div>
                     <label for="author">Author:</label>
-                    <input type="text" id="author" name="author"></input>
+                    <input type="text" id="author" name="author" required></input>
                 </div>
                 <div>
                     <label for="tags">Tags:</label>
@@ -96,19 +96,19 @@ function staff_page() {
 
                 <div>
                     <label for="description">Description:</label></div><div>
-                    <textarea id="description" name="description" placeholder="Enter full book description" rows="7" cols="50"></textarea>
+                    <textarea id="description" name="description" placeholder="Enter full book description" rows="7" cols="50" required></textarea>
                 </div>
                 <div>
                     <label for="publisher">Publisher:</label>
-                    <input type="text" id="publisher" name="publisher"></input>
+                    <input type="text" id="publisher" name="publisher" required></input>
                 </div>
                 <div>
                     <label for="pubYear">Published Year::</label>
-                    <input type="text" id="pubYear" name="pubYear"></input>
+                    <input type="text" id="pubYear" name="pubYear" required></input>
                 </div>
                 <div>
                     <label for="shelf">Shelf Location:</label>
-                    <input type="text" id="shelf" name="shelf"></input>
+                    <input type="text" id="shelf" name="shelf" required></input>
                 </div>
                 
                 <div>
@@ -121,14 +121,11 @@ function staff_page() {
             <form>
                 <div>
                     <label for="mTitle">Title:</label>
-                    <input type="text" id="mTitle" name="mTitle"></input>
+                    <input type="text" id="mTitle" name="mTitle" required></input>
                 </div>
                 <div>
                     <label for="studio">Studio:</label>
-                    <input type="text" id="studio" name="studio"></input>
-                </div>
-                <div>
-                    <label for="tags">Tags:</label>
+                    <input type="text" id="studio" name="studio" required></input>
                 </div>
                 <div>
                     <label for="tags">Tags:</label>
@@ -199,10 +196,10 @@ function staff_page() {
                 </div>
                 <div>
                     <label for="description">Description:</label></div><div>
-                    <textarea id="description" name="description" placeholder="Enter full book description" rows="7" cols="50"></textarea>
+                    <textarea id="description" name="description" placeholder="Enter full book description" rows="7" cols="50" required></textarea>
                 </div><div>
                     <label for="pubYear">Published Year::</label>
-                    <input type="text" id="pubYear" name="pubYear"></input>
+                    <input type="text" id="pubYear" name="pubYear" required></input>
                 </div>
 
                 <div>
@@ -215,11 +212,11 @@ function staff_page() {
             <form>
                 <div>
                     <label for="mTitle">Model:</label>
-                    <input type="text" id="mTitle" name="mTitle"></input>
+                    <input type="text" id="mTitle" name="mTitle" required></input>
                 </div>
                 <div>
                     <label for="studio">Manufactorer:</label>
-                    <input type="text" id="studio" name="studio"></input>
+                    <input type="text" id="studio" name="studio" required></input>
                 </div>
                 <div>Device Type:</div>
                 <div>
@@ -230,7 +227,7 @@ function staff_page() {
                 </div>
                 
                 <div>
-                    <input type="submit" id="submit" value="Register"></input>
+                    <input type="submit" id="submit" value="registerItem"></input>
                 </div>
             </form>
         </div>
@@ -238,4 +235,4 @@ function staff_page() {
   )
 }
 
-export default staff_page
+export default new_item_form
