@@ -3,7 +3,7 @@ import './pay_fine_user.css'
 
 function pay_fine_user() {
   return (
-        <div>
+    <div>
         <h1>Pay Off Your Fine</h1>
         <div>
             <div>
