@@ -17,7 +17,7 @@ function item_end_hold() {
             </div>
 
             <div>
-                <input type="submit" id="submit" value="newFine"></input>
+                <input type="submit" id="submit" value="endHold"></input>
             </div>
             /* Note: error handling should check if there are fewer copies on hold than we are trying to take off hold */
         </div>

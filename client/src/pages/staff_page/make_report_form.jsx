@@ -30,6 +30,9 @@ function make_report_form() {
 
         /* I don't know what else the report making page would need,
         the schema doesn't store any other info besides these 3 things */
+        <div>
+          <input type="submit" id="submit" value="makeReport"></input>
+        </div>
       </div>
     </div>
   )

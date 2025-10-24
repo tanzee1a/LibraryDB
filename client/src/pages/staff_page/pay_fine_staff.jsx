@@ -27,7 +27,7 @@ function pay_fine_staff() {
             </div>
 
             <div>
-                <input type="submit" id="submit" value="newFine"></input>
+                <input type="submit" id="submit" value="payFine"></input>
             </div>
         </div>
     </div>

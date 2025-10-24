@@ -19,7 +19,7 @@ function item_put_hold() {
             </div>
 
             <div>
-                <input type="submit" id="submit" value="newFine"></input>
+                <input type="submit" id="submit" value="holdItem"></input>
             </div>
             /* Note: error handling should check if there are fewer available copies than we are trying to put on hold */
         </div>

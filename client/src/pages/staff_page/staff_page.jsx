@@ -6,9 +6,12 @@ function staff_page() {
     <div>
       <p>This is our staff page</p>
       <ul>
-        <li><button>Manage Fines</button></li>
-        <li><button>Manage Users</button></li>
-        <li><button>Manage Items</button></li>
+        <li><p><button>Put Item On Hold</button></p></li>
+        <li><p><button>Take Item Off Hold</button></p></li>
+        <li><p><button>Create Report</button></p></li>
+        <li><p><button>Issue Fine to User</button></p></li>
+        <li><p><button>Pay a User's Fine</button></p></li>
+        <li><p><button>Add Item to Inventory</button></p></li>
       </ul>
     </div>
   )
