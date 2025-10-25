@@ -86,7 +86,6 @@ async function createMovie(req, res){
         const body = await getPostData(req);
         const { 
             item_id,
-            movie_id, // New unique ID for movie (e.g., UPC)
             title, 
             description, // Now in ITEM
             language_id, // New
@@ -101,12 +100,12 @@ async function createMovie(req, res){
             shelf_location // Now in ITEM
         } = JSON.parse(body);
         
-        if (!item_id || !movie_id || !title || !runtime || !release_year || !quantity) {
+        if (!item_id || !title || !runtime || !release_year || !quantity) {
              throw new Error('Missing required movie fields');
         }
 
         const movieData = {
-            item_id, movie_id, title, description, language_id, format_id, runtime, 
+            item_id, title, description, language_id, format_id, runtime, 
             rating_id, release_year, quantity, directors, tags, thumbnail_url, shelf_location
         };
 
@@ -211,16 +210,16 @@ async function updateMovie(req, res, id){
 
         const body = await getPostData(req);
         const { 
-            movie_id, title, description, language_id, format_id, runtime, 
+            title, description, language_id, format_id, runtime, 
             rating_id, release_year, quantity, directors, tags, thumbnail_url, shelf_location
         } = JSON.parse(body);
 
-        if (!movie_id || !title || !runtime || !release_year || quantity === undefined) {
+        if (!title || !runtime || !release_year || quantity === undefined) {
              throw new Error('Missing required movie fields for update');
         }
             
         const movieData = {
-             movie_id, title, description, language_id, format_id, runtime, 
+             title, description, language_id, format_id, runtime, 
             rating_id, release_year, quantity, directors, tags, thumbnail_url, shelf_location
         };
 

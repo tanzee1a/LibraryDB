@@ -219,12 +219,10 @@ async function createMovie(movieData) {
 
         // 2. Insert into MOVIE
         const movieSql = `
-            INSERT INTO MOVIE (movie_id, item_id, title, language_id, format_id, runtime, rating_id, release_year)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO MOVIE (item_id, title, language_id, format_id, runtime, rating_id, release_year)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         `;
-        // Note: movie_id needs to be provided or generated (using UPC?)
         await conn.query(movieSql, [
-             movieData.movie_id, // You need a unique movie ID here (e.g., UPC)
              movieData.item_id, movieData.title, movieData.language_id, movieData.format_id, 
              movieData.runtime, movieData.rating_id, movieData.release_year
         ]);
@@ -234,8 +232,8 @@ async function createMovie(movieData) {
             const directorIds = await Promise.all(
               movieData.directors.map(name => findOrCreateDirectorId(conn, name))
             );
-            const directorSql = 'INSERT INTO MOVIE_DIRECTOR (movie_id, director_id) VALUES ?';
-            const directorValues = directorIds.map(directorId => [movieData.movie_id, directorId]);
+            const directorSql = 'INSERT INTO MOVIE_DIRECTOR (item_id, director_id) VALUES ?';
+            const directorValues = directorIds.map(directorId => [movieData.item_id, directorId]);
              if (directorValues.length > 0) await conn.query(directorSql, [directorValues]);
         }
         
@@ -281,23 +279,23 @@ async function updateMovie(id, movieData) {
         // 2. Update MOVIE
         const movieSql = `
             UPDATE MOVIE
-            SET movie_id = ?, title = ?, language_id = ?, format_id = ?, 
+            SET title = ?, language_id = ?, format_id = ?, 
                 runtime = ?, rating_id = ?, release_year = ?
             WHERE item_id = ?
         `;
         await conn.query(movieSql, [
-            movieData.movie_id, movieData.title, movieData.language_id, movieData.format_id, 
+            movieData.title, movieData.language_id, movieData.format_id, 
             movieData.runtime, movieData.rating_id, movieData.release_year, id
         ]);
         
         // 3. Update Directors (Delete all, Find or Create, Re-insert)
-        await conn.query('DELETE FROM MOVIE_DIRECTOR WHERE movie_id = ?', [movieData.movie_id]);
+        await conn.query('DELETE FROM MOVIE_DIRECTOR WHERE item_id = ?', [id]);
         if (movieData.directors && movieData.directors.length > 0) {
             const directorIds = await Promise.all(
               movieData.directors.map(name => findOrCreateDirectorId(conn, name))
             );
-            const directorSql = 'INSERT INTO MOVIE_DIRECTOR (movie_id, director_id) VALUES ?';
-            const directorValues = directorIds.map(directorId => [movieData.movie_id, directorId]);
+            const directorSql = 'INSERT INTO MOVIE_DIRECTOR (item_id, director_id) VALUES ?';
+            const directorValues = directorIds.map(directorId => [id, directorId]);
              if (directorValues.length > 0) await conn.query(directorSql, [directorValues]);
         }
 
