@@ -1,50 +1,40 @@
 import React, { useState, useEffect } from 'react';
+import { IoBookOutline } from 'react-icons/io5';
 
-const Loans = () => {
-  // Set up state to hold your data
-  const [currentlyBorrowed, setCurrentlyBorrowed] = useState([]);
+export default function Loans() {
+  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  // Fetch data from the API when the component mounts
   useEffect(() => {
-    fetch('http://localhost:5000/api/my-loans') // Use your full server URL
-      .then(res => res.json())
-      .then(data => {
-        setCurrentlyBorrowed(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error("Failed to fetch loans:", err);
-        setLoading(false);
-      });
-  }, []); // The empty [] means this runs only once
+    fetch('http://localhost:5000/api/my-loans')
+      .then(r => { if (!r.ok) throw new Error('Network'); return r.json(); })
+      .then(data => { setItems(data || []); setLoading(false); })
+      .catch(() => { setError('Could not load loans'); setLoading(false); });
+  }, []);
 
-  // Show a loading message
-  if (loading) {
-    return (
-      <div className="dashboard-section">
-        <h3>Currently Borrowing</h3>
-        <p>Loading your borrowed items...</p>
-      </div>
-    );
-  }
+  if (loading) return <div>Loading your borrowed items…</div>;
+  if (error) return <div>{error}</div>;
+  if (!items.length) return <div>No current loans.</div>;
 
   return (
-    <div className="dashboard-section">
-      <h3>Currently Borrowing</h3>
-      {currentlyBorrowed.length === 0 ? (
-        <p>You have no items currently borrowed.</p>
-      ) : (
-        <ul>
-          {currentlyBorrowed.map(item => (
-            <li key={item.borrow_id}>
-              <strong>{item.title}</strong> - Due by: {new Date(item.dueDate).toLocaleDateString()}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+    <ul className="list">
+      {items.map(item => {
+        const due = item.dueDate || item.due_date; // accept either shape
+        return (
+          <li key={item.borrow_id} className="list-item">
+            <div className="thumb-icon" aria-hidden="true"><IoBookOutline /></div>
+            <div>
+              <div className="item-title">{item.title}</div>
+              <div className="item-sub">Due by {new Date(due).toLocaleDateString()}</div>
+            </div>
+            <div>
+              <button className="btn success">Return</button>
+              <button className="btn warn">Report Issue</button>
+            </div>
+          </li>
+        );
+      })}
+    </ul>
   );
-};
-
-export default Loans;
+}

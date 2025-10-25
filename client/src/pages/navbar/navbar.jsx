@@ -59,7 +59,7 @@ const Navbar = ({ isStaff, setIsStaff }) => {
                                 <a href="/login">Log in</a>
                                 <a href="#">Your Borrows</a>
                                 <a href="#">Your Holds</a>
-                                <a href="#">Account</a>
+                                <a href="/account">Account</a>
                             </div>
                         </div>
                     </div>
