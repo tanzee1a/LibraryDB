@@ -141,17 +141,46 @@ function SearchResults({ isStaff }) {
     }
 
     const renderItemDetails = (item) => {
-        if (item.category === "BOOK") {
-            return <p><small><strong>Authors:</strong> {item.creators || 'N/A'}</small></p>;
+        switch(item.item_category) {
+            case "BOOK":
+                return (
+                    <div className="result-details">
+                        <p><strong>Authors:</strong> {item.authors.join(', ')}</p>
+                        <p><strong>Publisher:</strong> {item.publisher}</p>
+                        <p><strong>Year:</strong> {item.publicationDate}</p>
+                        <p><strong>ISBN:</strong> {item.isbn}</p>
+                    </div>
+                )
+            case "MEDIA":
+                return (
+                    <div className="result-details">
+                        <p><strong>Directors:</strong> {item.directors.join(', ')}</p>
+                        <p><strong>Format:</strong> {item.format}</p>
+                        <p><strong>Rating:</strong> {item.rating}</p>
+                        <p><strong>Release Year:</strong> {item.release_year}</p>
+                    </div>
+                )
+            case "DEVICE":
+                return (
+                    <div className="result-details">
+                        <p><strong>Manufacturer:</strong> {item.manufacturer}</p>
+                        <p><strong>Software:</strong> {item.software}</p>
+                        <p><strong>Device Type:</strong> {item.device_type}</p>
+                    </div>
+                )
+            default:
+                return null;
         }
-        if (item.category === "MOVIE") {
-            return <p><small><strong>Directors:</strong> {item.creators || 'N/A'}</small></p>;
+    }
+
+    const renderItemActionButtons = (item) => {
+        if(isStaff) return;
+        if(item.available > 0) {
+            return <button className="action-button primary-button">Borrow</button>;
+        } else {
+            return <button className="action-button secondary-button">Place Hold</button>;
         }
-        if (item.category === "DEVICE") {
-            return <p><small><strong>Manufacturer:</strong> {item.creators || 'N/A'}</small></p>;
-        }
-        return null;
-    };
+    }
 
   return (
     <div>
@@ -212,7 +241,7 @@ function SearchResults({ isStaff }) {
                      {/* --- END ADDED --- */}
                     {!loading && !error && results.map((item) => {
                         return (
-                        <div key={item.id} className={`search-result-item ${item.category.toLowerCase()}`}>
+                        <div key={item.item_id} className={`search-result-item ${item.category.toLowerCase()}`}>
                             <div className="result-info">
                                 <div>
                                     {/* --- MODIFIED --- Use thumbnail_url from API */}
@@ -225,10 +254,9 @@ function SearchResults({ isStaff }) {
                                 </div>
                                 <div className='result-text-info'>
                                     <h3 className="result-title">
-                                     {/* --- MODIFIED --- Use Link component */}
-                                    <Link to={`/item/${item.item_id}`} className="result-link">
-                                        {item.title} 
-                                    </Link>
+                                    <a href={`/item/${item.id}`} className="result-link">
+                                        {item.title}
+                                    </a>
                                     </h3>
                                     <div className="result-description">
                                         {/* --- MODIFIED --- Use API data */}
@@ -243,11 +271,10 @@ function SearchResults({ isStaff }) {
                                     </div>
                                 </div>
                                 <div className="result-actions">
-                                     {/* --- TODO: Connect these buttons --- */}
                                     {item.available > 0 ? (
-                                        <button className="btn primary">Request Pickup</button>
+                                        <button className="action-button primary-button">Borrow</button>
                                     ) : (
-                                        <button className="btn secondary">Place Waitlist Hold</button>
+                                        <button className="action-button secondary-button">Place Hold</button>
                                     )}
                                 </div>
                             </div>
@@ -267,29 +294,29 @@ function SearchResults({ isStaff }) {
                     {/* --- Common fields --- */}
                     <label>
                     Title:
-                    <input type="text" name="title" value={newItem.title} onChange={handleItemInputChange} required />
+                    <input type="text" name="title" value={newItem.title} onChange={handleItemInputChange} required className="edit-input" />
                     </label>
                     <label>
                     Description:
-                    <textarea name="description" value={newItem.description} onChange={handleItemInputChange} required />
+                    <textarea name="description" value={newItem.description} onChange={handleItemInputChange} required className="edit-input" />
                     </label>
                     <label>
                     Thumbnail URL:
-                    <input type="text" name="thumbnail_url" value={newItem.thumbnail_url} onChange={handleItemInputChange} />
+                    <input type="text" name="thumbnail_url" value={newItem.thumbnail_url} onChange={handleItemInputChange} className="edit-input" />
                     </label>
                     <label>
                     Shelf Location:
-                    <input type="text" name="shelf_location" value={newItem.shelf_location} onChange={handleItemInputChange} />
+                    <input type="text" name="shelf_location" value={newItem.shelf_location} onChange={handleItemInputChange} className="edit-input" />
                     </label>
                     <label>
                     Tags:
-                    <input type="text" name="tags" value={newItem.tags} onChange={handleItemInputChange} />
+                    <input type="text" name="tags" value={newItem.tags} onChange={handleItemInputChange} className="edit-input" />
                     </label>
 
                     {/* --- Item Category --- */}
                     <label>
                     Item Type:
-                    <select name="item_category" value={newItem.item_category} onChange={handleItemInputChange}>
+                    <select className="edit-input" name="item_category" value={newItem.item_category} onChange={handleItemInputChange}>
                         <option value="BOOK">Book</option>
                         <option value="MEDIA">Media</option>
                         <option value="DEVICE">Device</option>
@@ -299,29 +326,29 @@ function SearchResults({ isStaff }) {
                     {/* --- Conditional Fields --- */}
                     {newItem.item_category === 'BOOK' && (
                     <>
-                        <label>Authors: <input type="text" name="authors" value={newItem.authors} onChange={handleItemInputChange} /></label>
-                        <label>Publisher: <input type="text" name="publisher" value={newItem.publisher} onChange={handleItemInputChange} /></label>
-                        <label>Published Date: <input type="date" name="publication_date" value={newItem.publication_date} onChange={handleItemInputChange} /></label>
-                        <label>Language: <input type="text" name="language" value={newItem.language} onChange={handleItemInputChange} /></label>
-                        <label>Page Number: <input type="number" name="page_number" value={newItem.page_number} onChange={handleItemInputChange} /></label>
-                        <label>ISBN: <input type="text" name="isbn" value={newItem.isbn} onChange={handleItemInputChange} /></label>
+                        <label>Authors: <input type="text" name="authors" value={newItem.authors} onChange={handleItemInputChange} className="edit-input" /></label>
+                        <label>Publisher: <input type="text" name="publisher" value={newItem.publisher} onChange={handleItemInputChange} className="edit-input" /></label>
+                        <label>Published Date: <input type="date" name="publication_date" value={newItem.publication_date} onChange={handleItemInputChange} className="edit-input" /></label>
+                        <label>Language: <input type="text" name="language" value={newItem.language} onChange={handleItemInputChange} className="edit-input" /></label>
+                        <label>Page Number: <input type="number" name="page_number" value={newItem.page_number} onChange={handleItemInputChange} className="edit-input" /></label>
+                        <label>ISBN: <input type="text" name="isbn" value={newItem.isbn} onChange={handleItemInputChange} className="edit-input" /></label>
                     </>
                     )}
 
                     {newItem.item_category === 'MEDIA' && (
                     <>
-                        <label>Directors: <input type="text" name="directors" value={newItem.directors} onChange={handleItemInputChange} /></label>
-                        <label>Release Year: <input type="number" name="release_year" value={newItem.release_year} onChange={handleItemInputChange} /></label>
-                        <label>Runtime (mins): <input type="number" name="runtime" value={newItem.runtime} onChange={handleItemInputChange} /></label>
-                        <label>Language: <input type="text" name="language" value={newItem.language} onChange={handleItemInputChange} /></label>
-                        <label>Format: <input type="text" name="format" value={newItem.format} onChange={handleItemInputChange} /></label>
-                        <label>Rating: <input type="text" name="rating" value={newItem.rating} onChange={handleItemInputChange} /></label>
+                        <label>Directors: <input type="text" name="directors" value={newItem.directors} onChange={handleItemInputChange} className="edit-input" /></label>
+                        <label>Release Year: <input type="number" name="release_year" value={newItem.release_year} onChange={handleItemInputChange} className="edit-input" /></label>
+                        <label>Runtime (mins): <input type="number" name="runtime" value={newItem.runtime} onChange={handleItemInputChange} className="edit-input" /></label>
+                        <label>Language: <input type="text" name="language" value={newItem.language} onChange={handleItemInputChange} className="edit-input" /></label>
+                        <label>Format: <input type="text" name="format" value={newItem.format} onChange={handleItemInputChange} className="edit-input" /></label>
+                        <label>Rating: <input type="text" name="rating" value={newItem.rating} onChange={handleItemInputChange} className="edit-input" /></label>
                     </>
                     )}
 
                     {newItem.item_category === 'DEVICE' && (
                     <>
-                        <label>Manufacturer: <input type="text" name="manufacturer" value={newItem.manufacturer} onChange={handleItemInputChange} /></label>
+                        <label>Manufacturer: <input type="text" name="manufacturer" value={newItem.manufacturer} onChange={handleItemInputChange} className="edit-input" /></label>
                         <label>Device Type:
                         <select name="device_type" value={newItem.device_type} onChange={handleItemInputChange}>
                             <option value="">Select...</option>

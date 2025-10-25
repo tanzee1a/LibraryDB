@@ -82,6 +82,7 @@ const Navbar = ({ isStaff, setIsStaff }) => {
                 </a></li>
                 <li><a href="/manage-users">Users</a></li>
                 <li><a href="/search">Items</a></li>
+                <li><a href="/manage-borrows">Borrows</a></li>
                 <li><a href="/manage-holds">Holds</a></li>
                 <li><a href="/manage-fines">Fines</a></li>
                 <li className="dropdown">

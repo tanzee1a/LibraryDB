@@ -30,10 +30,16 @@ async function registerUser(req, res) {
         // Generate user_id and default role
         const userId = generateUserId();
         const role = 'Patron';
-  
+        // --- STEP A: Insert into USER table (generated ID, email, role (default patron), Fname, Lname)
         await pool.query(
-          'INSERT INTO USER (user_id, email, password_hash, role, firstName, lastName) VALUES (?, ?, ?, ?, ?, ?)',
-          [userId, email, hashedPassword, role, firstName || '', lastName || '']
+          'INSERT INTO USER (user_id, email, role, firstName, lastName) VALUES (?, ?, ?, ?, ?)',
+          [userId, email, role, firstName || '', lastName || '']
+        );
+        
+        // --- STEP B: Insert into USER_CREDENTIAL table (email and hash) ---
+        await pool.query(
+          'INSERT INTO USER_CREDENTIAL (email, password_hash) VALUES (?, ?)',
+          [email, hashedPassword]
         );
   
         res.writeHead(201, { 'Content-Type': 'application/json' });
@@ -52,21 +58,44 @@ async function loginUser(req, res) {
   req.on('data', chunk => (body += chunk.toString()));
   req.on('end', async () => {
     try {
+      // SECRET needs to be defined in scope for jwt.sign
+      const SECRET = process.env.JWT_SECRET || 'your-super-secret-key'; 
       const { email, password } = JSON.parse(body);
 
-      const [rows] = await pool.query('SELECT * FROM USER WHERE email = ?', [email]);
+      // --- KEY CHANGE: Joining USER and USER_CREDENTIAL tables on email ---
+      const [rows] = await pool.query(
+        `SELECT 
+          U.user_id,
+          U.email,
+          U.role,
+          U.firstName,
+          U.lastName,
+          UC.password_hash
+        FROM 
+          USER U
+        JOIN 
+          USER_CREDENTIAL UC ON U.email = UC.email
+        WHERE 
+          U.email = ?`, 
+        [email]
+      );
+      
       if (rows.length === 0) {
+        // This handles cases where the email doesn't exist in either table (or the join fails)
         res.writeHead(401, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify({ message: 'Invalid email or password' }));
       }
 
       const user = rows[0];
+      
+      // The password hash is now retrieved from the joined USER_CREDENTIAL table
       const isMatch = await bcrypt.compare(password, user.password_hash);
       if (!isMatch) {
         res.writeHead(401, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify({ message: 'Invalid email or password' }));
       }
 
+      // Assuming jwt and SECRET are defined/imported globally
       const token = jwt.sign(
         { id: user.user_id, email: user.email, role: user.role },
         SECRET,
@@ -86,7 +115,7 @@ async function loginUser(req, res) {
         }
       }));
     } catch (err) {
-      console.error(err);
+      console.error('Error during user login:', err);
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ message: 'Server error' }));
     }
