@@ -26,7 +26,7 @@ function login() {
   
       if (response.ok) {
         localStorage.setItem('token', data.token);
-        navigate('/dashboard'); // redirect
+        navigate('/account'); // redirect
       } else {
         alert(data.message || 'Login failed');
       }
