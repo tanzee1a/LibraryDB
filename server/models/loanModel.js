@@ -465,6 +465,35 @@ async function waiveFine(fineId, reason, staffUserId) { // staffUserId for auth
     return { fine_id: fineId, message: 'Fine waived.' };
 }
 
+async function findAllBorrows(filters = {}) { // Add filters later if needed
+    // TODO: Add filtering logic based on status, user search, item search, etc.
+    const sql = `
+        SELECT 
+            b.borrow_id, 
+            b.item_id,
+            b.user_id,
+            b.borrow_date,
+            b.due_date, 
+            b.return_date,
+            bs.status_name, -- Get status name instead of ID
+            u.firstName, 
+            u.lastName,
+            COALESCE(bk.title, m.title, d.device_name) AS item_title,
+            i.thumbnail_url,
+            i.category
+        FROM BORROW b
+        JOIN USER u ON b.user_id = u.user_id
+        JOIN ITEM i ON b.item_id = i.item_id
+        JOIN BORROW_STATUS bs ON b.status_id = bs.status_id
+        LEFT JOIN BOOK bk ON i.item_id = bk.item_id AND i.category = 'BOOK'
+        LEFT JOIN MOVIE m ON i.item_id = m.item_id AND i.category = 'MOVIE'
+        LEFT JOIN DEVICE d ON i.item_id = d.item_id AND i.category = 'DEVICE'
+        ORDER BY b.borrow_date DESC; -- Show newest first
+    `;
+    const [rows] = await db.query(sql);
+    return rows;
+}
+
 
 module.exports = {
     requestPickup,
@@ -478,5 +507,6 @@ module.exports = {
     findWaitlistByUserId,
     findFinesByUserId,
     payFine,
-    waiveFine
+    waiveFine,
+    findAllBorrows
 };

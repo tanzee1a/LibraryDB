@@ -12,7 +12,7 @@ const {
 const { 
     requestPickup, pickupHold, returnItem, markLost, placeWaitlistHold, 
     getMyLoans, getMyHistory, getMyHolds, getMyWaitlist, getMyFines,
-    payFine, waiveFine
+    payFine, waiveFine, getAllBorrows
 } = require('./controllers/loanController');
 
 const { registerUser, loginUser } = require('./controllers/loginRegisterController');
@@ -131,6 +131,11 @@ const server = http.createServer((req, res) => {
         // --- Search Route ---
         else if (req.url.startsWith('/api/search') && req.method === 'GET') {
             searchItems(req, res);
+        }
+
+        // --- STAFF manages BORROW ROUTE ---
+        else if (req.url === '/api/borrows' && req.method === 'GET') {
+            getAllBorrows(req, res);
         }
         
         // --- Not Found ---

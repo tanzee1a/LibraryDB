@@ -193,6 +193,22 @@ async function waiveFine(req, res, fineId) {
     }
 }
 
+// @desc Get ALL borrow records (for Staff)
+// @route GET /api/borrows
+async function getAllBorrows(req, res) {
+    try {
+        // TODO: Add authentication check - only staff allowed
+        // TODO: Get filter parameters from req.url query string
+        const borrows = await Loan.findAllBorrows(/* pass filters */);
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        return res.end(JSON.stringify(borrows));
+    } catch (error) {
+        console.error("Error in getAllBorrows:", error);
+        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ message: 'Could not fetch borrow records', error: error.message }));
+    }
+}
+
 
 module.exports = {
     requestPickup,
@@ -206,5 +222,6 @@ module.exports = {
     getMyWaitlist,
     getMyFines,
     payFine,
-    waiveFine
+    waiveFine,
+    getAllBorrows
 };
