@@ -30,10 +30,16 @@ async function registerUser(req, res) {
         // Generate user_id and default role
         const userId = generateUserId();
         const role = 'Patron';
-  
+        // --- STEP A: Insert into USER table (generated ID, email, role (default patron), Fname, Lname)
         await pool.query(
-          'INSERT INTO USER (user_id, email, password_hash, role, firstName, lastName) VALUES (?, ?, ?, ?, ?, ?)',
-          [userId, email, hashedPassword, role, firstName || '', lastName || '']
+          'INSERT INTO USER (user_id, email, role, firstName, lastName) VALUES (?, ?, ?, ?, ?)',
+          [userId, email, role, firstName || '', lastName || '']
+        );
+        
+        // --- STEP B: Insert into USER_CREDENTIAL table (email and hash) ---
+        await pool.query(
+          'INSERT INTO USER_CREDENTIAL (email, password_hash) VALUES (?, ?)',
+          [email, hashedPassword]
         );
   
         res.writeHead(201, { 'Content-Type': 'application/json' });
