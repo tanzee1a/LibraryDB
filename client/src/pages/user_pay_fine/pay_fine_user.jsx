@@ -1,7 +1,7 @@
 import React from 'react'
 import './pay_fine_user.css'
 
-function pay_fine_user() {
+function PayFineUser() {
   return (
     <div>
         <h1>Pay Off Your Fine</h1>
@@ -31,4 +31,4 @@ function pay_fine_user() {
 }
 
 
-export default pay_fine_user
+export default PayFineUser

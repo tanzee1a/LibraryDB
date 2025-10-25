@@ -1,7 +1,7 @@
 import React from 'react'
 import './make_report_form.css'
 
-function make_report_form() {
+function ReportForm() {
   return (
     <div>
       <p>This is our staff page</p>
@@ -39,4 +39,4 @@ function make_report_form() {
 }
 
 
-export default make_report_form
+export default ReportForm

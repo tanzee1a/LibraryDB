@@ -1,7 +1,7 @@
 import React from 'react'
 import './edit_book_form.css'
 
-function edit_book_form() {
+function EditBook() {
   return (
     <div>
       <h1>Edit Existing Book</h1>
@@ -104,4 +104,4 @@ function edit_book_form() {
 }
 
 
-export default edit_book_form
+export default EditBook

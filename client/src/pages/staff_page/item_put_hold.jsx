@@ -1,7 +1,7 @@
 import React from 'react'
 import './item_put_hold.css'
 
-function item_put_hold() {
+function ItemHoldForm() {
   return (
     <div>
         <h1>Put Item(s) on Hold</h1>
@@ -28,4 +28,4 @@ function item_put_hold() {
 }
 
 
-export default item_put_hold
+export default ItemHoldForm

@@ -1,7 +1,7 @@
 import React from 'react'
 import './edit_device_form.css'
 
-function edit_device_form() {
+function EditDevice() {
   return (
     <div>
       <h1>Edit Existing Device</h1>
@@ -39,4 +39,4 @@ function edit_device_form() {
 }
 
 
-export default edit_device_form
+export default EditDevice

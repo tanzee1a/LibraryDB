@@ -1,7 +1,7 @@
 import React from 'react'
 import './new_fine_form.css'
 
-function new_fine_form() {
+function NewFineForm() {
   return (
     <div>
         <h1>Issue Fine</h1>
@@ -35,4 +35,4 @@ function new_fine_form() {
 }
 
 
-export default new_fine_form
+export default NewFineForm

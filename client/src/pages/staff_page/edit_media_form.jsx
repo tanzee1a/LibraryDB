@@ -1,7 +1,7 @@
 import React from 'react'
 import './edit_media_form.css'
 
-function edit_media_form() {
+function EditMedia() {
   return (
   <div>
     <h1>Edit Existing Media</h1>
@@ -106,4 +106,4 @@ function edit_media_form() {
 }
 
 
-export default edit_media_form
+export default EditMedia

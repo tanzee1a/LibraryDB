@@ -12,6 +12,20 @@ import ManageFines from './pages/main_staff_page/manage_fines.jsx'
 import AccountDashboard from './pages/account_dashboard/AccountDashboard.jsx';
 import Register from './pages/register_page/register.jsx';
 import Navbar from './pages/navbar/navbar.jsx';
+
+import StaffPage from '.pages/staff_page/staff_page.jsx' // another 'main' page, probably beyond redundant
+import StaffFineForm from '.pages/staff_page/pay_fine_staff.jsx'
+import NewItemForm from '.pages/staff_page/new_item_form.jsx'
+import NewFineForm from '.pages/staff_page/new_fine_form.jsx'
+import ReportForm from '.pages/staff_page/make_report_form.jsx'
+import ItemHoldForm from '.pages/staff_page/item_put_hold.jsx'
+import ItemHoldRemoveForm from '.pages/staff_page/item_end_hold.jsx'
+import ItemEditStart from '.pages/staff_page/edit_item_form.jsx' //also probably redundant, it was meant to pull an item by ID and then go to the form below for whatever item type it is
+import EditBook from '.pages/staff_page/edit_book_form.jsx'
+import EditMedia from '.pages/staff_page/edit_media_form.jsx'
+import EditDevice from '.pages/staff_page/edit_device_form.jsx'
+import PayFineUser from '.pages/user_pay_fine/pay_fine_user.jsx'
+
 import { useState, useEffect } from 'react';
 import './App.css'
 

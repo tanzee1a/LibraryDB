@@ -1,7 +1,7 @@
 import React from 'react'
 import './item_end_hold.css'
 
-function item_end_hold() {
+function ItemHoldRemoveForm() {
   return (
     <div>
         <h1>Take Item(s) Off Hold</h1>
@@ -26,4 +26,4 @@ function item_end_hold() {
 }
 
 
-export default item_end_hold
+export default ItemHoldRemoveForm

@@ -1,7 +1,7 @@
 import React from 'react'
 import './edit_item_form.css'
 
-function edit_item_form() {
+function ItemEditStart() {
   return (
     <div>
         <h1>Edit Existing Item</h1>
@@ -22,4 +22,4 @@ function edit_item_form() {
 }
 
 
-export default edit_item_form
+export default ItemEditStart

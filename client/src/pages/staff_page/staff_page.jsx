@@ -1,7 +1,7 @@
 import React from 'react'
 import './staff_page.css'
 
-function staff_page() {
+function StaffPage() {
   return (
     <div>
       <p>This is our staff page</p>
@@ -18,4 +18,4 @@ function staff_page() {
 }
 
 
-export default staff_page
+export default StaffPage

@@ -1,7 +1,7 @@
 import React from 'react'
 import './pay_fine_staff.css'
 
-function pay_fine_staff() {
+function StaffFineForm() {
   return (
     <div>
         <h1>Pay User's Fine</h1>
@@ -35,4 +35,4 @@ function pay_fine_staff() {
 }
 
 
-export default pay_fine_staff
+export default StaffFineForm

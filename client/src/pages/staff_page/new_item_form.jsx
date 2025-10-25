@@ -1,7 +1,7 @@
 import React from 'react'
 import './new_item_form.css'
 
-function new_item_form() {
+function NewItemForm() {
   return (
     <div>
         <h1>Add New Item</h1>
@@ -250,4 +250,4 @@ function new_item_form() {
   )
 }
 
-export default new_item_form
+export default NewItemForm
