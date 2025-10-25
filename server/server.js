@@ -17,6 +17,7 @@ const {
 
 const { registerUser, loginUser } = require('./controllers/loginRegisterController');
 const { saveItem, unsaveItem, getMyWishlist } = require('./controllers/wishlistController');
+const { getMyProfile } = require('./controllers/userController');
 
 const server = http.createServer((req, res) => {
     // --- CORS Headers ---
@@ -90,6 +91,14 @@ const server = http.createServer((req, res) => {
         } else if (req.url === '/api/my-fines' && req.method === 'GET') { // Added fines
             getMyFines(req, res);
         } 
+        // Get My Fines
+        else if (req.url === '/api/my-fines' && req.method === 'GET') { 
+            getMyFines(req, res);
+        } 
+        // Get My Profile
+        else if (req.url === '/api/my-profile' && req.method === 'GET') {
+            getMyProfile(req, res);
+        }
         
         // --- Fine Management Routes (Staff) ---
          else if (req.url.match(/^\/api\/fines\/([0-9]+)\/pay$/) && req.method === 'POST') {
