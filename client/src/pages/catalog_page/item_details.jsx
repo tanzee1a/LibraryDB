@@ -1,9 +1,9 @@
 import './item_details.css';
-import { useState } from 'react';
-
-import bookThumbnail from '../../assets/book_thumbnail.jpeg';
-import mediaThumbnail from '../../assets/media_thumbnail.jpg';
-import deviceThumbnail from '../../assets/device_thumbnail.jpeg';
+import React, { useState, useEffect } from 'react'; // <<< Add useEffect here
+import { useParams } from 'react-router-dom';
+//import bookThumbnail from '../../assets/book_thumbnail.jpeg';
+//import mediaThumbnail from '../../assets/media_thumbnail.jpg';
+//import deviceThumbnail from '../../assets/device_thumbnail.jpeg';
 import { FaRegFileAlt } from "react-icons/fa";
 import { IoMdGlobe } from "react-icons/io";
 import { IoBookOutline, IoCalendarClearOutline, IoBarcodeOutline, IoInformationCircleOutline, IoTimerOutline } from "react-icons/io5";
@@ -11,134 +11,83 @@ import { MdDevicesOther } from "react-icons/md";
 import { TbBuildingFactory2 } from "react-icons/tb";
 import { BsTicketPerforated } from "react-icons/bs";
 
-import sampleData from '../../assets/sample_data.json'
+// import sampleData from '../../assets/sample_data.json'
 
 function ItemDetails({ isStaff }) {
-  const [selectedCategory, setSelectedCategory] = useState("BOOK");
-  const item = sampleData.data.find(entry => entry.category === selectedCategory);
-  const thumbnail =
-    selectedCategory === "BOOK"
-      ? bookThumbnail
-      : selectedCategory === "MEDIA"
-      ? mediaThumbnail
-      : deviceThumbnail;
+// --- Add State & Params ---
+  const { itemId } = useParams();
+  const [item, setItem] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  // --- End Add State ---
+
+  // --- Add useEffect for fetching ---
+  useEffect(() => {
+    if (itemId) {
+      setLoading(true);
+      setError('');
+      // Fetch from specific item endpoint
+      fetch(`http://localhost:5000/api/items/${itemId}`) // Adjust URL if needed
+        .then(r => {
+          if (r.status === 404) throw new Error('Item not found');
+          if (!r.ok) throw new Error('Network response failed');
+          return r.json();
+        })
+        .then(data => {
+          // --- TODO: Enhance Backend ---
+          // This 'data' currently only has ITEM table fields.
+          // You MUST update the backend GET /api/items/:id endpoint to JOIN
+          // with BOOK/MOVIE/DEVICE and related tables (AUTHOR, DIRECTOR, TAG, LANGUAGE etc.)
+          // based on data.category to get ALL details needed below.
+          // For now, we only set the basic item data.
+          setItem(data);
+          // --- End TODO ---
+          setLoading(false);
+        })
+        .catch((err) => {
+          setError(err.message || 'Could not load item details.');
+          setLoading(false);
+        });
+    }
+  }, [itemId]);
+  // --- End useEffect ---
+
+  // --- Add Loading/Error states ---
+  if (loading) return <div className="page-container"><p>Loading item details...</p></div>;
+  if (error) return <div className="page-container"><p style={{ color: 'red' }}>Error: {error}</p></div>;
+  if (!item) return <div className="page-container"><p>Item data could not be loaded.</p></div>;
+  // --- End Loading/Error states ---
 
   const renderAdditionalInfo = () => {
-    switch (selectedCategory) {
+  // --- TODO: Fetch specific details ---
+    // This needs the enhanced backend endpoint mentioned above.
+    switch (item.category) { // Use fetched category
       case "BOOK":
-        return (
-          <>
-            <li>
-              <span className="info-name">Pages</span>
-              <span className="info-icon"><FaRegFileAlt /></span>
-              <span className="info-detail">{item.pages}</span>
-            </li>
-            <li>
-              <span className="info-name">Language</span>
-              <span className="info-icon"><IoMdGlobe /></span>
-              <span className="info-detail">{item.language}</span>
-            </li>
-            <li>
-              <span className="info-name">Publisher</span>
-              <span className="info-icon"><IoBookOutline /></span>
-              <span className="info-detail">{item.publisher}</span>
-            </li>
-            <li>
-              <span className="info-name">Publication Date</span>
-              <span className="info-icon"><IoCalendarClearOutline /></span>
-              <span className="info-detail">{item.publicationDate}</span>
-            </li>
-            <li>
-              <span className="info-name">ISBN</span>
-              <span className="info-icon"><IoBarcodeOutline /></span>
-              <span className="info-detail">{item.isbn}</span>
-            </li>
-          </>
-        );
-      case "MEDIA":
-        return (
-          <>
-            <li>
-                <span className="info-name">Release Year</span>
-                <span className="info-icon"><IoCalendarClearOutline /></span>
-                <span className="info-detail">{item.release_year}</span>
-              </li>
-              <li>
-                <span className="info-name">Runtime</span>
-                <span className="info-icon"><IoTimerOutline /></span>
-                <span className="info-detail">{item.runtime}</span>
-              </li>
-              <li>
-                <span className="info-name">Language</span>
-                <span className="info-icon"><IoMdGlobe /></span>
-                <span className="info-detail">{item.language}</span>
-              </li>
-              <li>
-                <span className="info-name">Format</span>
-                <span className="info-icon"><IoInformationCircleOutline /></span>
-                <span className="info-detail">{item.format}</span>
-              </li>
-              <li>
-                <span className="info-name">Rated</span>
-                <span className="info-icon"><BsTicketPerforated /></span>
-                <span className="info-detail">{item.rating}</span>
-              </li>
-          </>
-        );
+        return <p>Book details loading... (Requires backend update)</p>;
+      case "MOVIE": // Use MOVIE based on ITEM.category
+        return <p>Movie details loading... (Requires backend update)</p>;
       case "DEVICE":
-        return (
-          <>
-            <li>
-              <span className="info-name">Manufacturer</span>
-              <span className="info-icon"><TbBuildingFactory2 /></span>
-              <span className="info-detail">{item.manufacturer}</span>
-            </li>
-            <li>
-              <span className="info-name">Device Type</span>
-              <span className="info-icon"><MdDevicesOther /></span>
-              <span className="info-detail">{item.device_type}</span>
-            </li>
-          </>
-        );
-      default:
-        return null;
+        return <p>Device details loading... (Requires backend update)</p>;
+      default: return null;
     }
   };
 
   const creatorInfo = (() => {
-    if (selectedCategory === "BOOK" && Array.isArray(item.authors) && item.authors.length > 0) {
-      return { label: "written by", names: item.authors.join(", ") };
-    }
-    if (selectedCategory === "MEDIA" && Array.isArray(item.directors) && item.directors.length > 0) {
-      return { label: "directed by", names: item.directors.join(", ") };
-    }
-    return null;
-  })();
+// --- TODO: Fetch specific details ---
+     if (item.category === "BOOK") {
+       return { label: "written by", names: "Author(s) loading..." };
+     }
+     if (item.category === "MOVIE") {
+       return { label: "directed by", names: "Director(s) loading..." };
+     }
+     return null;
+   })();
 
-
+  const tagsDisplay = "Tags loading..."; // --- TODO: Fetch specific details ---
+  
   return (
     <div>
       <div className="page-container">
-        <div className="category-switch">
-          <button
-            className={`switch-button ${selectedCategory === "BOOK" ? "active" : ""}`}
-            onClick={() => setSelectedCategory("BOOK")}
-          >
-            Book
-          </button>
-          <button
-            className={`switch-button ${selectedCategory === "MEDIA" ? "active" : ""}`}
-            onClick={() => setSelectedCategory("MEDIA")}
-          >
-            Media
-          </button>
-          <button
-            className={`switch-button ${selectedCategory === "DEVICE" ? "active" : ""}`}
-            onClick={() => setSelectedCategory("DEVICE")}
-          >
-            Device
-          </button>
-        </div>
         <div className="item-details-container">
           <div className="thumbnail-section">
             <img src={thumbnail} alt="Item thumbnail" className="thumbnail" />
@@ -146,14 +95,14 @@ function ItemDetails({ isStaff }) {
               <button className="action-button secondary-button">Edit</button>
             )}
             <div className="availability-info">
-              <p><strong>Holds:</strong> <span>{item.holds}</span></p>
+              {/* Use fetched item data */}
               <p><strong>Available:</strong> <span>{item.available}</span></p>
-              {
-                item.available == 0 && (
-                  <p><strong>Earliest Available:</strong> <span>{item.earliestAvailable}</span></p>
-                )
-              }
+              {item.available <= 0 && item.on_hold > 0 && <p><strong>On Hold:</strong> <span>{item.on_hold}</span></p>}
+               {item.available <= 0 && (
+                  <p><strong>Earliest Available:</strong> <span>{item.earliest_available_date ? new Date(item.earliest_available_date).toLocaleDateString() : 'N/A'}</span></p>
+              )}
             </div>
+            {/* TODO: Connect Borrow/Hold buttons */}
             {item.available > 0 ? (
               <button className="action-button primary-button">Borrow</button>
             ) : (
@@ -162,7 +111,9 @@ function ItemDetails({ isStaff }) {
           </div>
 
           <div className="details-section">
-            <h1 className="item-title">{item.title}</h1>
+            {/* Use fetched item data */}
+            <h1 className="item-title">{item.title || 'Loading title...'}</h1>
+            {/* ... (keep creatorInfo rendering) ... */}
              {creatorInfo && (
               <p className="item-author">
                 {creatorInfo.label}{" "}

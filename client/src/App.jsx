@@ -24,8 +24,8 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/notifications" element={<Notifications />} />
 
-        <Route path="/item-details" element={<ItemDetails isStaff={isStaff} />} />
-        <Route path="/search-results" element={<SearchResults isStaff={isStaff} />} />
+        <Route path="/search" element={<SearchResults isStaff={isStaff} />} />
+        <Route path="/item/:itemId" element={<ItemDetails isStaff={isStaff} />} />
         <Route path="/account" element={<AccountDashboard />} />
         {/* ADMIN */}
         <Route path="/manage-users" element={<ManageUsers />} />

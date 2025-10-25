@@ -1,26 +1,38 @@
 import './search_results.css'
-import bookThumbnail from '../../assets/book_thumbnail.jpeg'
-import mediaThumbnail from '../../assets/media_thumbnail.jpg'
-import deviceThumbnail from '../../assets/device_thumbnail.jpeg'
-import sampleData from '../../assets/sample_data.json'
-import { useState } from 'react'
+//import bookThumbnail from '../../assets/book_thumbnail.jpeg'
+//import mediaThumbnail from '../../assets/media_thumbnail.jpg'
+//import deviceThumbnail from '../../assets/device_thumbnail.jpeg'
+//import sampleData from '../../assets/sample_data.json'
+import React, { useState, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 
 import { FaPlus } from "react-icons/fa"
 
 function SearchResults({ isStaff }) {
-    const filters = sampleData.item_filters;
+    // --- Add State ---
+    const [results, setResults] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    const [searchParams] = useSearchParams();
+    const query = searchParams.get('q') || '';
+    const filters = []; // Placeholder empty array
+    // --- End Add State ---
 
-    const mockResults = sampleData.data.map(item => ({
-    ...item,
-    thumbnail:
-        item.category === "BOOK"
-        ? bookThumbnail
-        : item.category === "MEDIA"
-        ? mediaThumbnail
-        : deviceThumbnail,
-    }));
-
-    const multipleMockResults = [...mockResults, ...mockResults, ...mockResults];
+    // --- Add useEffect for fetching ---
+    useEffect(() => {
+        if (query) {
+        setLoading(true);
+        setError('');
+        fetch(`http://localhost:5000/api/search?q=${encodeURIComponent(query)}`) // Adjust URL if needed
+            .then(r => { if (!r.ok) throw new Error('Network response failed'); return r.json(); })
+            .then(data => { setResults(data || []); setLoading(false); })
+            .catch((err) => { setError(`Could not load results for "${query}".`); setLoading(false); });
+        } else {
+        setResults([]);
+        setLoading(false);
+        }
+    }, [query]);
+    // --- End useEffect ---
 
     const [showAddItemSheet, setShowAddItemSheet] = useState(false);
     const [newItem, setNewItem] = useState({
@@ -58,44 +70,25 @@ function SearchResults({ isStaff }) {
     }
 
     const renderItemDetails = (item) => {
-        switch(item.item_category) {
-            case "BOOK":
-                return (
-                    <div className="result-details">
-                        <p><strong>Authors:</strong> {item.authors.join(', ')}</p>
-                        <p><strong>Publisher:</strong> {item.publisher}</p>
-                        <p><strong>Year:</strong> {item.publicationDate}</p>
-                        <p><strong>ISBN:</strong> {item.isbn}</p>
-                    </div>
-                )
-            case "MEDIA":
-                return (
-                    <div className="result-details">
-                        <p><strong>Directors:</strong> {item.directors.join(', ')}</p>
-                        <p><strong>Format:</strong> {item.format}</p>
-                        <p><strong>Rating:</strong> {item.rating}</p>
-                        <p><strong>Release Year:</strong> {item.release_year}</p>
-                    </div>
-                )
-            case "DEVICE":
-                return (
-                    <div className="result-details">
-                        <p><strong>Manufacturer:</strong> {item.manufacturer}</p>
-                        <p><strong>Software:</strong> {item.software}</p>
-                        <p><strong>Device Type:</strong> {item.device_type}</p>
-                    </div>
-                )
-            default:
-                return null;
+        // Assuming your API returns 'creators' which holds authors/directors/manufacturer
+        if (item.category === "BOOK") {
+            return <p><small><strong>Authors:</strong> {item.creators || 'N/A'}</small></p>;
         }
-    }
+        if (item.category === "MOVIE") {
+            return <p><small><strong>Directors:</strong> {item.creators || 'N/A'}</small></p>;
+        }
+        if (item.category === "DEVICE") {
+            return <p><small><strong>Manufacturer:</strong> {item.creators || 'N/A'}</small></p>;
+        }
+        return null;
+    };
 
   return (
     <div>
       <div className="page-container">
         <div className='search-result-page-container'>
             <div className="search-result-header">
-                <h1>Find your perfect discovery.</h1>
+                <h1>{query ? `Search Results for "${query}"` : 'Browse Items'}</h1>
                 <div className="search-result-search-bar-container">
                     { isStaff && (
                         <button
@@ -105,12 +98,13 @@ function SearchResults({ isStaff }) {
                             <FaPlus />
                         </button>
                     )}
+                    {/* TODO: Make this search bar update the URL query to re-trigger the search */}
                     <input type="text" placeholder="Search..." className="search-result-search-bar" />
                 </div>
             </div>
             <div className="search-results-contents">
             <div className="filter-section">
-                {filters.map((filter) => (
+                {/*filters.map((filter) => (
                     <div key={filter.category} className="filter-category">
                         <h3>{filter.category}</h3>
                         <hr className='divider divider--tight' />
@@ -131,41 +125,52 @@ function SearchResults({ isStaff }) {
                             ))}
                         </ul>
                     </div>
-                    ))}
+                    ))*/}
             </div>
                 <div className="search-results-list">
-                    {multipleMockResults.map((item) => {
+                    {/* --- ADDED --- Loading, Error, No Results states */}
+                     {loading && <p>Loading results...</p>}
+                     {error && <p style={{ color: 'red' }}>{error}</p>}
+                     {!loading && !error && results.length === 0 && <p>No results found {query ? `for "${query}"` : ''}.</p>}
+                     {/* --- END ADDED --- */}
+                    {!loading && !error && results.map((item) => {
                         return (
                         <div key={item.id} className={`search-result-item ${item.category.toLowerCase()}`}>
                             <div className="result-info">
                                 <div>
-                                    <img src={item.thumbnail} alt={item.title} className="result-thumbnail" />
+                                    {/* --- MODIFIED --- Use thumbnail_url from API */}
+                                    <img 
+                                        src={item.thumbnail_url || '/placeholder-image.png'} 
+                                        alt={item.title} 
+                                        className="result-thumbnail" 
+                                        onError={(e) => { e.target.onerror = null; e.target.src='/placeholder-image.png'; }}
+                                    />
                                 </div>
                                 <div className='result-text-info'>
                                     <h3 className="result-title">
-                                    <a href={`/item/${item.id}`} className="result-link">
-                                        {item.title}
-                                    </a>
+                                     {/* --- MODIFIED --- Use Link component */}
+                                    <Link to={`/item/${item.item_id}`} className="result-link">
+                                        {item.title} 
+                                    </Link>
                                     </h3>
                                     <div className="result-description">
+                                        {/* --- MODIFIED --- Use API data */}
                                         {renderItemDetails(item)}
                                         <div className="availability-status">
-                                            <p><strong>Holds:</strong> <span>{item.holds}</span></p>
-                                            <p><strong>Available:</strong> <span>{item.available}</span></p>
-                                            {
-                                                item.available == 0 && (
-                                                <p><strong>Earliest Available:</strong> <span>{item.earliestAvailable}</span></p>
-                                                )
-                                            }
+                                            <p><small><strong>Available:</strong> <span>{item.available}</span></small></p>
+                                            {item.available <= 0 && item.on_hold > 0 && <p><small><strong>On Hold:</strong> <span>{item.on_hold}</span></small></p>}
+                                            {item.available <= 0 && (
+                                                <p><small><strong>Earliest Available:</strong> <span>{item.earliest_available_date ? new Date(item.earliest_available_date).toLocaleDateString() : 'N/A'}</span></small></p>
+                                            )}
                                         </div>
-
                                     </div>
                                 </div>
                                 <div className="result-actions">
+                                     {/* --- TODO: Connect these buttons --- */}
                                     {item.available > 0 ? (
-                                        <button className="action-button primary-button">Borrow</button>
+                                        <button className="btn primary">Request Pickup</button>
                                     ) : (
-                                        <button className="action-button secondary-button">Place Hold</button>
+                                        <button className="btn secondary">Place Waitlist Hold</button>
                                     )}
                                 </div>
                             </div>
