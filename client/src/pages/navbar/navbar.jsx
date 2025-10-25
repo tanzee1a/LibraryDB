@@ -45,9 +45,9 @@ const Navbar = ({ isStaff, setIsStaff }) => {
                                 {/*<a href="#">Books</a>
                                 <a href="#">Movies</a>
                                 <a href="#">Devices</a>*/}
-                                <li><Link to="/search?category=BOOK">Books</Link></li> 
-                                <li><Link to="/search?category=MOVIE">Movies</Link></li> 
-                                <li><Link to="/search?category=DEVICE">Devices</Link></li>
+                                <div><Link to="/search?category=BOOK">Books</Link></div> 
+                                <div><Link to="/search?category=MOVIE">Movies</Link></div> 
+                                <div><Link to="/search?category=DEVICE">Devices</Link></div>
                             </div>
                         </div>
                     </div>
@@ -98,9 +98,9 @@ const Navbar = ({ isStaff, setIsStaff }) => {
                                 {/*<a href="#">Books</a>
                                 <a href="#">Movies</a>
                                 <a href="#">Devices</a>*/}
-                                <li><Link to="/search?category=BOOK">Books</Link></li> 
-                                <li><Link to="/search?category=MOVIE">Movies</Link></li> 
-                                <li><Link to="/search?category=DEVICE">Devices</Link></li>
+                                <div><Link to="/search?category=BOOK">Books</Link></div> 
+                                <div><Link to="/search?category=MOVIE">Movies</Link></div> 
+                                <div><Link to="/search?category=DEVICE">Devices</Link></div>
                             </div>
                         </div>
                     </div>

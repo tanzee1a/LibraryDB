@@ -7,7 +7,7 @@ async function getMyProfile(req, res) {
     try {
         // !!! --- TEMPORARY --- !!!
         // Use the same hardcoded user ID as your loan controller
-        const test_user_id = 'U176124407386'; 
+        const test_user_id = 'U176124397339'; 
         // !!! ----------------- !!!
 
         const user = await User.findById(test_user_id);
