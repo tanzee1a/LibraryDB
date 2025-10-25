@@ -31,10 +31,9 @@ function SearchResults({ isStaff }) {
         filterOptions.forEach(group => {
             const paramValue = searchParams.get(group.param);
             if (paramValue) {
-                // Assuming multiple values are comma-separated in URL (e.g., genre=Sci-Fi,Fantasy)
                 filters[group.param] = paramValue.split(','); 
             } else {
-                filters[group.param] = []; // Default to empty array
+                filters[group.param] = [];
             }
         });
         return filters;
@@ -65,16 +64,14 @@ function SearchResults({ isStaff }) {
 
 
     const handleSearch = (event) => {
-        if (event.key === 'Enter') { // Check for Enter key press
+        if (event.key === 'Enter') {
             event.preventDefault();
             const currentParams = Object.fromEntries(searchParams.entries());
             const term = localSearchTerm.trim();
             
             if (term) {
-                // Update the URL with the new search term
                 setSearchParams({ ...currentParams, q: term }); 
             } else {
-                // If search term is empty, remove 'q' from URL params
                 delete currentParams.q; 
                 setSearchParams(currentParams);
             }

@@ -98,7 +98,6 @@ async function searchItems(searchTerm, filters = {}) {
 
     const finalSql = sqlParts.join('\n UNION \n');
 
-    // --- Execute Query ---
     console.log("Executing Search SQL:", finalSql); // For debugging
     console.log("With Params:", params);          // For debugging
     const [rows] = await db.query(finalSql, params);
