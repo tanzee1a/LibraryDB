@@ -24,7 +24,7 @@ async function findByUserId(userId) {
             w.item_id,
             w.created_at,
             COALESCE(bk.title, m.title, d.device_name) AS title,
-            i.thumbnail_url
+            i.thumbnail_url -- <<< ENSURE THIS LINE IS PRESENT
         FROM WISHLIST w
         JOIN ITEM i ON w.item_id = i.item_id
         LEFT JOIN BOOK bk ON i.item_id = bk.item_id AND i.category = 'BOOK'

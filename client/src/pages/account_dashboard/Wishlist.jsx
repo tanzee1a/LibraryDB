@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { IoHeartOutline, IoHourglassOutline } from 'react-icons/io5'; // Add hourglass for holds
+import { IoHeartOutline, IoHourglassOutline } from 'react-icons/io5';
 
 export default function Wishlist() {
   const [holds, setHolds] = useState([]);
@@ -7,12 +7,13 @@ export default function Wishlist() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
+  // --- Fetch Holds and Wishlist ---
+  const fetchData = () => {
     setLoading(true);
     setError('');
     Promise.all([
-      fetch('http://localhost:5000/api/my-holds').then(r => r.ok ? r.json() : Promise.reject('Failed holds fetch')),   // Fetch holds
-      fetch('http://localhost:5000/api/my-wishlist').then(r => r.ok ? r.json() : Promise.reject('Failed wishlist fetch')) // Fetch wishlist
+      fetch('http://localhost:5000/api/my-holds').then(r => r.ok ? r.json() : Promise.reject('Failed holds fetch')),
+      fetch('http://localhost:5000/api/my-wishlist').then(r => r.ok ? r.json() : Promise.reject('Failed wishlist fetch'))
     ])
     .then(([holdsData, wishlistData]) => {
       setHolds(holdsData || []);
@@ -24,25 +25,18 @@ export default function Wishlist() {
       setError('Could not load items.');
       setLoading(false);
     });
+  };
+
+  useEffect(() => {
+    fetchData();
   }, []);
 
   // --- Handle Remove from Wishlist ---
   const handleUnsave = (itemId) => {
-    fetch(`http://localhost:5000/api/wishlist/${itemId}`, { method: 'DELETE' }) // Call unsave
+    fetch(`http://localhost:5000/api/wishlist/${itemId}`, { method: 'DELETE' })
       .then(r => { if (!r.ok) throw new Error('Unsave failed'); return r.json(); })
       .then(() => {
-         // Re-fetch both lists to update UI
-         // (A more optimized way would be to filter the state directly)
-         setLoading(true); // Show loading briefly
-         Promise.all([
-           fetch('http://localhost:5000/api/my-holds').then(r => r.json()),
-           fetch('http://localhost:5000/api/my-wishlist').then(r => r.json())
-         ])
-         .then(([holdsData, wishlistData]) => {
-            setHolds(holdsData || []);
-            setWishlistItems(wishlistData || []);
-            setLoading(false);
-          });
+         fetchData(); // Refresh lists
       })
       .catch((err) => {
         console.error("Unsave Item Error:", err);
@@ -67,14 +61,20 @@ export default function Wishlist() {
         <ul className="list">
           {holds.map(h => (
             <li key={`hold-${h.hold_id}`} className="list-item">
-              <div className="thumb-icon" aria-hidden="true"><IoHourglassOutline /></div>
+              {/* Add Image */}
+              <img 
+                  src={h.thumbnail_url || '/placeholder-image.png'} 
+                  alt={h.title} 
+                  className="thumb"
+                  onError={(e) => { e.target.onerror = null; e.target.src='/placeholder-image.png'; }}
+              />
               <div>
                 <div className="item-title">{h.title}</div>
                 <div className="item-sub">Requested: {new Date(h.created_at).toLocaleDateString()}</div>
                 <div className="item-sub">Pickup Expires: {new Date(h.expires_at).toLocaleDateString()}</div>
               </div>
               <div>
-                 {/* TODO: Add a Cancel Hold button? */}
+                 {/* Optional: Add Cancel Hold button later */}
               </div>
             </li>
           ))}
@@ -92,14 +92,20 @@ export default function Wishlist() {
         <ul className="list">
           {wishlistItems.map(w => (
             <li key={`wish-${w.item_id}`} className="list-item">
-              <div className="thumb-icon" aria-hidden="true"><IoHeartOutline /></div>
+              {/* Add Image */}
+              <img 
+                  src={w.thumbnail_url || '/placeholder-image.png'} 
+                  alt={w.title} 
+                  className="thumb"
+                  onError={(e) => { e.target.onerror = null; e.target.src='/placeholder-image.png'; }}
+              />
               <div>
                 <div className="item-title">{w.title}</div>
                 <div className="item-sub">Saved: {new Date(w.created_at).toLocaleDateString()}</div>
               </div>
               <div>
                 <button className="btn danger" onClick={() => handleUnsave(w.item_id)}>Remove</button>
-                 {/* TODO: Add a "Request Pickup" button if available? */}
+                 {/* Optional: Add Request/Borrow button later */}
               </div>
             </li>
           ))}
