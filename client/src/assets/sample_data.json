@@ -65,9 +65,9 @@
     }
   ],
 
-  "data": [
+  "items": [
     {
-      "id": 1,
+      "item_id": 1,
       "category": "BOOK",
       "thumbnail": "bookThumbnail",
       "title": "The Dreaming City",
@@ -78,13 +78,15 @@
       "publisher": "Fiction House",
       "publicationDate": "2021",
       "isbn": "123-4567890123",
+      "shelf_location": "Aisle 3, Shelf B",
       "tags": ["Fiction", "Fantasy", "Adventure"],
       "available": 3,
       "holds": 1,
+      "loanedOut": 2,
       "earliestAvailable": "2 day(s)"
     },
     {
-      "id": 2,
+      "item_id": 2,
       "category": "MEDIA",
       "thumbnail": "mediaThumbnail",
       "title": "The Great Adventure",
@@ -96,22 +98,26 @@
       "release_year": "2020",
       "runtime": "2h 15m",
       "tags": ["Fiction", "Fantasy", "Adventure"],
+      "shelf_location": "Aisle 2, Shelf C",
       "available": 0,
       "holds": 2,
+      "loanedOut": 2,
       "earliestAvailable": "3 day(s)"
     },
     {
-      "id": 3,
+      "item_id": 3,
       "category": "DEVICE",
       "thumbnail": "deviceThumbnail",
       "title": "MacBook Pro 16”",
-      "description": "This small, portable book presents a unique perspective on the human body for artists to study and implement in their drawing work. In this book, artist and teacher Michel Lauricella simplifies the human body into basic shapes and forms, offering profound insight for artists of all kinds, sparking the imagination and improving one’s observational abilities. Rather than going the traditional route of memorizing a repertoire of poses, Lauricella instead stresses learning this small collection of forms, which can then be combined and shaped into the more complex and varied forms and postures we see in the living body.\n\nGeared toward artists of all levels—from beginners through professionals—this handy, pocket-sized book will help spark your imagination and creativity. Whether your interest is in figure drawing, fine arts, fashion design, game design, or creating comic book or manga art, you will find this helpful book filled with actionable insights.",
+      "description": "This powerful laptop is designed for professionals and creatives who need high performance on the go.\nWith its stunning Retina display, advanced graphics, and fast processors, it can handle demanding tasks with ease.",
       "manufacturer": "Apple",
       "software": "macOS",
       "device_type": "Laptop",
+      "shelf_location": "Aisle 1, Shelf A",
       "tags": ["Apple", "macOS", "Laptop"],
       "available": 1,
       "holds": 0,
+      "loanedOut": 2,
       "earliestAvailable": "1 day(s)"
     }
   ],
@@ -156,7 +162,7 @@
   ],
   "user_filters": [
     {
-      "category": "Borrow",
+      "category": "Borrows",
       "topics": [
         {
           "name": "Status",
@@ -196,6 +202,11 @@
         "item_category": "BOOK",
         "title": "The Dreaming City",
         "thumbnail": "bookThumbnail"
+      },
+      "user": {
+        "user_id": 1,
+        "user_first_name": "Alex",
+        "user_last_name": "Johnson"
       }
     },
     {
@@ -210,6 +221,11 @@
         "item_category": "MEDIA",
         "title": "The Great Adventure",
         "thumbnail": "mediaThumbnail"
+      },
+      "user": {
+        "user_id": 1,
+        "user_first_name": "Alex",
+        "user_last_name": "Johnson"
       }
     },
     {
@@ -224,6 +240,11 @@
         "item_category": "DEVICE",
         "title": "MacBook Pro 16”",
         "thumbnail": "deviceThumbnail"
+      },
+      "user": {
+        "user_id": 1,
+        "user_first_name": "Alex",
+        "user_last_name": "Johnson"
       }
     },
     {
@@ -238,6 +259,11 @@
         "item_category": "BOOK",
         "title": "The Dreaming City",
         "thumbnail": "deviceThumbnail"
+      },
+      "user": {
+        "user_id": 1,
+        "user_first_name": "Alex",
+        "user_last_name": "Johnson"
       }
     },
     {
@@ -252,6 +278,11 @@
         "item_category": "MEDIA",
         "title": "The Great Adventure",
         "thumbnail": "deviceThumbnail"
+      },
+      "user": {
+        "user_id": 1,
+        "user_first_name": "Alex",
+        "user_last_name": "Johnson"
       }
     }
   ],
@@ -267,6 +298,11 @@
         "item_category": "BOOK",
         "title": "The Dreaming City",
         "thumbnail": "bookThumbnail"
+      },
+      "user": {
+        "user_id": 1,
+        "user_first_name": "Alex",
+        "user_last_name": "Johnson"
       }
     },
     {
@@ -280,6 +316,11 @@
         "item_category": "MEDIA",
         "title": "The Great Adventure",
         "thumbnail": "mediaThumbnail"
+      },
+      "user": {
+        "user_id": 1,
+        "user_first_name": "Alex",
+        "user_last_name": "Johnson"
       }
     },
     {
@@ -293,6 +334,11 @@
         "item_category": "DEVICE",
         "title": "MacBook Pro 16”",
         "thumbnail": "deviceThumbnail"
+      },
+      "user": {
+        "user_id": 1,
+        "user_first_name": "Alex",
+        "user_last_name": "Johnson"
       }
     }
   ],
@@ -304,7 +350,12 @@
       "date_issued": "2025-09-25",
       "amount": 2.50,
       "date_paid": "2025-09-30",
-      "status_id": "Paid"
+      "status_id": "Paid",
+      "user": {
+        "user_id": 1,
+        "user_first_name": "Alex",
+        "user_last_name": "Johnson"
+      }
     },
     {
       "fine_id": 2,
@@ -313,7 +364,12 @@
       "date_issued": "2025-07-20",
       "amount": 15.00,
       "date_paid": null,
-      "status_id": "Awaiting Payment"
+      "status_id": "Awaiting Payment",
+      "user": {
+        "user_id": 1,
+        "user_first_name": "Alex",
+        "user_last_name": "Johnson"
+      }
     },
     {
       "fine_id": 3,
@@ -322,7 +378,12 @@
       "date_issued": "2025-08-01",
       "amount": 5.00,
       "date_paid": "2025-08-05",
-      "status_id": "Canceled"
+      "status_id": "Canceled",
+      "user": {
+        "user_id": 1,
+        "user_first_name": "Alex",
+        "user_last_name": "Johnson"
+      }
     }
   ]
 }

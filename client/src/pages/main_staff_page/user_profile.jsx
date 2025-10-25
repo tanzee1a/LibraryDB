@@ -3,7 +3,7 @@ import bookThumbnail from '../../assets/book_thumbnail.jpeg'
 import mediaThumbnail from '../../assets/media_thumbnail.jpg'
 import deviceThumbnail from '../../assets/device_thumbnail.jpeg'
 import sampleData from '../../assets/sample_data.json'
-import { IoCheckmark } from "react-icons/io5"
+import { IoCheckmark, IoTrash } from "react-icons/io5"
 import { MdEdit } from "react-icons/md"
 import { useState } from 'react'
 
@@ -255,6 +255,11 @@ function UserProfile() {
                         <button className="action-circle-button primary-button" onClick={handleEditToggle}>
                         {isEditing ? <IoCheckmark /> : <MdEdit />}
                         </button>
+                        {!isEditing && (
+                            <button className="action-circle-button red-button">
+                                <IoTrash />
+                            </button>
+                        )}
                     </div>
 
                     <div className="result-description">
@@ -304,23 +309,29 @@ function UserProfile() {
                                 <input type="text" placeholder="Search user history..." className="search-result-search-bar" />
                             </div>
                             <div className="search-result-buttons">
-                                <button 
-                                  className={`action-button primary-button ${activeSection === 'borrows' ? 'active' : ''}`}
-                                  onClick={() => setActiveSection('borrows')}
+                                <button
+                                    className={`action-button ${
+                                    activeSection === 'borrows' ? 'primary-button' : 'secondary-button'
+                                    }`}
+                                    onClick={() => setActiveSection('borrows')}
                                 >
-                                  Borrows
+                                    Borrows
                                 </button>
-                                <button 
-                                  className={`action-button primary-button ${activeSection === 'holds' ? 'active' : ''}`}
-                                  onClick={() => setActiveSection('holds')}
+                                <button
+                                    className={`action-button ${
+                                    activeSection === 'holds' ? 'primary-button' : 'secondary-button'
+                                    }`}
+                                    onClick={() => setActiveSection('holds')}
                                 >
-                                  Holds
+                                    Holds
                                 </button>
-                                <button 
-                                  className={`action-button primary-button ${activeSection === 'fines' ? 'active' : ''}`}
-                                  onClick={() => setActiveSection('fines')}
+                                <button
+                                    className={`action-button ${
+                                    activeSection === 'fines' ? 'primary-button' : 'secondary-button'
+                                    }`}
+                                    onClick={() => setActiveSection('fines')}
                                 >
-                                  Fines
+                                    Fines
                                 </button>
                             </div>
                         </div>

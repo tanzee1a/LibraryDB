@@ -10,7 +10,7 @@ import { FaPlus } from "react-icons/fa"
 function SearchResults({ isStaff }) {
     const filters = sampleData.item_filters;
 
-    const mockResults = sampleData.data.map(item => ({
+    const mockResults = sampleData.items.map(item => ({
     ...item,
     thumbnail:
         item.category === "BOOK"
@@ -58,7 +58,7 @@ function SearchResults({ isStaff }) {
     }
 
     const renderItemDetails = (item) => {
-        switch(item.item_category) {
+        switch(item.category) {
             case "BOOK":
                 return (
                     <div className="result-details">
@@ -87,6 +87,15 @@ function SearchResults({ isStaff }) {
                 )
             default:
                 return null;
+        }
+    }
+
+    const renderItemActionButtons = (item) => {
+        if(isStaff) return;
+        if(item.available > 0) {
+            return <button className="action-button primary-button">Borrow</button>;
+        } else {
+            return <button className="action-button secondary-button">Place Hold</button>;
         }
     }
 
@@ -136,14 +145,15 @@ function SearchResults({ isStaff }) {
                 <div className="search-results-list">
                     {multipleMockResults.map((item) => {
                         return (
-                        <div key={item.id} className={`search-result-item ${item.category.toLowerCase()}`}>
+                        <div key={item.item_id} className={`search-result-item ${item.category.toLowerCase()}`}>
                             <div className="result-info">
                                 <div>
                                     <img src={item.thumbnail} alt={item.title} className="result-thumbnail" />
                                 </div>
                                 <div className='result-text-info'>
                                     <h3 className="result-title">
-                                    <a href={`/item/${item.id}`} className="result-link">
+                                    {/* This should be href={`/item-details/${item.item_id}`} when not testing.*/}
+                                    <a href={`/item-details`} className="result-link">
                                         {item.title}
                                     </a>
                                     </h3>
@@ -162,11 +172,7 @@ function SearchResults({ isStaff }) {
                                     </div>
                                 </div>
                                 <div className="result-actions">
-                                    {item.available > 0 ? (
-                                        <button className="action-button primary-button">Borrow</button>
-                                    ) : (
-                                        <button className="action-button secondary-button">Place Hold</button>
-                                    )}
+                                    {renderItemActionButtons(item)}
                                 </div>
                             </div>
                             <hr className="divider" />
@@ -185,29 +191,29 @@ function SearchResults({ isStaff }) {
                     {/* --- Common fields --- */}
                     <label>
                     Title:
-                    <input type="text" name="title" value={newItem.title} onChange={handleItemInputChange} required />
+                    <input type="text" name="title" value={newItem.title} onChange={handleItemInputChange} required className="edit-input" />
                     </label>
                     <label>
                     Description:
-                    <textarea name="description" value={newItem.description} onChange={handleItemInputChange} required />
+                    <textarea name="description" value={newItem.description} onChange={handleItemInputChange} required className="edit-input" />
                     </label>
                     <label>
                     Thumbnail URL:
-                    <input type="text" name="thumbnail_url" value={newItem.thumbnail_url} onChange={handleItemInputChange} />
+                    <input type="text" name="thumbnail_url" value={newItem.thumbnail_url} onChange={handleItemInputChange} className="edit-input" />
                     </label>
                     <label>
                     Shelf Location:
-                    <input type="text" name="shelf_location" value={newItem.shelf_location} onChange={handleItemInputChange} />
+                    <input type="text" name="shelf_location" value={newItem.shelf_location} onChange={handleItemInputChange} className="edit-input" />
                     </label>
                     <label>
                     Tags:
-                    <input type="text" name="tags" value={newItem.tags} onChange={handleItemInputChange} />
+                    <input type="text" name="tags" value={newItem.tags} onChange={handleItemInputChange} className="edit-input" />
                     </label>
 
                     {/* --- Item Category --- */}
                     <label>
                     Item Type:
-                    <select name="item_category" value={newItem.item_category} onChange={handleItemInputChange}>
+                    <select className="edit-input" name="item_category" value={newItem.item_category} onChange={handleItemInputChange}>
                         <option value="BOOK">Book</option>
                         <option value="MEDIA">Media</option>
                         <option value="DEVICE">Device</option>
@@ -217,29 +223,29 @@ function SearchResults({ isStaff }) {
                     {/* --- Conditional Fields --- */}
                     {newItem.item_category === 'BOOK' && (
                     <>
-                        <label>Authors: <input type="text" name="authors" value={newItem.authors} onChange={handleItemInputChange} /></label>
-                        <label>Publisher: <input type="text" name="publisher" value={newItem.publisher} onChange={handleItemInputChange} /></label>
-                        <label>Published Date: <input type="date" name="publication_date" value={newItem.publication_date} onChange={handleItemInputChange} /></label>
-                        <label>Language: <input type="text" name="language" value={newItem.language} onChange={handleItemInputChange} /></label>
-                        <label>Page Number: <input type="number" name="page_number" value={newItem.page_number} onChange={handleItemInputChange} /></label>
-                        <label>ISBN: <input type="text" name="isbn" value={newItem.isbn} onChange={handleItemInputChange} /></label>
+                        <label>Authors: <input type="text" name="authors" value={newItem.authors} onChange={handleItemInputChange} className="edit-input" /></label>
+                        <label>Publisher: <input type="text" name="publisher" value={newItem.publisher} onChange={handleItemInputChange} className="edit-input" /></label>
+                        <label>Published Date: <input type="date" name="publication_date" value={newItem.publication_date} onChange={handleItemInputChange} className="edit-input" /></label>
+                        <label>Language: <input type="text" name="language" value={newItem.language} onChange={handleItemInputChange} className="edit-input" /></label>
+                        <label>Page Number: <input type="number" name="page_number" value={newItem.page_number} onChange={handleItemInputChange} className="edit-input" /></label>
+                        <label>ISBN: <input type="text" name="isbn" value={newItem.isbn} onChange={handleItemInputChange} className="edit-input" /></label>
                     </>
                     )}
 
                     {newItem.item_category === 'MEDIA' && (
                     <>
-                        <label>Directors: <input type="text" name="directors" value={newItem.directors} onChange={handleItemInputChange} /></label>
-                        <label>Release Year: <input type="number" name="release_year" value={newItem.release_year} onChange={handleItemInputChange} /></label>
-                        <label>Runtime (mins): <input type="number" name="runtime" value={newItem.runtime} onChange={handleItemInputChange} /></label>
-                        <label>Language: <input type="text" name="language" value={newItem.language} onChange={handleItemInputChange} /></label>
-                        <label>Format: <input type="text" name="format" value={newItem.format} onChange={handleItemInputChange} /></label>
-                        <label>Rating: <input type="text" name="rating" value={newItem.rating} onChange={handleItemInputChange} /></label>
+                        <label>Directors: <input type="text" name="directors" value={newItem.directors} onChange={handleItemInputChange} className="edit-input" /></label>
+                        <label>Release Year: <input type="number" name="release_year" value={newItem.release_year} onChange={handleItemInputChange} className="edit-input" /></label>
+                        <label>Runtime (mins): <input type="number" name="runtime" value={newItem.runtime} onChange={handleItemInputChange} className="edit-input" /></label>
+                        <label>Language: <input type="text" name="language" value={newItem.language} onChange={handleItemInputChange} className="edit-input" /></label>
+                        <label>Format: <input type="text" name="format" value={newItem.format} onChange={handleItemInputChange} className="edit-input" /></label>
+                        <label>Rating: <input type="text" name="rating" value={newItem.rating} onChange={handleItemInputChange} className="edit-input" /></label>
                     </>
                     )}
 
                     {newItem.item_category === 'DEVICE' && (
                     <>
-                        <label>Manufacturer: <input type="text" name="manufacturer" value={newItem.manufacturer} onChange={handleItemInputChange} /></label>
+                        <label>Manufacturer: <input type="text" name="manufacturer" value={newItem.manufacturer} onChange={handleItemInputChange} className="edit-input" /></label>
                         <label>Device Type:
                         <select name="device_type" value={newItem.device_type} onChange={handleItemInputChange}>
                             <option value="">Select...</option>
