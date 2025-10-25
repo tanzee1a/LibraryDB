@@ -18,6 +18,7 @@ const {
 const { registerUser, loginUser } = require('./controllers/loginRegisterController');
 const { saveItem, unsaveItem, getMyWishlist } = require('./controllers/wishlistController');
 const { getMyProfile } = require('./controllers/userController');
+const { searchItems } = require('./controllers/searchController');
 
 const server = http.createServer((req, res) => {
     // --- CORS Headers ---
@@ -126,6 +127,11 @@ const server = http.createServer((req, res) => {
         } else if (req.url === '/api/login' && req.method === 'POST') {
             loginUser(req, res);
         } 
+
+        // --- Search Route ---
+        else if (req.url.startsWith('/api/search') && req.method === 'GET') {
+            searchItems(req, res);
+        }
         
         // --- Not Found ---
         else {
