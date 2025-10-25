@@ -154,7 +154,31 @@
   background-color: var(--darker-tertiary-color);
 }
 
+.red-button {
+  background-color: rgb(251, 98, 98);
+  color: white;
+  cursor: pointer;
+}
+
+.red-button:hover {
+  background-color: rgb(221, 36, 36);
+}
+
 .tags-section {
   display: flex;
   flex-wrap: wrap;
+}
+
+.edit-input {
+  font-size: 1rem;
+  padding: 0.3rem 0.4rem;
+  border: 1px solid var(--darker-tertiary-color);
+  border-radius: 8px;
+  width: 100%;
+  background-color: var(--tertiary-color);
+}
+
+.edit-description {
+  height: 10rem;
+  resize: vertical;
 }
