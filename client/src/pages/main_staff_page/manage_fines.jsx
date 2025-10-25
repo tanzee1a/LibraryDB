@@ -30,7 +30,7 @@ function ManageFines() {
                 buttons.push(<button key="cancel" className="action-button secondary-button">Cancel Fine</button>);
                 break;
             case 'Paid':
-                buttons.push(<button key="refund" className="action-button secondary-button">Refund</button>);
+                buttons.push(<button key="refund" className="action-button red-button">Refund</button>);
                 break;
             default:
                 break;

@@ -35,16 +35,26 @@ function ManageBorrows() {
     const renderBorrowActionButtons = (borrow) => {
         const buttons = [];
         switch (borrow.status_id) {
-            case 'Active':
-                buttons.push(<button key="return" className="action-button primary-button">Return</button>);
-                buttons.push(<button key="renew" className="action-button secondary-button">Renew</button>);
-                break;
             case 'Overdue':
-                buttons.push(<button key="return" className="action-button primary-button">Return</button>);
-                buttons.push(<button key="pay" className="action-button secondary-button">Pay Fine</button>);
+                buttons.push(<button key="return" className="action-button primary-button">Mark as Returned</button>);
+                buttons.push(<button key="lost" className="action-button secondary-button">Mark as Lost</button>);
+                break;
+            case 'Loaned Out':
+                buttons.push(<button key="return" className="action-button primary-button">Mark as Returned</button>);
+                buttons.push(<button key="lost" className="action-button secondary-button">Mark as Lost</button>);
+                break;
+            case 'Pending':
+                buttons.push(<button key="ready" className="action-button primary-button">Ready for Pickup</button>);
+                buttons.push(<button key="cancel" className="action-button secondary-button">Cancel Request</button>);
+                break;
+            case 'Ready for Pickup':
+                buttons.push(<button key="cancel" className="action-button secondary-button">Cancel Request</button>);
+                break;
+            case 'Lost':
+                buttons.push(<button key="found" className="action-button secondary-button">Mark as Found</button>);
                 break;
             case 'Returned':
-                buttons.push(<a href="#" className="simple-link">View Details</a>);
+                // No action buttons for returned items
                 break;
             default:
                 break;
