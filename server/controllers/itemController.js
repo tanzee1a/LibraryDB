@@ -1,7 +1,7 @@
 const Item = require('../models/itemModel'); 
 const { getPostData } = require('../utils');
 
-// --- GET Functions (Mostly Unchanged) ---
+// --- GET Functions ---
 
 // @desc gets all items
 // @route GET /api/items
@@ -36,7 +36,7 @@ async function getItem(req, res, id){
     }
 }
 
-// --- CREATE Functions (Updated Fields) ---
+// --- CREATE Functions ---
 
 // @desc Create a book
 // @route POST /api/items/book
@@ -46,16 +46,16 @@ async function createBook(req, res){
         const { 
             item_id, 
             title, 
-            description, // Now in ITEM table
+            description,
             publisher, 
-            published_date, // Changed from year
-            shelf_location, // Now in ITEM table
-            language_id,    // New
-            page_number,    // New
-            quantity,       // Used for initial 'available' count
-            authors,        // Array of names
-            tags,           // Array of names
-            thumbnail_url   // Now in ITEM table
+            published_date,
+            shelf_location,
+            language_id,
+            page_number,
+            quantity,
+            authors,
+            tags,
+            thumbnail_url
         } = JSON.parse(body);
         
         // Basic validation
@@ -87,17 +87,17 @@ async function createMovie(req, res){
         const { 
             item_id,
             title, 
-            description, // Now in ITEM
-            language_id, // New
-            format_id,   // New
-            runtime,     // New
-            rating_id,   // New
-            release_year,// New
-            quantity,    // For initial available
-            directors,   // Array of names
-            tags,        // Array of names
-            thumbnail_url, // Now in ITEM
-            shelf_location // Now in ITEM
+            description,
+            language_id,
+            format_id,
+            runtime,
+            rating_id,
+            release_year,
+            quantity,
+            directors,
+            tags,
+            thumbnail_url,
+            shelf_location
         } = JSON.parse(body);
         
         if (!item_id || !title || !runtime || !release_year || !quantity) {
@@ -128,14 +128,14 @@ async function createDevice(req, res){
         const body = await getPostData(req);
         const { 
             item_id, 
-            manufacturer,   // New
-            device_name,    // Changed from model
-            device_type,    // Changed to FK ID
-            description,    // Now in ITEM
-            quantity,       // For initial available
-            tags,           // Array of names
-            thumbnail_url,  // Now in ITEM
-            shelf_location  // Now in ITEM
+            manufacturer,
+            device_name,
+            device_type,
+            description,
+            quantity,
+            tags,
+            thumbnail_url,
+            shelf_location
         } = JSON.parse(body);
         
          if (!item_id || !device_name || !device_type || !quantity) {
@@ -272,7 +272,7 @@ async function updateDevice(req, res, id){
 }
 
 
-// --- DELETE Function (Unchanged, uses model) ---
+// --- DELETE Function ---
 
 // @desc Delete an Item
 // @route DELETE /api/items/:id

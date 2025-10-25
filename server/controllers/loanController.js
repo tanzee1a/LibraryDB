@@ -1,5 +1,5 @@
 const Loan = require('../models/loanModel');
-const { getPostData } = require('../utils'); // We need this for waiveFine reason
+const { getPostData } = require('../utils');
 
 // @desc User requests pickup for an available item
 // @route POST /api/request/:itemId
@@ -202,9 +202,9 @@ module.exports = {
     placeWaitlistHold,
     getMyLoans,
     getMyHistory,
-    getMyHolds, // Added
+    getMyHolds,
     getMyWaitlist,
-    getMyFines, // Added
-    payFine,    // Added
-    waiveFine   // Added
+    getMyFines,
+    payFine,
+    waiveFine
 };
