@@ -42,9 +42,12 @@ const Navbar = ({ isStaff, setIsStaff }) => {
                                     <IoSearch />
                                 <input type="text" className="search-input" placeholder="Search the entire library..." />
                                 <p>Quick Links</p>
-                                <a href="#">Books</a>
+                                {/*<a href="#">Books</a>
                                 <a href="#">Movies</a>
-                                <a href="#">Devices</a>
+                                <a href="#">Devices</a>*/}
+                                <li><Link to="/search?category=BOOK">Books</Link></li> 
+                                <li><Link to="/search?category=MOVIE">Movies</Link></li> 
+                                <li><Link to="/search?category=DEVICE">Devices</Link></li>
                             </div>
                         </div>
                     </div>
@@ -91,9 +94,12 @@ const Navbar = ({ isStaff, setIsStaff }) => {
                                     <IoSearch />
                                 <input type="text" className="search-input" placeholder="Search the entire library..." />
                                 <p>Quick Links</p>
-                                <a href="#">Books</a>
+                                {/*<a href="#">Books</a>
                                 <a href="#">Movies</a>
-                                <a href="#">Devices</a>
+                                <a href="#">Devices</a>*/}
+                                <li><Link to="/search?category=BOOK">Books</Link></li> 
+                                <li><Link to="/search?category=MOVIE">Movies</Link></li> 
+                                <li><Link to="/search?category=DEVICE">Devices</Link></li>
                             </div>
                         </div>
                     </div>

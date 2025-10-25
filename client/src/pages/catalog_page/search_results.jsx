@@ -41,27 +41,68 @@ function SearchResults({ isStaff }) {
     };
     const [selectedFilters, setSelectedFilters] = useState(initialFilters);
 
-    // --- Add useEffect for fetching ---
     useEffect(() => {
-        if (query) {
         setLoading(true);
         setError('');
-        fetch(`http://localhost:5000/api/search?q=${encodeURIComponent(query)}`) // Adjust URL if needed
+
+        const params = new URLSearchParams();
+        if (query) {
+            params.set('q', query);
+        }
+        Object.entries(selectedFilters).forEach(([key, values]) => {
+            if (values.length > 0) {
+                params.set(key, values.join(','));
+            }
+        });
+        const queryString = params.toString();
+
+        fetch(`http://localhost:5000/api/search?${queryString}`) 
             .then(r => { if (!r.ok) throw new Error('Network response failed'); return r.json(); })
             .then(data => { setResults(data || []); setLoading(false); })
-            .catch((err) => { setError(`Could not load results for "${query}".`); setLoading(false); });
-        } else {
-        setResults([]);
-        setLoading(false);
-        }
-    }, [query]);
+            .catch((err) => { setError(`Could not load results.`); setLoading(false); });
+
+    }, [query, selectedFilters]);
+
 
     const handleSearch = (event) => {
-        if (event.key === 'Enter' && localSearchTerm.trim()) {
+        if (event.key === 'Enter') { // Check for Enter key press
             event.preventDefault();
-            // Update the URL query parameter, which triggers useEffect
-            setSearchParams({ q: localSearchTerm.trim() }); 
+            const currentParams = Object.fromEntries(searchParams.entries());
+            const term = localSearchTerm.trim();
+            
+            if (term) {
+                // Update the URL with the new search term
+                setSearchParams({ ...currentParams, q: term }); 
+            } else {
+                // If search term is empty, remove 'q' from URL params
+                delete currentParams.q; 
+                setSearchParams(currentParams);
+            }
         }
+    };
+
+    const handleFilterChange = (param, option) => {
+        setSelectedFilters(prevFilters => {
+            const currentValues = prevFilters[param] || [];
+            let newValues;
+            if (currentValues.includes(option)) {
+                // Remove option if already selected
+                newValues = currentValues.filter(val => val !== option);
+            } else {
+                // Add option if not selected
+                newValues = [...currentValues, option];
+            }
+            // Update URL immediately when filter changes
+            const currentParams = Object.fromEntries(searchParams.entries());
+            const newSearchParams = { ...currentParams, [param]: newValues.join(',') };
+            // Remove param if empty
+            if (newValues.length === 0) {
+                 delete newSearchParams[param];
+            }
+            setSearchParams(newSearchParams, { replace: true }); // Use replace to avoid browser history clutter
+
+            return { ...prevFilters, [param]: newValues };
+        });
     };
 
     const [showAddItemSheet, setShowAddItemSheet] = useState(false);
@@ -141,28 +182,27 @@ function SearchResults({ isStaff }) {
             </div>
             <div className="search-results-contents">
             <div className="filter-section">
-                {/*filters.map((filter) => (
-                    <div key={filter.category} className="filter-category">
-                        <h3>{filter.category}</h3>
+                {filterOptions.map((filterGroup) => (
+                    <div key={filterGroup.param} className="filter-category">
+                        <h3>{filterGroup.category}</h3>
                         <hr className='divider divider--tight' />
                         <ul>
-                            {filter.topics.map((topic) => (
-                                <li key={topic.name}>
-                                    <strong>{topic.name}</strong>
-                                    <ul>
-                                        {topic.options.map((option) => (
-                                            <li key={option}>
-                                                <label>
-                                                    <input type="checkbox" /> {option}
-                                                </label>
-                                            </li>
-                                        ))}
-                                    </ul>
+                            {filterGroup.options.map((option) => (
+                                <li key={option}>
+                                    <label>
+                                        <input 
+                                            type="checkbox" 
+                                            value={option}
+                                            // Check if option is in the state for this filter param
+                                            checked={selectedFilters[filterGroup.param]?.includes(option) || false}
+                                            onChange={() => handleFilterChange(filterGroup.param, option)}
+                                        /> {option}
+                                    </label>
                                 </li>
                             ))}
                         </ul>
                     </div>
-                    ))*/}
+                ))}
             </div>
                 <div className="search-results-list">
                     {/* --- ADDED --- Loading, Error, No Results states */}
