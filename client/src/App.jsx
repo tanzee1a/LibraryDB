@@ -12,11 +12,20 @@ import ManageFines from './pages/main_staff_page/manage_fines.jsx'
 import AccountDashboard from './pages/account_dashboard/AccountDashboard.jsx';
 import Register from './pages/register_page/register.jsx';
 import Navbar from './pages/navbar/navbar.jsx';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './App.css'
 
 function App() {
-  const [isStaff, setIsStaff] = useState(true);
+  const [isStaff, setIsStaff] = useState(() => {
+    // Load saved value (if any)
+    const saved = localStorage.getItem('isStaff');
+    return saved ? JSON.parse(saved) : false; // default to false
+  });
+
+  useEffect(() => {
+    // Save value whenever it changes
+    localStorage.setItem('isStaff', JSON.stringify(isStaff));
+  }, [isStaff]);
 
   return (
     <BrowserRouter>
