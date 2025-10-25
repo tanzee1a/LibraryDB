@@ -3,14 +3,21 @@ const User = require('../models/userModel');
 
 // @desc Get profile details for the "logged in" user
 // @route GET /api/my-profile
+// NOTE: This function *requires* the 'protect' middleware to run first,
+// which attaches the user's ID to req.userId.
 async function getMyProfile(req, res) {
     try {
-        // !!! --- TEMPORARY --- !!!
-        // Use the same hardcoded user ID as your loan controller
-        const test_user_id = 'U176124407386'; 
-        // !!! ----------------- !!!
+        // --- KEY CHANGE: Use the user ID attached by the 'protect' middleware ---
+        // The 'protect' middleware should have verified the JWT and set req.userId
+        const userId = req.userId; // Use req.userId instead of the temporary hardcoded ID
 
-        const user = await User.findById(test_user_id);
+        if (!userId) {
+            // This should ideally be caught by the middleware, but is a safe check
+            res.writeHead(401, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+            return res.end(JSON.stringify({ message: 'User not authenticated' }));
+        }
+
+        const user = await User.findById(userId);
 
         if (!user) {
             res.writeHead(404, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });

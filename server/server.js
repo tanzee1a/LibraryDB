@@ -19,6 +19,7 @@ const { registerUser, loginUser } = require('./controllers/loginRegisterControll
 const { saveItem, unsaveItem, getMyWishlist } = require('./controllers/wishlistController');
 const { getMyProfile } = require('./controllers/userController');
 const { searchItems } = require('./controllers/searchController');
+const { protect } = require('./authMiddleware'); // <--- ADD THIS IMPORT
 
 const server = http.createServer((req, res) => {
     // --- CORS Headers ---
@@ -98,7 +99,11 @@ const server = http.createServer((req, res) => {
         } 
         // Get My Profile
         else if (req.url === '/api/my-profile' && req.method === 'GET') {
-            getMyProfile(req, res);
+            // 1. Run the 'protect' middleware
+            protect(req, res, () => {
+                // 2. If 'protect' calls next(), then run the controller
+                getMyProfile(req, res);
+            });
         }
         
         // --- Fine Management Routes (Staff) ---
