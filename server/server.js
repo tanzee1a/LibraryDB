@@ -19,7 +19,7 @@ const { registerUser, loginUser } = require('./controllers/loginRegisterControll
 const { saveItem, unsaveItem, getMyWishlist } = require('./controllers/wishlistController');
 const { getMyProfile } = require('./controllers/userController');
 const { searchItems } = require('./controllers/searchController');
-const { protect } = require('./authMiddleware'); // <--- ADD THIS IMPORT
+const { protect } = require('./middleware/authMiddleware'); // <--- ADD THIS IMPORT
 
 const server = http.createServer((req, res) => {
     // --- CORS Headers ---
