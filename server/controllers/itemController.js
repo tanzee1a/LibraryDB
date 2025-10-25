@@ -21,7 +21,7 @@ async function getItems(req, res){
 // @route GET /api/items/:id
 async function getItem(req, res, id){
     try {
-        const item = await Item.findById(id); 
+        const item = await Item.findById(id);
         if(!item){
             res.writeHead(404, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
             res.end(JSON.stringify({ message: 'Item Not Found'}));
@@ -30,7 +30,7 @@ async function getItem(req, res, id){
             res.end(JSON.stringify(item));
         }
     } catch (error) {
-        console.error(`Error getting item ${id}:`, error);
+       console.error(`Error getting item ${id}:`, error);
         res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         res.end(JSON.stringify({ message: 'Server error', error: error.message }));
     }

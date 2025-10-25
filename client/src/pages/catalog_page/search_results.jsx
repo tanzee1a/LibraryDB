@@ -1,22 +1,45 @@
 import './search_results.css'
-//import bookThumbnail from '../../assets/book_thumbnail.jpeg'
-//import mediaThumbnail from '../../assets/media_thumbnail.jpg'
-//import deviceThumbnail from '../../assets/device_thumbnail.jpeg'
-//import sampleData from '../../assets/sample_data.json'
 import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 
 import { FaPlus } from "react-icons/fa"
 
+const filterOptions = [
+    { 
+        category: 'Item Type', 
+        param: 'category', // URL parameter name
+        options: ['BOOK', 'MOVIE', 'DEVICE'] 
+    },
+    { 
+        category: 'Genre (Books/Movies)', 
+        param: 'genre', // URL parameter name
+        options: ['Sci-Fi', 'Fantasy', 'Drama', 'Action', 'Thriller', 'Comedy', 'Animation'] // Add more
+    },
+    // Add more filter categories like Audience, Language ID, etc.
+];
+
 function SearchResults({ isStaff }) {
-    // --- Add State ---
     const [results, setResults] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [searchParams] = useSearchParams();
+    const [searchParams, setSearchParams] = useSearchParams();
     const query = searchParams.get('q') || '';
-    const filters = []; // Placeholder empty array
-    // --- End Add State ---
+    const [localSearchTerm, setLocalSearchTerm] = useState(query);
+
+    const initialFilters = () => {
+        const filters = {};
+        filterOptions.forEach(group => {
+            const paramValue = searchParams.get(group.param);
+            if (paramValue) {
+                // Assuming multiple values are comma-separated in URL (e.g., genre=Sci-Fi,Fantasy)
+                filters[group.param] = paramValue.split(','); 
+            } else {
+                filters[group.param] = []; // Default to empty array
+            }
+        });
+        return filters;
+    };
+    const [selectedFilters, setSelectedFilters] = useState(initialFilters);
 
     // --- Add useEffect for fetching ---
     useEffect(() => {
@@ -32,7 +55,14 @@ function SearchResults({ isStaff }) {
         setLoading(false);
         }
     }, [query]);
-    // --- End useEffect ---
+
+    const handleSearch = (event) => {
+        if (event.key === 'Enter' && localSearchTerm.trim()) {
+            event.preventDefault();
+            // Update the URL query parameter, which triggers useEffect
+            setSearchParams({ q: localSearchTerm.trim() }); 
+        }
+    };
 
     const [showAddItemSheet, setShowAddItemSheet] = useState(false);
     const [newItem, setNewItem] = useState({
@@ -70,7 +100,6 @@ function SearchResults({ isStaff }) {
     }
 
     const renderItemDetails = (item) => {
-        // Assuming your API returns 'creators' which holds authors/directors/manufacturer
         if (item.category === "BOOK") {
             return <p><small><strong>Authors:</strong> {item.creators || 'N/A'}</small></p>;
         }
@@ -98,8 +127,16 @@ function SearchResults({ isStaff }) {
                             <FaPlus />
                         </button>
                     )}
-                    {/* TODO: Make this search bar update the URL query to re-trigger the search */}
-                    <input type="text" placeholder="Search..." className="search-result-search-bar" />
+                    <input 
+                        type="text" 
+                        placeholder="Search..." 
+                        className="search-result-search-bar" 
+                        value={localSearchTerm}
+                        onChange={(e) => setLocalSearchTerm(e.target.value)}
+                        onKeyDown={handleSearch}
+                    />
+                     {/* Optional: Add a button that calls handleSearch onClick */}
+                    {/* <button onClick={handleSearch}>Search</button> */}
                 </div>
             </div>
             <div className="search-results-contents">

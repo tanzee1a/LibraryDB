@@ -63,10 +63,102 @@ async function findAll() {
 
 // --- FIND ITEM BY ID (Basic for now) ---
 async function findById(id) {
-    const sql = 'SELECT * FROM ITEM WHERE item_id = ?';
-    const [rows] = await db.query(sql, [id]);
-    // TODO: Later, enhance this to JOIN with Book/Movie/Device details
-    return rows[0]; 
+    // 1. Get base item data and category
+    const baseSql = 'SELECT * FROM ITEM WHERE item_id = ?';
+    const [baseRows] = await db.query(baseSql, [id]);
+    if (baseRows.length === 0) {
+        return undefined; // Item not found
+    }
+    const item = baseRows[0];
+
+    // 2. Get category-specific details and creators
+    let details = {};
+    let creators = []; // For authors/directors
+    
+    if (item.category === 'BOOK') {
+        const bookSql = `
+            SELECT b.*, l.name as language_name
+            FROM BOOK b 
+            LEFT JOIN LANGUAGE l ON b.language_id = l.language_id
+            WHERE b.item_id = ?
+        `;
+        const [bookRows] = await db.query(bookSql, [id]);
+        if (bookRows.length > 0) details = bookRows[0];
+
+        // Get Authors
+        const authorSql = `
+            SELECT a.first_name, a.middle_name, a.last_name 
+            FROM BOOK_AUTHOR ba 
+            JOIN AUTHOR a ON ba.author_id = a.author_id 
+            WHERE ba.item_id = ?
+        `;
+        const [authorRows] = await db.query(authorSql, [id]);
+        creators = authorRows.map(a => [a.first_name, a.middle_name, a.last_name].filter(Boolean).join(' '));
+
+    } else if (item.category === 'MOVIE') {
+        const movieSql = `
+            SELECT m.*, l.name as language_name, f.format_name, r.rating_name 
+            FROM MOVIE m
+            LEFT JOIN LANGUAGE l ON m.language_id = l.language_id
+            LEFT JOIN MOVIE_FORMAT f ON m.format_id = f.format_id
+            LEFT JOIN MOVIE_RATING r ON m.rating_id = r.rating_id
+            WHERE m.item_id = ?
+        `;
+        const [movieRows] = await db.query(movieSql, [id]);
+         if (movieRows.length > 0) details = movieRows[0];
+         
+        // Get Directors
+        const directorSql = `
+             SELECT d.first_name, d.middle_name, d.last_name 
+             FROM MOVIE_DIRECTOR md 
+             JOIN DIRECTOR d ON md.director_id = d.director_id 
+             WHERE md.item_id = ? 
+        `; // Assuming MOVIE_DIRECTOR now uses item_id
+        const [directorRows] = await db.query(directorSql, [id]);
+        creators = directorRows.map(d => [d.first_name, d.middle_name, d.last_name].filter(Boolean).join(' '));
+
+    } else if (item.category === 'DEVICE') {
+        const deviceSql = `
+            SELECT d.*, dt.type_name as device_type_name
+            FROM DEVICE d
+            LEFT JOIN DEVICE_TYPE dt ON d.device_type = dt.type_id
+            WHERE d.item_id = ?
+        `;
+        const [deviceRows] = await db.query(deviceSql, [id]);
+         if (deviceRows.length > 0) details = deviceRows[0];
+         // For devices, we can maybe put manufacturer in creators for consistency?
+         if (details.manufacturer) creators = [details.manufacturer];
+    }
+
+    // 3. Get Tags
+    const tagSql = `
+        SELECT t.tag_name 
+        FROM ITEM_TAG it 
+        JOIN TAG t ON it.tag_id = t.tag_id 
+        WHERE it.item_id = ?
+    `;
+    const [tagRows] = await db.query(tagSql, [id]);
+    const tags = tagRows.map(t => t.tag_name);
+
+    // 4. Combine all data
+    // We merge the base 'item' data with the specific 'details'
+    // and add 'creators' and 'tags' arrays
+    const fullItemDetails = {
+        ...item,      // Includes item_id, available, category, description, etc. from ITEM table
+        ...details,   // Includes title, publisher/runtime, page_number/format_name etc. from BOOK/MOVIE/DEVICE
+        creators: creators, // Array of author/director names
+        tags: tags          // Array of tag names
+    };
+
+    // Clean up redundant keys if ITEM and specific table have same column name (e.g., description)
+    // The specific table's value will overwrite the ITEM table's value if spread last.
+    // Ensure `title` is always present, taking it from details if possible.
+    if (!fullItemDetails.title && item.category === 'DEVICE') {
+        fullItemDetails.title = details.device_name; // Use device_name as title for devices
+    }
+
+
+    return fullItemDetails;
 }
 
 // --- DELETE ITEM (Simpler now due to CASCADE) ---

@@ -58,39 +58,71 @@ function ItemDetails({ isStaff }) {
   if (!item) return <div className="page-container"><p>Item data could not be loaded.</p></div>;
   // --- End Loading/Error states ---
 
-  const renderAdditionalInfo = () => {
-  // --- TODO: Fetch specific details ---
-    // This needs the enhanced backend endpoint mentioned above.
-    switch (item.category) { // Use fetched category
+const renderAdditionalInfo = () => {
+    switch (item.category) {
       case "BOOK":
-        return <p>Book details loading... (Requires backend update)</p>;
-      case "MOVIE": // Use MOVIE based on ITEM.category
-        return <p>Movie details loading... (Requires backend update)</p>;
+        return (
+          <>
+            <li><IoBookOutline /> Pages: {item.page_number || 'N/A'}</li>
+            <li><IoMdGlobe /> Language: {item.language_name || 'N/A'}</li>
+            <li><BsTicketPerforated /> Publisher: {item.publisher || 'N/A'}</li>
+            <li><IoCalendarClearOutline /> Published: {item.published_date ? new Date(item.published_date).toLocaleDateString() : 'N/A'}</li>
+             {/* ISBN was removed from BOOK table, maybe display item_id? */}
+             {/* <li><IoBarcodeOutline /> ISBN: {item.isbn_13 || 'N/A'}</li> */}
+          </>
+        );
+      case "MOVIE":
+        return (
+           <>
+            <li><IoTimerOutline /> Runtime: {item.runtime ? `${item.runtime} mins` : 'N/A'}</li>
+            <li><IoMdGlobe /> Language: {item.language_name || 'N/A'}</li>
+            <li><FaRegFileAlt /> Format: {item.format_name || 'N/A'}</li>
+            <li><IoInformationCircleOutline/> Rating: {item.rating_name || 'N/A'}</li>
+            <li><IoCalendarClearOutline /> Released: {item.release_year || 'N/A'}</li>
+          </>
+        );
       case "DEVICE":
-        return <p>Device details loading... (Requires backend update)</p>;
+        return (
+           <>
+            <li><TbBuildingFactory2 /> Manufacturer: {item.manufacturer || 'N/A'}</li>
+            <li><MdDevicesOther /> Type: {item.device_type_name || 'N/A'}</li>
+          </>
+        );
       default: return null;
     }
   };
 
+// Replace the old creatorInfo variable
   const creatorInfo = (() => {
-// --- TODO: Fetch specific details ---
+     // Use the 'creators' array directly from the enhanced findById response
+     const names = item.creators && item.creators.length > 0 ? item.creators.join(', ') : 'N/A';
+     
      if (item.category === "BOOK") {
-       return { label: "written by", names: "Author(s) loading..." };
+       return { label: "written by", names: names };
      }
      if (item.category === "MOVIE") {
-       return { label: "directed by", names: "Director(s) loading..." };
+       return { label: "directed by", names: names };
+     }
+      if (item.category === "DEVICE") {
+        // For devices, 'creators' holds the manufacturer from our backend logic
+       return { label: "manufacturer ", names: names }; 
      }
      return null;
-   })();
+  })();
 
-  const tagsDisplay = "Tags loading..."; // --- TODO: Fetch specific details ---
+  const tagsDisplay = item.tags && item.tags.length > 0 ? item.tags.join(', ') : 'None';
   
   return (
     <div>
       <div className="page-container">
         <div className="item-details-container">
           <div className="thumbnail-section">
-            <img src={thumbnail} alt="Item thumbnail" className="thumbnail" />
+            <img 
+                src={item.thumbnail_url || '/placeholder-image.png'} // Use fetched URL or placeholder
+                alt={item.title || 'Item thumbnail'} // Use fetched title for alt text
+                className="thumbnail" 
+                onError={(e) => { e.target.onerror = null; e.target.src='/placeholder-image.png'; }} // Fallback on error
+            />
             { isStaff && (
               <button className="action-button secondary-button">Edit</button>
             )}

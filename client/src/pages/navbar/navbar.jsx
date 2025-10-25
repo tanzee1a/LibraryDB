@@ -1,6 +1,7 @@
 import './navbar.css'
 import { IoSearch, IoPersonCircleOutline } from "react-icons/io5"
 import sampleData from '../../assets/sample_data.json'
+import { Link } from 'react-router-dom';
 
 const Navbar = ({ isStaff, setIsStaff }) => {
     const filters = sampleData.item_filters;
@@ -12,8 +13,8 @@ const Navbar = ({ isStaff, setIsStaff }) => {
                 <li><a href="/" className="logo">LBRY
                 {/* <img className="navbar-logo" src={Logo} alt="" /> */}
                 </a></li>
-                <li><a href="/item-details">ItemDetails</a></li>
-                <li><a href="/search-results">SearchResults</a></li>
+                <li><a href="/item">ItemDetails</a></li>
+                <li><a href="/search">SearchResults</a></li>
                 {filters.map(filter => (
                 <li key={filter.category} className="dropdown">
                     <a href="#">{filter.category}</a>
@@ -77,7 +78,7 @@ const Navbar = ({ isStaff, setIsStaff }) => {
                 {/* <img className="navbar-logo" src={Logo} alt="" /> */}
                 </a></li>
                 <li><a href="/manage-users">Users</a></li>
-                <li><a href="/search-results">Items</a></li>
+                <li><a href="/search">Items</a></li>
                 <li><a href="/manage-holds">Holds</a></li>
                 <li><a href="/manage-fines">Fines</a></li>
                 <li className="dropdown">

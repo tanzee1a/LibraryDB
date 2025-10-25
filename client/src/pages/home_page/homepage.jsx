@@ -1,17 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './homepage.css'
+import './homepage.css';
 
-
-function homepage() {
+function Homepage() {
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
 
   const handleSearch = (event) => {
-    console.log('Key pressed:', event.key); // <-- Add this log
     if (event.key === 'Enter' && searchTerm.trim()) {
       event.preventDefault();
-      console.log('Navigating to:', `/search?q=${encodeURIComponent(searchTerm.trim())}`); // <-- Add this log
       navigate(`/search?q=${encodeURIComponent(searchTerm.trim())}`);
     }
   };
@@ -24,11 +21,18 @@ function homepage() {
             <h1>Search the world's knowledge</h1>
             <p>Access a world of stories, ideas, and innovation — all in one place.</p>
           </div>
-          <input type="text" placeholder="Curiosity starts here..." className="search-bar" />
+          <input
+            type="text"
+            placeholder="Curiosity starts here..."
+            className="search-bar"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={handleSearch}
+          />
         </div>
       </div>
     </div>
   );
 }
 
-export default homepage
+export default Homepage;
