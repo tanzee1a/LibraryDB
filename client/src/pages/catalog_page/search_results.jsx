@@ -141,37 +141,17 @@ function SearchResults({ isStaff }) {
     }
 
     const renderItemDetails = (item) => {
-        switch(item.item_category) {
-            case "BOOK":
-                return (
-                    <div className="result-details">
-                        <p><strong>Authors:</strong> {item.authors.join(', ')}</p>
-                        <p><strong>Publisher:</strong> {item.publisher}</p>
-                        <p><strong>Year:</strong> {item.publicationDate}</p>
-                        <p><strong>ISBN:</strong> {item.isbn}</p>
-                    </div>
-                )
-            case "MEDIA":
-                return (
-                    <div className="result-details">
-                        <p><strong>Directors:</strong> {item.directors.join(', ')}</p>
-                        <p><strong>Format:</strong> {item.format}</p>
-                        <p><strong>Rating:</strong> {item.rating}</p>
-                        <p><strong>Release Year:</strong> {item.release_year}</p>
-                    </div>
-                )
-            case "DEVICE":
-                return (
-                    <div className="result-details">
-                        <p><strong>Manufacturer:</strong> {item.manufacturer}</p>
-                        <p><strong>Software:</strong> {item.software}</p>
-                        <p><strong>Device Type:</strong> {item.device_type}</p>
-                    </div>
-                )
-            default:
-                return null;
+        if (item.category === "BOOK") {
+            return <p><small><strong>Authors:</strong> {item.creators || 'N/A'}</small></p>;
         }
-    }
+        if (item.category === "MOVIE") {
+            return <p><small><strong>Directors:</strong> {item.creators || 'N/A'}</small></p>;
+        }
+        if (item.category === "DEVICE") {
+            return <p><small><strong>Manufacturer:</strong> {item.creators || 'N/A'}</small></p>;
+        }
+        return null;
+    };
 
     const renderItemActionButtons = (item) => {
         if(isStaff) return;
@@ -254,9 +234,10 @@ function SearchResults({ isStaff }) {
                                 </div>
                                 <div className='result-text-info'>
                                     <h3 className="result-title">
-                                    <a href={`/item/${item.id}`} className="result-link">
-                                        {item.title}
-                                    </a>
+                                     {/* --- MODIFIED --- Use Link component */}
+                                    <Link to={`/item/${item.item_id}`} className="result-link">
+                                        {item.title} 
+                                    </Link>
                                     </h3>
                                     <div className="result-description">
                                         {/* --- MODIFIED --- Use API data */}
@@ -271,10 +252,11 @@ function SearchResults({ isStaff }) {
                                     </div>
                                 </div>
                                 <div className="result-actions">
+                                     {/* --- TODO: Connect these buttons --- */}
                                     {item.available > 0 ? (
-                                        <button className="action-button primary-button">Borrow</button>
+                                        <button className="btn primary">Request Pickup</button>
                                     ) : (
-                                        <button className="action-button secondary-button">Place Hold</button>
+                                        <button className="btn secondary">Place Waitlist Hold</button>
                                     )}
                                 </div>
                             </div>
