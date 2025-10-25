@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { IoTimeOutline } from 'react-icons/io5';
+// Remove IoTimeOutline if no longer needed
 
 export default function BorrowHistory() {
   const [history, setHistory] = useState([]);
@@ -7,7 +7,7 @@ export default function BorrowHistory() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/my-history') // Fetch from your history endpoint
+    fetch('http://localhost:5000/api/my-history') // Or Render URL
       .then(r => { if (!r.ok) throw new Error('Network response was not ok'); return r.json(); })
       .then(data => { setHistory(data || []); setLoading(false); })
       .catch((err) => { console.error("Fetch History Error:", err); setError('Could not load borrow history.'); setLoading(false); });
@@ -18,7 +18,8 @@ export default function BorrowHistory() {
   if (!history.length) {
     return (
       <div className="list-item" style={{ padding: '8px 0' }}>
-        <div className="thumb-icon" aria-hidden="true"><IoTimeOutline /></div>
+         {/* You can keep an icon here if you like */}
+        <div className="thumb-icon" aria-hidden="true"><IoTimeOutline /></div> 
         <div>Your past borrows will appear here.</div>
       </div>
     );
@@ -28,7 +29,13 @@ export default function BorrowHistory() {
     <ul className="list">
       {history.map(b => (
         <li key={b.borrow_id} className="list-item">
-          <div className="thumb-icon" aria-hidden="true"><IoTimeOutline /></div>
+          {/* Replace Icon with Image */}
+          <img 
+              src={b.thumbnail_url || '/placeholder-image.png'} 
+              alt={b.title} 
+              className="thumb"
+              onError={(e) => { e.target.onerror = null; e.target.src='/placeholder-image.png'; }}
+            />
           <div>
             <div className="item-title">{b.title}</div>
             <div className="item-sub">
@@ -36,9 +43,9 @@ export default function BorrowHistory() {
               {b.status_name === 'Lost' && ' (Marked as Lost)'} 
             </div>
           </div>
+           {/* --- REMOVED "Borrow Again" BUTTON --- */}
           <div>
-             {/* "Borrow Again" button - functionality not implemented yet */}
-            <button className="btn">Borrow Again</button>
+             {/* No button needed here, or perhaps link to item details page? */}
           </div>
         </li>
       ))}

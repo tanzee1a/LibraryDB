@@ -121,29 +121,42 @@
 }
 .section-header .icon { font-size: 22px; color: var(--primary); }
 
-/* Lists */
-.list { list-style: none; padding: 0; margin: 0; }
+
+.thumb, .thumb-icon {
+  width: 50px;
+  height: 75px;
+  border-radius: 4px; 
+  display: grid; 
+  place-items: center;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  overflow: hidden; 
+}
+
+.thumb { 
+  object-fit: contain;
+  background-color: var(--panel-2);
+}
+
+.thumb-icon {
+  font-size: 24px; 
+  color: var(--muted);
+  background: var(--panel-2);
+}
 
 .list-item {
   display: grid;
-  grid-template-columns: 40px 1fr auto;
+  grid-template-columns: 50px 1fr auto;
   gap: 14px;
   align-items: center;
   border-top: 1px solid var(--border);
   padding: 16px 0;
 }
 
-.list-item:first-child { border-top: 0; padding-top: 4px; }
-
-.thumb, .thumb-icon {
-  width: 40px; height: 40px;
-  border-radius: 8px;
-  display: grid; place-items: center;
-  background: var(--panel-2);
-  border: 1px solid var(--border);
+.list-item:first-child { 
+  border-top: 0; 
+  padding-top: 4px;
 }
-
-.thumb { object-fit: cover; }
 
 .item-title { font-weight: 600; }
 .item-sub { color: var(--muted); font-size: 13px; }
@@ -165,7 +178,7 @@
 
 .btn + .btn { margin-left: 8px; }
 
-/* Profile card (icon instead of photo) */
+/* Profile card */
 .profile-card {
   display: grid;
   grid-template-columns: 48px 1fr auto;

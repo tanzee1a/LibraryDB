@@ -290,6 +290,7 @@ async function placeWaitlistHold(itemId, userId) {
     }
 }
 
+/*
 // --- Get Loans for User (Updated for status_id and title COALESCE) ---
 async function findLoansByUserId(userId) {
     const loanedOutStatusId = await getStatusId(db, 'Loaned Out');
@@ -309,7 +310,28 @@ async function findLoansByUserId(userId) {
     const [rows] = await db.query(sql, [userId, loanedOutStatusId]);
     return rows;
 }
+*/
 
+async function findLoansByUserId(userId) {
+    const loanedOutStatusId = await getStatusId(db, 'Loaned Out');
+    const sql = `
+        SELECT 
+            b.borrow_id, 
+            b.item_id,
+            b.due_date, 
+            COALESCE(bk.title, m.title, d.device_name) AS title,
+            i.thumbnail_url -- <<< ADD THIS LINE
+        FROM BORROW b
+        JOIN ITEM i ON b.item_id = i.item_id
+        LEFT JOIN BOOK bk ON i.item_id = bk.item_id AND i.category = 'BOOK'
+        LEFT JOIN MOVIE m ON i.item_id = m.item_id AND i.category = 'MOVIE'
+        LEFT JOIN DEVICE d ON i.item_id = d.item_id AND i.category = 'DEVICE'
+        WHERE b.user_id = ? AND b.status_id = ?;
+    `;
+    const [rows] = await db.query(sql, [userId, loanedOutStatusId]);
+    return rows;
+}
+/*
 // --- Get History for User (Updated) ---
 async function findLoanHistoryByUserId(userId) {
      const returnedStatusId = await getStatusId(db, 'Returned');
@@ -321,6 +343,30 @@ async function findLoanHistoryByUserId(userId) {
             b.return_date,
             COALESCE(bk.title, m.title, d.device_name) AS title,
             bs.status_name
+        FROM BORROW b
+        JOIN ITEM i ON b.item_id = i.item_id
+        JOIN BORROW_STATUS bs ON b.status_id = bs.status_id
+        LEFT JOIN BOOK bk ON i.item_id = bk.item_id AND i.category = 'BOOK'
+        LEFT JOIN MOVIE m ON i.item_id = m.item_id AND i.category = 'MOVIE'
+        LEFT JOIN DEVICE d ON i.item_id = d.item_id AND i.category = 'DEVICE'
+        WHERE b.user_id = ? AND b.status_id IN (?, ?); -- Returned or Lost
+    `;
+    const [rows] = await db.query(sql, [userId, returnedStatusId, lostStatusId]);
+    return rows;
+}
+*/
+
+async function findLoanHistoryByUserId(userId) {
+     const returnedStatusId = await getStatusId(db, 'Returned');
+     const lostStatusId = await getStatusId(db, 'Lost');
+     const sql = `
+        SELECT 
+            b.borrow_id, 
+            b.item_id,
+            b.return_date,
+            COALESCE(bk.title, m.title, d.device_name) AS title,
+            bs.status_name,
+            i.thumbnail_url -- <<< ADD THIS LINE
         FROM BORROW b
         JOIN ITEM i ON b.item_id = i.item_id
         JOIN BORROW_STATUS bs ON b.status_id = bs.status_id
