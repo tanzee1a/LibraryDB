@@ -1,33 +1,109 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { IoWalletOutline } from 'react-icons/io5';
 
-export default function Fines() {
-  // Wire this to your API when ready
-  const fines = [];
+const Fines = () => {
+  const [fines, setFines] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  if (!fines.length) {
-    return (
-      <div className="list-item" style={{padding: '8px 0'}}>
-        <div className="thumb-icon" aria-hidden="true"><IoWalletOutline /></div>
-        <div>No outstanding fines. 🎉</div>
-      </div>
-    );
-  }
+  // --- Fetch Fines ---
+  const fetchFines = () => {
+    setLoading(true);
+    setError(null);
+    fetch('http://localhost:5000/api/my-fines') // Fetch from your fines endpoint
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch fines');
+        return res.json();
+       })
+      .then(data => {
+        setFines(data || []);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Failed to fetch fines:", err);
+        setError(err.message);
+        setLoading(false);
+      });
+  };
+
+  useEffect(() => {
+    fetchFines();
+  }, []); 
+
+  // --- Handle Pay Button Click ---
+  const handlePayFine = (fineId) => {
+    fetch(`http://localhost:5000/api/fines/${fineId}/pay`, { method: 'POST' }) // Call pay endpoint
+      .then(res => {
+        if (!res.ok) throw new Error('Payment failed');
+        return res.json();
+      })
+      .then(() => {
+        fetchFines(); // Refresh list after paying
+      })
+      .catch(err => {
+        console.error("Failed to pay fine:", err);
+        alert(`Error: ${err.message}`); 
+      });
+  };
+
+  // --- Render Logic ---
+  if (loading) return <div className="dashboard-section"><h3>Fines</h3><p>Loading fines...</p></div>;
+  if (error) return <div className="dashboard-section"><h3>Fines</h3><p>Error loading fines: {error}</p></div>;
+
+  const unpaidFines = fines.filter(fine => !fine.date_paid && !fine.waived_at);
+  const paidFines = fines.filter(fine => fine.date_paid || fine.waived_at);
 
   return (
-    <ul className="list">
-      {fines.map(f => (
-        <li key={f.fine_id} className="list-item">
-          <div className="thumb-icon" aria-hidden="true"><IoWalletOutline /></div>
-          <div>
-            <div className="item-title">Fine #{f.fine_id}</div>
-            <div className="item-sub">{new Date(f.date_issued).toLocaleDateString()} · ${f.amount}</div>
-          </div>
-          <div>
-            <button className="btn primary">Pay</button>
-          </div>
-        </li>
-      ))}
-    </ul>
+    <div className="dashboard-section">
+      <h3>Outstanding Fines</h3>
+      {unpaidFines.length === 0 ? (
+        <p>You have no outstanding fines!</p>
+      ) : (
+        <ul className="list">
+          {unpaidFines.map(fine => (
+            <li key={fine.fine_id} className="list-item">
+              <div className="thumb-icon" aria-hidden="true"><IoWalletOutline /></div>
+              <div>
+                  <div className="item-title">${Number(fine.amount).toFixed(2)} - {fine.fee_type}</div>
+                 <div className="item-sub">For: {fine.item_title} (Issued: {new Date(fine.date_issued).toLocaleDateString()})</div>
+                 {fine.notes && <div className="item-sub">Note: {fine.notes}</div>}
+              </div>
+              <div>
+                <button 
+                  onClick={() => handlePayFine(fine.fine_id)} 
+                  className="btn primary"
+                >
+                  Pay Fine
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {paidFines.length > 0 && (
+        <>
+          <h4 style={{ marginTop: '20px' }}>Paid / Waived Fines</h4>
+          <ul className="list">
+            {paidFines.map(fine => (
+               <li key={fine.fine_id} className="list-item" style={{ opacity: 0.6 }}>
+                 <div className="thumb-icon" aria-hidden="true"><IoWalletOutline /></div>
+                 <div>
+                    <div className="item-title">${Number(fine.amount).toFixed(2)} - {fine.fee_type}</div>
+                    <div className="item-sub">For: {fine.item_title}</div>
+                    <div className="item-sub">
+                     {fine.waived_at 
+                       ? `Waived: ${new Date(fine.waived_at).toLocaleDateString()} (${fine.waived_reason || 'No reason'})` 
+                       : `Paid: ${new Date(fine.date_paid).toLocaleDateString()}`}
+                    </div>
+                 </div>
+               </li>
+             ))}
+          </ul>
+        </>
+      )}
+    </div>
   );
-}
+};
+
+export default Fines;
