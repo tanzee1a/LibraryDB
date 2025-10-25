@@ -6,8 +6,25 @@ export default function UserProfile() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    
+    // 1. Retrieve the token using the correct key
+    const token = localStorage.getItem('authToken'); 
+
+    if (!token) {
+        console.error("Authentication Error: No token found. User needs to log in.");
+        setLoading(false);
+        // You might want to redirect to the login page here
+        return; 
+    }
+
+    // 2. Construct the headers object with the Authorization header
+    const headers = {
+      'Content-Type': 'application/json',
+      // KEY FIX: Attach the token to authorize the request
+      'Authorization': `Bearer ${token}` 
+    };
     // NOTE: You need to create this '/api/my-profile' endpoint on the backend!
-    fetch('http://localhost:5000/api/my-profile') 
+    fetch('http://localhost:5000/api/my-profile', { headers }) 
       .then(res => res.ok ? res.json() : Promise.reject('Failed fetch'))
       .then(data => {
         setUser(data);
