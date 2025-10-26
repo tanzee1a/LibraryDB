@@ -114,9 +114,7 @@ const Navbar = ({ isStaff, setIsStaff }) => {
                             <div className="category-column">
                                 <p>Profile</p>
                                 <a href="/login">Log in</a>
-                                <a href="#">Your Borrows</a>
-                                <a href="#">Your Holds</a>
-                                <a href="#">Account</a>
+                                <a href="/staff-dashboard">Dashboard</a>
                             </div>
                         </div>
                     </div>
