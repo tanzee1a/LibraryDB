@@ -3,10 +3,11 @@ const { getPostData } = require('../utils');
 
 // @desc User requests pickup for an available item
 // @route POST /api/request/:itemId
+// REQUIRES: protect middleware (sets req.userId)
 async function requestPickup(req, res, itemId) {
     try {
-        const test_user_id = 'U176124397339'; // TODO: Replace with real user ID from auth
-        const result = await Loan.requestPickup(itemId, test_user_id);
+        const userId = req.userId; // 🔑 Sourced from auth middleware
+        const result = await Loan.requestPickup(itemId, userId);
         res.writeHead(201, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify(result));
     } catch (error) {
@@ -64,10 +65,11 @@ async function markLost(req, res, borrowId) {
 
 // @desc User places a hold on an UNAVAILABLE item (Waitlist)
 // @route POST /api/waitlist/:itemId
+// REQUIRES: protect middleware (sets req.userId)
 async function placeWaitlistHold(req, res, itemId) {
     try {
-        const test_user_id = 'U176124397339'; // TODO: Replace with real user ID from auth
-        const result = await Loan.placeWaitlistHold(itemId, test_user_id);
+        const userId = req.userId; // 🔑 Sourced from auth middleware
+        const result = await Loan.placeWaitlistHold(itemId, userId);
         res.writeHead(201, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify(result));
     } catch (error) {
@@ -82,10 +84,11 @@ async function placeWaitlistHold(req, res, itemId) {
 
 // @desc Get all active loans for the current user
 // @route GET /api/my-loans
+// REQUIRES: protect middleware (sets req.userId)
 async function getMyLoans(req, res) {
     try {
-        const test_user_id = 'U176124397339'; // TODO: Replace with real user ID from auth
-        const loans = await Loan.findLoansByUserId(test_user_id);
+        const userId = req.userId; // 🔑 Sourced from auth middleware
+        const loans = await Loan.findLoansByUserId(userId);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify(loans));
     } catch (error) {
@@ -97,10 +100,11 @@ async function getMyLoans(req, res) {
 
 // @desc Get loan history for the current user
 // @route GET /api/my-history
+// REQUIRES: protect middleware (sets req.userId)
 async function getMyHistory(req, res) {
     try {
-        const test_user_id = 'U176124397339'; // TODO: Replace with real user ID from auth
-        const history = await Loan.findLoanHistoryByUserId(test_user_id);
+        const userId = req.userId; // 🔑 Sourced from auth middleware
+        const history = await Loan.findLoanHistoryByUserId(userId);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify(history));
     } catch (error) {
@@ -112,10 +116,11 @@ async function getMyHistory(req, res) {
 
 // @desc Get active holds (pickup requests) for the current user
 // @route GET /api/my-holds
+// REQUIRES: protect middleware (sets req.userId)
 async function getMyHolds(req, res) {
     try {
-        const test_user_id = 'U176124397339'; // TODO: Replace with real user ID from auth
-        const holds = await Loan.findHoldsByUserId(test_user_id);
+        const userId = req.userId; // 🔑 Sourced from auth middleware
+        const holds = await Loan.findHoldsByUserId(userId);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify(holds));
     } catch (error) {
@@ -127,10 +132,11 @@ async function getMyHolds(req, res) {
 
 // @desc Get waitlist items for the current user
 // @route GET /api/my-waitlist
+// REQUIRES: protect middleware (sets req.userId)
 async function getMyWaitlist(req, res) {
     try {
-        const test_user_id = 'U176124397339'; // TODO: Replace with real user ID from auth
-        const waitlist = await Loan.findWaitlistByUserId(test_user_id);
+        const userId = req.userId; // 🔑 Sourced from auth middleware
+        const waitlist = await Loan.findWaitlistByUserId(userId);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify(waitlist));
     } catch (error) {
@@ -142,10 +148,11 @@ async function getMyWaitlist(req, res) {
 
 // @desc Get fines for the current user
 // @route GET /api/my-fines
+// REQUIRES: protect middleware (sets req.userId)
 async function getMyFines(req, res) {
     try {
-        const test_user_id = 'U176124397339'; // TODO: Replace with real user ID from auth
-        const fines = await Loan.findFinesByUserId(test_user_id);
+        const userId = req.userId; // 🔑 Sourced from auth middleware
+        const fines = await Loan.findFinesByUserId(userId);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify(fines));
     } catch (error) {
