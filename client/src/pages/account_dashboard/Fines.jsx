@@ -8,9 +8,25 @@ const Fines = () => {
 
   // --- Fetch Fines ---
   const fetchFines = () => {
+    // 1. Retrieve the token from storage
+    const token = localStorage.getItem('authToken'); 
+
+    if (!token) {
+        console.error("Authentication Error: No token found. User needs to log in.");
+        setError('Please log in to view your borrow history.');
+        setLoading(false);
+        return; 
+    }
+
+    // 2. Construct the headers object with the Authorization header
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}` // 🔑 KEY FIX: Attach the token
+    };
+
     setLoading(true);
     setError(null);
-    fetch('http://localhost:5000/api/my-fines') // Fetch from your fines endpoint
+    fetch('http://localhost:5000/api/my-fines', { headers }) // Fetch from your fines endpoint
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch fines');
         return res.json();

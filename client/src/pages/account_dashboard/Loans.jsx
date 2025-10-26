@@ -8,9 +8,25 @@ export default function Loans() {
 
   // --- Fetch Loans ---
   const fetchLoans = () => {
+    // 1. Retrieve the token from storage
+    const token = localStorage.getItem('authToken'); 
+
+    if (!token) {
+        console.error("Authentication Error: No token found. User needs to log in.");
+        setError('Please log in to view your borrow history.');
+        setLoading(false);
+        return; 
+    }
+
+    // 2. Construct the headers object with the Authorization header
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}` // 🔑 KEY FIX: Attach the token
+    };
+
     setLoading(true);
     setError(''); 
-    fetch('http://localhost:5000/api/my-loans') // Or your Render URL
+    fetch('http://localhost:5000/api/my-loans', { headers }) // Or your Render URL
       .then(r => { if (!r.ok) throw new Error('Network response was not ok'); return r.json(); })
       .then(data => { setItems(data || []); setLoading(false); })
       .catch((err) => { console.error("Fetch Loans Error:", err); setError('Could not load loans.'); setLoading(false); });

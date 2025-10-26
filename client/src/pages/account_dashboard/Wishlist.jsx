@@ -9,11 +9,27 @@ export default function Wishlist() {
 
   // --- Fetch Holds and Wishlist ---
   const fetchData = () => {
+    // 1. Retrieve the token from storage
+    const token = localStorage.getItem('authToken'); 
+
+    if (!token) {
+        console.error("Authentication Error: No token found. User needs to log in.");
+        setError('Please log in to view your borrow history.');
+        setLoading(false);
+        return; 
+    }
+
+    // 2. Construct the headers object with the Authorization header
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}` // 🔑 KEY FIX: Attach the token
+    };
+
     setLoading(true);
     setError('');
     Promise.all([
-      fetch('http://localhost:5000/api/my-holds').then(r => r.ok ? r.json() : Promise.reject('Failed holds fetch')),
-      fetch('http://localhost:5000/api/my-wishlist').then(r => r.ok ? r.json() : Promise.reject('Failed wishlist fetch'))
+      fetch('http://localhost:5000/api/my-holds', { headers }).then(r => r.ok ? r.json() : Promise.reject('Failed holds fetch')),
+      fetch('http://localhost:5000/api/my-wishlist', { headers }).then(r => r.ok ? r.json() : Promise.reject('Failed wishlist fetch'))
     ])
     .then(([holdsData, wishlistData]) => {
       setHolds(holdsData || []);
