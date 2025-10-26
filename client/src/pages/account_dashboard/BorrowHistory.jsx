@@ -7,7 +7,23 @@ export default function BorrowHistory() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/my-history') // Or Render URL
+    // 1. Retrieve the token from storage
+    const token = localStorage.getItem('authToken'); 
+
+    if (!token) {
+        console.error("Authentication Error: No token found. User needs to log in.");
+        setError('Please log in to view your borrow history.');
+        setLoading(false);
+        return; 
+    }
+
+    // 2. Construct the headers object with the Authorization header
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}` // 🔑 KEY FIX: Attach the token
+    };
+
+    fetch('http://localhost:5000/api/my-history', { headers }) // Or Render URL
       .then(r => { if (!r.ok) throw new Error('Network response was not ok'); return r.json(); })
       .then(data => { setHistory(data || []); setLoading(false); })
       .catch((err) => { console.error("Fetch History Error:", err); setError('Could not load borrow history.'); setLoading(false); });

@@ -23,21 +23,20 @@ const { protect } = require('./middleware/authMiddleware'); // <--- ADD THIS IMP
 
 const server = http.createServer((req, res) => {
     // --- CORS Headers ---
-    // IMPORTANT: Replace '*' with your Vercel URL in production for security
     res.setHeader('Access-Control-Allow-Origin', '*'); 
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
     // Handle CORS preflight requests
     if (req.method === 'OPTIONS') {
-        res.writeHead(204); // Use 204 No Content for OPTIONS
+        res.writeHead(204);
         res.end();
         return;
     }
 
     // --- Routing ---
     try {
-        // --- Item Routes ---
+        // --- Item Routes --- (Unchanged)
         if (req.url === '/api/items' && req.method === 'GET') {
             getItems(req, res);
         } else if (req.url.match(/^\/api\/items\/([a-zA-Z0-9-]+)$/) && req.method === 'GET') {
@@ -63,77 +62,78 @@ const server = http.createServer((req, res) => {
             deleteItem(req, res, id);
         }
 
-        // --- Loan/Hold/Waitlist Routes ---
+        // --- Loan/Hold/Waitlist Routes (User Actions) ---
         else if (req.url.match(/^\/api\/request\/([a-zA-Z0-9-]+)$/) && req.method === 'POST') {
             const itemId = req.url.split('/')[3];
-            requestPickup(req, res, itemId); // User requests pickup
+            // FIX: Ensure req and res are passed to the controller
+            protect(req, res, (req, res) => requestPickup(req, res, itemId)); 
         } else if (req.url.match(/^\/api\/holds\/([0-9]+)\/pickup$/) && req.method === 'POST') {
             const holdId = req.url.split('/')[3];
-            pickupHold(req, res, holdId); // Staff checks out hold
+            // FIX: Wrap staff routes in protect too (assuming staff is logged in)
+            protect(req, res, (req, res) => pickupHold(req, res, holdId)); 
         } else if (req.url.match(/^\/api\/return\/([A-Za-z0-9-]+)$/) && req.method === 'POST') {
             const borrowId = req.url.split('/')[3];
-            returnItem(req, res, borrowId); // Staff returns item
+            protect(req, res, (req, res) => returnItem(req, res, borrowId)); 
         } else if (req.url.match(/^\/api\/borrows\/([A-Za-z0-9-]+)\/lost$/) && req.method === 'POST') {
             const borrowId = req.url.split('/')[3];
-            markLost(req, res, borrowId); // Staff marks lost
+            protect(req, res, (req, res) => markLost(req, res, borrowId)); 
         } else if (req.url.match(/^\/api\/waitlist\/([a-zA-Z0-9-]+)$/) && req.method === 'POST') {
             const itemId = req.url.split('/')[3];
-            placeWaitlistHold(req, res, itemId); // User waitlists unavailable item
+            // FIX: Ensure req and res are passed to the controller
+            protect(req, res, (req, res) => placeWaitlistHold(req, res, itemId)); 
         }
 
-        // --- User Data Routes ---
+        // --- User Data Routes (My- Routes) ---
         else if (req.url === '/api/my-loans' && req.method === 'GET') {
-            getMyLoans(req, res);
+            // FIX: Correctly wrap the controller function
+            protect(req, res, (req, res) => getMyLoans(req, res));
         } else if (req.url === '/api/my-history' && req.method === 'GET') {
-            getMyHistory(req, res);
-        } else if (req.url === '/api/my-holds' && req.method === 'GET') { // Added holds
-            getMyHolds(req, res);
+            // FIX: Correctly wrap the controller function (This fixes your primary error)
+            protect(req, res, (req, res) => getMyHistory(req, res)); 
+        } else if (req.url === '/api/my-holds' && req.method === 'GET') {
+            // FIX: Correctly wrap the controller function
+            protect(req, res, (req, res) => getMyHolds(req, res)); 
         } else if (req.url === '/api/my-waitlist' && req.method === 'GET') {
-            getMyWaitlist(req, res);
-        } else if (req.url === '/api/my-fines' && req.method === 'GET') { // Added fines
-            getMyFines(req, res);
-        } 
-        // Get My Fines
-        else if (req.url === '/api/my-fines' && req.method === 'GET') { 
-            getMyFines(req, res);
-        } 
+            // FIX: Correctly wrap the controller function
+            protect(req, res, (req, res) => getMyWaitlist(req, res)); 
+        } else if (req.url === '/api/my-fines' && req.method === 'GET') {
+            // FIX: Correctly wrap the controller function
+            protect(req, res, (req, res) => getMyFines(req, res)); 
+        }
         // Get My Profile
         else if (req.url === '/api/my-profile' && req.method === 'GET') {
-            // 1. Run the 'protect' middleware
-            protect(req, res, () => {
-                // 2. If 'protect' calls next(), then run the controller
-                getMyProfile(req, res);
-            });
+            // FIX: Correctly wrap the controller function
+            protect(req, res, (req, res) => getMyProfile(req, res));
         }
         
         // --- Fine Management Routes (Staff) ---
          else if (req.url.match(/^\/api\/fines\/([0-9]+)\/pay$/) && req.method === 'POST') {
             const fineId = req.url.split('/')[3];
-            payFine(req, res, fineId);
+            protect(req, res, (req, res) => payFine(req, res, fineId));
         } else if (req.url.match(/^\/api\/fines\/([0-9]+)\/waive$/) && req.method === 'POST') {
             const fineId = req.url.split('/')[3];
-            waiveFine(req, res, fineId);
+            protect(req, res, (req, res) => waiveFine(req, res, fineId));
         }
 
         // --- Wishlist Routes ---
         else if (req.url.match(/^\/api\/wishlist\/([a-zA-Z0-9-]+)$/) && req.method === 'POST') {
             const itemId = req.url.split('/')[3];
-            saveItem(req, res, itemId);
+            protect(req, res, (req, res) => saveItem(req, res, itemId));
         } else if (req.url.match(/^\/api\/wishlist\/([a-zA-Z0-9-]+)$/) && req.method === 'DELETE') {
             const itemId = req.url.split('/')[3];
-            unsaveItem(req, res, itemId);
+            protect(req, res, (req, res) => unsaveItem(req, res, itemId));
         } else if (req.url === '/api/my-wishlist' && req.method === 'GET') {
-            getMyWishlist(req, res);
+            protect(req, res, (req, res) => getMyWishlist(req, res));
         }
 
-        // --- Auth Routes ---
+        // --- Auth Routes --- (Unchanged, not protected)
         else if (req.url === '/api/register' && req.method === 'POST') {
             registerUser(req, res);
         } else if (req.url === '/api/login' && req.method === 'POST') {
             loginUser(req, res);
         } 
 
-        // --- Search Route ---
+        // --- Search Route --- (Unchanged, not protected)
         else if (req.url.startsWith('/api/search') && req.method === 'GET') {
             searchItems(req, res);
         }

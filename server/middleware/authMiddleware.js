@@ -1,6 +1,6 @@
-// authMiddleware.js (New file)
+// authMiddleware.js (Corrected version)
 const jwt = require('jsonwebtoken');
-const SECRET = process.env.JWT_SECRET || 'your-super-secret-key'; // MUST MATCH THE SECRET IN loginController
+const SECRET = process.env.JWT_SECRET || 'your-super-secret-key';
 
 // Middleware to protect routes
 function protect(req, res, next) {
@@ -11,18 +11,19 @@ function protect(req, res, next) {
         return res.end(JSON.stringify({ message: 'Not authorized, no token' }));
     }
 
-    const token = authHeader.split(' ')[1]; // "Bearer TOKEN" -> [1] is the TOKEN
+    const token = authHeader.split(' ')[1];
 
     try {
         // 2. Verify the token
         const decoded = jwt.verify(token, SECRET);
 
         // 3. Attach the user_id from the token payload to the request
-        // This 'id' matches the property name used in loginUser: { id: user.user_id, ... }
         req.userId = decoded.id; 
         
         // 4. Proceed to the next middleware or controller function
-        next(); 
+        // 🔑 THE FIX: Pass req and res so the controller wrapper receives them!
+        next(req, res); // <--- CHANGE THIS LINE
+        
     } catch (error) {
         console.error("Token verification error:", error.message);
         res.writeHead(401, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
