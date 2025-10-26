@@ -1,6 +1,7 @@
 import './search_results.css'
 import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid';
 
 import { FaPlus } from "react-icons/fa"
 
@@ -103,38 +104,126 @@ function SearchResults({ isStaff }) {
     };
 
     const [showAddItemSheet, setShowAddItemSheet] = useState(false);
-    const [newItem, setNewItem] = useState({
+    const initialNewItemState = {
+        item_id: '',
         title: '',
         description: '',
         thumbnail_url: '',
         shelf_location: '',
         tags: '',
-        item_category: 'BOOK', // default
+        category: 'BOOK',
         authors: '',
         publisher: '',
-        publication_date: '',
-        language: '',
+        published_date: '',
+        language_id: '1',
         page_number: '',
-        isbn: '',
         directors: '',
         release_year: '',
         runtime: '',
-        format: '',
-        rating: '',
+        format_id: '1',
+        rating_id: '1',
         manufacturer: '',
-        device_type: ''
-    });
+        device_type: '1',
+        quantity: '1'
+    };
+    const [newItem, setNewItem] = useState(initialNewItemState);
+    const [isSubmitting, setIsSubmitting] = useState(false); // For loading state on submit
+    const [submitError, setSubmitError] = useState('');
 
     function handleItemInputChange(e) {
         const { name, value } = e.target;
         setNewItem(prev => ({ ...prev, [name]: value }));
     }
 
-    function handleAddItemSubmit(e) {
+    async function handleAddItemSubmit(e) {
         e.preventDefault();
-        console.log("New Item Added:", newItem);
-        // send `newItem` to backend or state
-        setShowAddItemSheet(false);
+        setIsSubmitting(true);
+        setSubmitError('');
+
+        // 1. Determine Endpoint and Prepare Base Data
+        let endpoint = '';
+        const commonData = {
+            item_id: newItem.item_id,
+            title: newItem.title,
+            description: newItem.description,
+            thumbnail_url: newItem.thumbnail_url || null, // Allow empty URL
+            shelf_location: newItem.shelf_location || null,
+            quantity: parseInt(newItem.quantity, 10) || 0, // Ensure it's a number
+            tags: newItem.tags ? newItem.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [], // Split tags into array
+        };
+
+        let specificData = {};
+
+        // 2. Prepare Category-Specific Data and Endpoint
+        if (newItem.category === 'BOOK') {
+            endpoint = '/api/items/book';
+            specificData = {
+                // isbn_13: newItem.isbn, // Removed
+                publisher: newItem.publisher,
+                published_date: newItem.published_date,
+                language_id: parseInt(newItem.language_id, 10) || 1, // Use selected/default ID
+                page_number: parseInt(newItem.page_number, 10) || 0,
+                authors: newItem.authors ? newItem.authors.split(',').map(a => a.trim()).filter(Boolean) : [], // Split authors
+            };
+        } else if (newItem.category === 'MOVIE') { // Changed from MEDIA
+            endpoint = '/api/items/movie';
+             // --- TODO: Generate or get a unique movie_id (like UPC) if needed by backend ---
+            // Let's assume item_id is sufficient for now based on previous discussion
+            specificData = {
+                // movie_id: `MOV-${uuidv4().substring(0, 8)}`, // Example if needed
+                language_id: parseInt(newItem.language_id, 10) || 1,
+                format_id: parseInt(newItem.format_id, 10) || 1, // Use selected/default ID
+                runtime: parseInt(newItem.runtime, 10) || 0,
+                rating_id: parseInt(newItem.rating_id, 10) || 1, // Use selected/default ID
+                release_year: parseInt(newItem.release_year, 10) || null,
+                directors: newItem.directors ? newItem.directors.split(',').map(d => d.trim()).filter(Boolean) : [], // Split directors
+            };
+        } else if (newItem.category === 'DEVICE') {
+            endpoint = '/api/items/device';
+            specificData = {
+                manufacturer: newItem.manufacturer,
+                device_name: newItem.title, // Use title as device_name based on schema
+                device_type: parseInt(newItem.device_type, 10) || 1, // Use selected/default ID
+            };
+             // Device doesn't have its own title field, reuse commonData.title
+             delete specificData.title; 
+             // Device model uses device_name
+             specificData.device_name = commonData.title;
+        } else {
+             setSubmitError('Invalid item category selected.');
+             setIsSubmitting(false);
+             return; // Stop if category is wrong
+        }
+
+        // 3. Combine Data and Make API Call
+        const payload = { ...commonData, ...specificData };
+        console.log("Submitting:", endpoint, payload); // For debugging
+
+        try {
+            const response = await fetch(`http://localhost:5000${endpoint}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `HTTP error ${response.status}`);
+            }
+
+            // Success!
+            console.log("Item Added:", await response.json());
+            setShowAddItemSheet(false);     // Close sheet
+            setNewItem(initialNewItemState); // Reset form
+            // Optionally: Refresh search results list here if needed
+            // fetchSearchResults(); // You'd need to extract fetch logic into a reusable function
+
+        } catch (err) {
+            console.error("Add Item Error:", err);
+            setSubmitError(`Failed to add item: ${err.message}`);
+        } finally {
+            setIsSubmitting(false); // Re-enable button
+        }
     }
 
     const renderItemDetails = (item) => {
@@ -266,75 +355,106 @@ function SearchResults({ isStaff }) {
         </div>
       </div>
         {showAddItemSheet && (
-            <div className="sheet-overlay" onClick={() => setShowAddItemSheet(false)}>
+            <div className="sheet-overlay" onClick={() => !isSubmitting && setShowAddItemSheet(false)}> 
                 <div className="sheet-container" onClick={(e) => e.stopPropagation()}>
                 <h2>Add New Item</h2>
+                {/* Display submission error */}
+                {submitError && <p style={{color: 'red'}}>{submitError}</p>}
+                
                 <form onSubmit={handleAddItemSubmit}>
                     {/* --- Common fields --- */}
                     <label>
-                    Title:
-                    <input type="text" name="title" value={newItem.title} onChange={handleItemInputChange} required className="edit-input" />
+                    Item ID (13 chars): {/* Add this label and input */}
+                    <input 
+                        type="text" 
+                        name="item_id" 
+                        value={newItem.item_id} 
+                        onChange={handleItemInputChange} 
+                        required 
+                        maxLength="13" // Enforce 13 characters
+                        minLength="13" // Enforce 13 characters
+                        className="edit-input" 
+                    />
                     </label>
-                    <label>
-                    Description:
-                    <textarea name="description" value={newItem.description} onChange={handleItemInputChange} required className="edit-input" />
+                    <label> Title: <input type="text" name="title" value={newItem.title} onChange={handleItemInputChange} required className="edit-input" /></label>
+                    <label> Category:
+                        {/* --- MODIFIED: Use category, not item_category --- */}
+                        <select className="edit-input" name="category" value={newItem.category} onChange={handleItemInputChange}>
+                            <option value="BOOK">Book</option>
+                            <option value="MOVIE">Movie</option> {/* Changed from MEDIA */}
+                            <option value="DEVICE">Device</option>
+                        </select>
                     </label>
-                    <label>
-                    Thumbnail URL:
-                    <input type="text" name="thumbnail_url" value={newItem.thumbnail_url} onChange={handleItemInputChange} className="edit-input" />
-                    </label>
-                    <label>
-                    Shelf Location:
-                    <input type="text" name="shelf_location" value={newItem.shelf_location} onChange={handleItemInputChange} className="edit-input" />
-                    </label>
-                    <label>
-                    Tags:
-                    <input type="text" name="tags" value={newItem.tags} onChange={handleItemInputChange} className="edit-input" />
-                    </label>
-
-                    {/* --- Item Category --- */}
-                    <label>
-                    Item Type:
-                    <select className="edit-input" name="item_category" value={newItem.item_category} onChange={handleItemInputChange}>
-                        <option value="BOOK">Book</option>
-                        <option value="MEDIA">Media</option>
-                        <option value="DEVICE">Device</option>
-                    </select>
-                    </label>
+                    <label> Description: <textarea name="description" value={newItem.description} onChange={handleItemInputChange} className="edit-input" /></label>
+                    <label> Thumbnail URL: <input type="url" name="thumbnail_url" value={newItem.thumbnail_url} onChange={handleItemInputChange} className="edit-input" /></label>
+                    <label> Shelf Location: <input type="text" name="shelf_location" value={newItem.shelf_location} onChange={handleItemInputChange} className="edit-input" /></label>
+                    <label> Quantity: <input type="number" name="quantity" min="0" value={newItem.quantity} onChange={handleItemInputChange} required className="edit-input" /></label>
+                    <label> Tags (comma-separated): <input type="text" name="tags" value={newItem.tags} onChange={handleItemInputChange} className="edit-input" /></label>
 
                     {/* --- Conditional Fields --- */}
-                    {newItem.item_category === 'BOOK' && (
+                    {newItem.category === 'BOOK' && (
                     <>
-                        <label>Authors: <input type="text" name="authors" value={newItem.authors} onChange={handleItemInputChange} className="edit-input" /></label>
+                        {/* <label>ISBN: <input type="text" name="isbn" value={newItem.isbn} onChange={handleItemInputChange} className="edit-input" /></label> */}
+                        <label>Authors (comma-separated): <input type="text" name="authors" value={newItem.authors} onChange={handleItemInputChange} className="edit-input" /></label>
                         <label>Publisher: <input type="text" name="publisher" value={newItem.publisher} onChange={handleItemInputChange} className="edit-input" /></label>
-                        <label>Published Date: <input type="date" name="publication_date" value={newItem.publication_date} onChange={handleItemInputChange} className="edit-input" /></label>
-                        <label>Language: <input type="text" name="language" value={newItem.language} onChange={handleItemInputChange} className="edit-input" /></label>
-                        <label>Page Number: <input type="number" name="page_number" value={newItem.page_number} onChange={handleItemInputChange} className="edit-input" /></label>
-                        <label>ISBN: <input type="text" name="isbn" value={newItem.isbn} onChange={handleItemInputChange} className="edit-input" /></label>
+                        <label>Published Date: <input type="date" name="published_date" value={newItem.published_date} onChange={handleItemInputChange} className="edit-input" required/></label>
+                        <label>Language ID: 
+                            <select name="language_id" value={newItem.language_id} onChange={handleItemInputChange} className="edit-input">
+                                <option value="1">English</option> 
+                                <option value="2">Spanish</option>
+                                <option value="6">Japanese</option> 
+                                {/* TODO: Fetch languages dynamically */}
+                            </select>
+                        </label>
+                        <label>Page Number: <input type="number" name="page_number" min="1" value={newItem.page_number} onChange={handleItemInputChange} className="edit-input" required/></label>
                     </>
                     )}
 
-                    {newItem.item_category === 'MEDIA' && (
+                    {newItem.category === 'MOVIE' && ( // Changed from MEDIA
                     <>
-                        <label>Directors: <input type="text" name="directors" value={newItem.directors} onChange={handleItemInputChange} className="edit-input" /></label>
-                        <label>Release Year: <input type="number" name="release_year" value={newItem.release_year} onChange={handleItemInputChange} className="edit-input" /></label>
-                        <label>Runtime (mins): <input type="number" name="runtime" value={newItem.runtime} onChange={handleItemInputChange} className="edit-input" /></label>
-                        <label>Language: <input type="text" name="language" value={newItem.language} onChange={handleItemInputChange} className="edit-input" /></label>
-                        <label>Format: <input type="text" name="format" value={newItem.format} onChange={handleItemInputChange} className="edit-input" /></label>
-                        <label>Rating: <input type="text" name="rating" value={newItem.rating} onChange={handleItemInputChange} className="edit-input" /></label>
+                        <label>Directors (comma-separated): <input type="text" name="directors" value={newItem.directors} onChange={handleItemInputChange} className="edit-input" /></label>
+                        <label>Release Year: <input type="number" name="release_year" min="1800" max={new Date().getFullYear()+1} value={newItem.release_year} onChange={handleItemInputChange} className="edit-input" required/></label>
+                        <label>Runtime (mins): <input type="number" name="runtime" min="1" value={newItem.runtime} onChange={handleItemInputChange} className="edit-input" required/></label>
+                        <label>Language ID: 
+                             <select name="language_id" value={newItem.language_id} onChange={handleItemInputChange} className="edit-input">
+                                <option value="1">English</option> 
+                                <option value="2">Spanish</option>
+                                <option value="6">Japanese</option> 
+                                <option value="12">Korean</option>
+                                {/* TODO: Fetch languages dynamically */}
+                            </select>
+                        </label>
+                        <label>Format ID: 
+                             <select name="format_id" value={newItem.format_id} onChange={handleItemInputChange} className="edit-input">
+                                <option value="1">DVD</option> 
+                                <option value="2">Blu-ray</option>
+                                <option value="3">4K Ultra HD</option>
+                                {/* TODO: Fetch formats dynamically */}
+                            </select>
+                        </label>
+                        <label>Rating ID: 
+                             <select name="rating_id" value={newItem.rating_id} onChange={handleItemInputChange} className="edit-input">
+                                <option value="1">G</option> 
+                                <option value="2">PG</option>
+                                <option value="3">PG-13</option>
+                                <option value="4">R</option>
+                                {/* TODO: Fetch ratings dynamically */}
+                            </select>
+                        </label>
                     </>
                     )}
 
-                    {newItem.item_category === 'DEVICE' && (
+                    {newItem.category === 'DEVICE' && (
                     <>
                         <label>Manufacturer: <input type="text" name="manufacturer" value={newItem.manufacturer} onChange={handleItemInputChange} className="edit-input" /></label>
-                        <label>Device Type:
-                        <select name="device_type" value={newItem.device_type} onChange={handleItemInputChange}>
-                            <option value="">Select...</option>
-                            <option value="Laptop">Laptop</option>
-                            <option value="Tablet">Tablet</option>
-                            <option value="Headphones">Headphones</option>
-                            <option value="Camera">Camera</option>
+                        <label>Device Type ID:
+                         {/* --- MODIFIED: Use device_type ID --- */}
+                        <select name="device_type" value={newItem.device_type} onChange={handleItemInputChange} className="edit-input" required>
+                            <option value="1">Laptops</option>
+                            <option value="2">Tablets</option>
+                            <option value="3">Cameras</option>
+                            <option value="4">Headphones</option>
+                             {/* TODO: Fetch device types dynamically */}
                         </select>
                         </label>
                     </>
@@ -342,11 +462,15 @@ function SearchResults({ isStaff }) {
 
                     {/* --- Actions --- */}
                     <div className="sheet-actions">
-                    <button type="submit" className="action-button primary-button">Add Item</button>
+                    {/* Disable button while submitting */}
+                    <button type="submit" className="action-button primary-button" disabled={isSubmitting}>
+                         {isSubmitting ? 'Adding...' : 'Add Item'}
+                    </button>
                     <button
                         type="button"
                         className="action-button secondary-button"
                         onClick={() => setShowAddItemSheet(false)}
+                        disabled={isSubmitting} // Disable cancel too
                     >
                         Cancel
                     </button>
