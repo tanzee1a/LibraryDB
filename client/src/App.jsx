@@ -11,6 +11,7 @@ import ManageHolds from './pages/main_staff_page/manage_holds.jsx'
 import ManageFines from './pages/main_staff_page/manage_fines.jsx'
 import AccountDashboard from './pages/account_dashboard/AccountDashboard.jsx';
 import StaffDashboard from './pages/staff_dashboard/StaffDashboard.jsx';
+import Reports from './pages/reports/Reports.jsx';
 import Register from './pages/register_page/register.jsx';
 import Navbar from './pages/navbar/navbar.jsx';
 import { useState, useEffect } from 'react';
@@ -42,6 +43,7 @@ function App() {
         <Route path="/account" element={<AccountDashboard />} />
         {/* ADMIN */}
         <Route path="/staff-dashboard" element={<StaffDashboard />} />
+        <Route path="/reports" element={<Reports />} />
         <Route path="/user" element={<UserProfile />} />
         <Route path="/manage-users" element={<ManageUsers />} />
         <Route path="/manage-borrows" element={<ManageBorrows />} />

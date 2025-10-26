@@ -19,6 +19,7 @@ const { registerUser, loginUser } = require('./controllers/loginRegisterControll
 const { saveItem, unsaveItem, getMyWishlist } = require('./controllers/wishlistController');
 const { getMyProfile } = require('./controllers/userController');
 const { searchItems } = require('./controllers/searchController');
+const { getOverdueReport, getPopularityReport, getFineReport } = require('./controllers/reportController');
 
 const server = http.createServer((req, res) => {
     // --- CORS Headers ---
@@ -127,6 +128,15 @@ const server = http.createServer((req, res) => {
         } else if (req.url === '/api/login' && req.method === 'POST') {
             loginUser(req, res);
         } 
+
+        // --- Report Routes ---
+        else if (req.url === '/api/reports/overdue' && req.method === 'GET') {
+            getOverdueReport(req, res);
+        } else if (req.url === '/api/reports/popular' && req.method === 'GET') {
+            getPopularityReport(req, res);
+        } else if (req.url === '/api/reports/fines' && req.method === 'GET') {
+            getFineReport(req, res);
+        }
 
         // --- Search Route ---
         else if (req.url.startsWith('/api/search') && req.method === 'GET') {
