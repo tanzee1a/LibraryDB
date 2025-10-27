@@ -17,12 +17,17 @@ const SECTIONS = [
   { key: 'profile', label: 'Profile', icon: <IoPersonCircleOutline className="nav-icon" /> },
 ];
 
-export default function AccountDashboard() {
+export default function AccountDashboard({ isLoggedIn, setIsLoggedIn, isStaff, setIsStaff }) {
   const [active, setActive] = useState('overview');
 
   return (
     <div className="dashboard-container">
-      <Navbar />
+      <Navbar
+        isLoggedIn={isLoggedIn}
+        setIsLoggedIn={setIsLoggedIn}
+        isStaff={isStaff}
+        setIsStaff={setIsStaff}
+      />
 
       <div className="dashboard-inner">
         <div className="dashboard-layout">

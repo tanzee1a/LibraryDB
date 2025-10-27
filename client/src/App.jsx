@@ -1,53 +1,86 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom"
-import HomePage from './pages/home_page/homepage.jsx'
-import Login from './pages/login_page/login.jsx'
-import Notifications from './pages/notifications/notification.jsx'
-import ItemDetails from './pages/catalog_page/item_details.jsx'
-import SearchResults from './pages/catalog_page/search_results.jsx'
-import UserProfile from './pages/main_staff_page/user_profile.jsx'
-import ManageUsers from './pages/main_staff_page/manage_users.jsx'
-import ManageBorrows from './pages/main_staff_page/manage_borrows.jsx'
-import ManageHolds from './pages/main_staff_page/manage_holds.jsx'
-import ManageFines from './pages/main_staff_page/manage_fines.jsx'
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import HomePage from './pages/home_page/homepage.jsx';
+import Login from './pages/login_page/Login.jsx';
+import Notifications from './pages/notifications/notification.jsx';
+import ItemDetails from './pages/catalog_page/item_details.jsx';
+import SearchResults from './pages/catalog_page/search_results.jsx';
+import UserProfile from './pages/main_staff_page/user_profile.jsx';
+import ManageUsers from './pages/main_staff_page/manage_users.jsx';
+import ManageBorrows from './pages/main_staff_page/manage_borrows.jsx';
+import ManageHolds from './pages/main_staff_page/manage_holds.jsx';
+import ManageFines from './pages/main_staff_page/manage_fines.jsx';
 import AccountDashboard from './pages/account_dashboard/AccountDashboard.jsx';
 import Register from './pages/register_page/register.jsx';
 import Navbar from './pages/navbar/navbar.jsx';
+import Staff_page from './pages/staff_page/staff_page.jsx';
 import { useState, useEffect } from 'react';
-import './App.css'
+import './App.css';
 
 function App() {
-  const [isStaff, setIsStaff] = useState(() => {
-    // Load saved value (if any)
-    const saved = localStorage.getItem('isStaff');
-    return saved ? JSON.parse(saved) : false; // default to false
-  });
+  const [loading, setLoading] = useState(true); // Start loading
+  const [isStaff, setIsStaff] = useState(false); 
+  const [isLoggedIn, setIsLoggedIn] = useState(false); 
 
   useEffect(() => {
-    // Save value whenever it changes
-    localStorage.setItem('isStaff', JSON.stringify(isStaff));
-  }, [isStaff]);
+    // Read localStorage to set initial state
+    const token = localStorage.getItem('authToken');
+    const role = localStorage.getItem('userRole');
 
+    if (token) {
+      setIsLoggedIn(true);
+      setIsStaff(role === 'Staff');
+    }
+    
+    // CRITICAL: Set loading to false ONLY after state is set
+    setLoading(false); 
+  }, []); 
+
+  // Block rendering until state is initialized
+  if (loading) {
+    return (
+        <div style={{ padding: '20px', textAlign: 'center', fontFamily: 'Inter' }}>
+            Loading content...
+        </div>
+    ); 
+  }
   return (
     <BrowserRouter>
-      <Navbar isStaff={isStaff} setIsStaff={setIsStaff} />
+      <Navbar
+        isStaff={isStaff}
+        setIsStaff={setIsStaff}
+        isLoggedIn={isLoggedIn}
+        setIsLoggedIn={setIsLoggedIn}
+      />
+
       <Routes>
         {/* USERS */}
         <Route path="/" element={<HomePage />} />
-        <Route path="/login" element={<Login />} />
+        <Route
+          path="/login"
+          element={<Login setIsStaff={setIsStaff} setIsLoggedIn={setIsLoggedIn} />}
+        />
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/register" element={<Register />} />
         <Route path="/search" element={<SearchResults isStaff={isStaff} />} />
         <Route path="/item/:itemId" element={<ItemDetails isStaff={isStaff} />} />
-        <Route path="/account" element={<AccountDashboard />} />
-        {/* ADMIN */}
+        <Route path="/account" element={ <AccountDashboard
+          isLoggedIn={isLoggedIn}
+          setIsLoggedIn={setIsLoggedIn}
+          isStaff={isStaff}
+          setIsStaff={setIsStaff}
+        />
+  } />
+
+        {/* STAFF */}
         <Route path="/user" element={<UserProfile />} />
         <Route path="/manage-users" element={<ManageUsers />} />
         <Route path="/manage-borrows" element={<ManageBorrows />} />
         <Route path="/manage-holds" element={<ManageHolds />} />
         <Route path="/manage-fines" element={<ManageFines />} />
+        <Route path="/staff_page" element={<Staff_page />} />
       </Routes>
     </BrowserRouter>
-  )
+  );
 }
 
-export default App
+export default App;

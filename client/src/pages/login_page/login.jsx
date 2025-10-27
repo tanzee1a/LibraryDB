@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '../navbar/navbar';
 
 
-function login() {
+function Login({ setIsStaff, setIsLoggedIn }) {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,17 +25,31 @@ function login() {
       const data = await response.json();
   
       if (response.ok) {
-        localStorage.setItem('authToken', data.token);
-        navigate('/account'); // redirect
-      } else {
+       // 1. Persist the data
+    localStorage.setItem('authToken', data.token);
+    localStorage.setItem('userRole', data.user.role); 
+
+    // 2. Update React state immediately (optional, but good practice)
+    const isStaffUser = data.user.role === 'Staff';
+    setIsStaff(isStaffUser);
+    setIsLoggedIn(true);
+
+    // 3. Navigate the user
+    if (isStaffUser) {
+        // Staff can use soft navigation
+        navigate('/staff_page', { replace: true });
+    } else {
+        // 🚨 FIX: Force a hard reload for patron users
+        navigate('/account', { replace: true });
+      }
+    }else {
         alert(data.message || 'Login failed');
       }
     } catch (err) {
       console.error(err);
       alert('Error connecting to server');
     }
-  }
-
+  };
 
   return (
     <div className= "Login_Page_Wrapper">
@@ -93,4 +107,4 @@ function login() {
   )
 }
 
-export default login
+export default Login

@@ -1,10 +1,77 @@
 import './navbar.css'
 import { IoSearch, IoPersonCircleOutline } from "react-icons/io5"
 import sampleData from '../../assets/sample_data.json'
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
-const Navbar = ({ isStaff, setIsStaff }) => {
+
+const Navbar = ({
+    isStaff = false, 
+    setIsStaff = () => {}, 
+    isLoggedIn = false, 
+    setIsLoggedIn = () => {}
+  }) => {
+    const navigate = useNavigate();
+    console.log("NAVBAR PROPS - isStaff:", isStaff, "isLoggedIn:", isLoggedIn);
     const filters = sampleData.item_filters;
+
+    // --- 1. GUEST NAVBAR (NOT LOGGED IN) ---
+    const guestNavbar = () => {
+        return (
+            <nav className="nav">
+                <ul className="nav-links">
+                    <li><a href="/" className="logo">LBRY</a></li>
+                    {/* Minimal Category Dropdowns */}
+                    {filters.map(filter => (
+                    <li key={filter.category} className="dropdown">
+                        <a href="#">{filter.category}</a>
+                        <div className="dropdown-menu">
+                        <div className="dropdown-menu-contents">
+                            {filter.topics.map(topic => (
+                            <div key={topic.name} className="category-column">
+                                <p>{topic.name}</p>
+                                {topic.options.map(option => (
+                                <a key={option} href="#">{option}</a>
+                                ))}
+                            </div>
+                            ))}
+                        </div>
+                        </div>
+                    </li>
+                    ))}
+                    {/* Search Dropdown */}
+                    <li className="dropdown">
+                        <button className="nav-icon"><IoSearch /></button>
+                        <div className="dropdown-menu">
+                            <div className="dropdown-menu-contents">
+                                <div className="category-column">
+                                    <IoSearch />
+                                    <input type="text" className="search-input" placeholder="Search the entire library..." />
+                                    <p>Quick Links</p>
+                                    <Link to="/search?category=BOOK">Books</Link>
+                                    <Link to="/search?category=MOVIE">Movies</Link>
+                                    <Link to="/search?category=DEVICE">Devices</Link>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                    {/* Login/Register Links */}
+                    <li className="dropdown">
+                        <button className="nav-icon"><IoPersonCircleOutline /></button>
+                        <div className="dropdown-menu">
+                            <div className="dropdown-menu-contents">
+                                <div className="category-column">
+                                    <p>Access</p>
+                                    <Link to="/login">Login</Link>
+                                    <Link to="/register">Register</Link>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </nav>
+        );
+    }
+
 
     const userNavbar = () => {
         return (
@@ -42,12 +109,9 @@ const Navbar = ({ isStaff, setIsStaff }) => {
                                     <IoSearch />
                                 <input type="text" className="search-input" placeholder="Search the entire library..." />
                                 <p>Quick Links</p>
-                                {/*<a href="#">Books</a>
-                                <a href="#">Movies</a>
-                                <a href="#">Devices</a>*/}
-                                <li><Link to="/search?category=BOOK">Books</Link></li> 
-                                <li><Link to="/search?category=MOVIE">Movies</Link></li> 
-                                <li><Link to="/search?category=DEVICE">Devices</Link></li>
+                                <Link to="/search?category=BOOK">Books</Link>
+                                <Link to="/search?category=MOVIE">Movies</Link>
+                                <Link to="/search?category=DEVICE">Devices</Link>
                             </div>
                         </div>
                     </div>
@@ -59,9 +123,25 @@ const Navbar = ({ isStaff, setIsStaff }) => {
                 <div className="dropdown-menu">
                         <div className="dropdown-menu-contents">
                             <div className="category-column">
-                                <p>Profile</p>
-                                <a href="/login">Log in</a>
-                                <a href="#">Your Borrows</a>
+                            <p>Profile</p>
+                            {window.location.pathname === '/account' && console.log("ON /ACCOUNT - isLoggedIn:", isLoggedIn)}
+                            {/* FIX APPLIED HERE: Using && for conditional rendering */}
+                            {isLoggedIn && (
+                                <a
+                                    href="#"
+                                        onClick={(e) => {
+                                        e.preventDefault(); // 🛑 Critical Fix: Prevents browser race condition
+                                        localStorage.removeItem('authToken');
+                                        localStorage.removeItem('userRole');
+                                        setIsStaff(false);
+                                        setIsLoggedIn(false); 
+                                        navigate('/login');                                    
+                                    }}
+                                >
+                                Log out
+                                </a>
+                            )}
+                            <a href="#">Your Borrows</a>
                                 <a href="#">Your Holds</a>
                                 <a href="/account">Account</a>
                             </div>
@@ -74,67 +154,77 @@ const Navbar = ({ isStaff, setIsStaff }) => {
     }
 
     const staffNavbar = () => {
-        return (
-            <nav className="nav">
-                <ul className="nav-links">
-                <li><a href="/" className="logo">LBRY
-                {/* <img className="navbar-logo" src={Logo} alt="" /> */}
-                </a></li>
-                <li><a href="/manage-users">Users</a></li>
-                <li><a href="/search">Items</a></li>
-                <li><a href="/manage-borrows">Borrows</a></li>
-                <li><a href="/manage-holds">Holds</a></li>
-                <li><a href="/manage-fines">Fines</a></li>
-                <li className="dropdown">
-                <button className="nav-icon">
-                    <IoSearch />
-                </button>
-                <div className="dropdown-menu">
-                        <div className="dropdown-menu-contents">
-                            <div className="category-column">
-                                    <IoSearch />
-                                <input type="text" className="search-input" placeholder="Search the entire library..." />
-                                <p>Quick Links</p>
-                                {/*<a href="#">Books</a>
-                                <a href="#">Movies</a>
-                                <a href="#">Devices</a>*/}
-                                <li><Link to="/search?category=BOOK">Books</Link></li> 
-                                <li><Link to="/search?category=MOVIE">Movies</Link></li> 
-                                <li><Link to="/search?category=DEVICE">Devices</Link></li>
-                            </div>
+    return (
+        <nav className="nav">
+            <ul className="nav-links">
+            <li><a href="/" className="logo">LBRY
+            {/* <img className="navbar-logo" src={Logo} alt="" /> */}
+            </a></li>
+            <li><a href="/manage-users">Users</a></li>
+            <li><a href="/search">Items</a></li>
+            <li><a href="/manage-borrows">Borrows</a></li>
+            <li><a href="/manage-holds">Holds</a></li>
+            <li><a href="/manage-fines">Fines</a></li>
+            <li className="dropdown">
+            <button className="nav-icon">
+                <IoSearch />
+            </button>
+            <div className="dropdown-menu">
+                    <div className="dropdown-menu-contents">
+                        <div className="category-column">
+                                <IoSearch />
+                            <input type="text" className="search-input" placeholder="Search the entire library..." />
+                            <p>Quick Links</p>
+                            <Link to="/search?category=BOOK">Books</Link>
+                            <Link to="/search?category=MOVIE">Movies</Link>
+                            <Link to="/search?category=DEVICE">Devices</Link>
                         </div>
                     </div>
-                </li>
-                <li className="dropdown">
-                <button className="nav-icon">
-                    <IoPersonCircleOutline />
-                </button>
-                <div className="dropdown-menu">
-                        <div className="dropdown-menu-contents">
-                            <div className="category-column">
-                                <p>Profile</p>
-                                <a href="/login">Log in</a>
-                                <a href="#">Your Borrows</a>
-                                <a href="#">Your Holds</a>
-                                <a href="#">Account</a>
-                            </div>
+                </div>
+            </li>
+            <li className="dropdown">
+            <button className="nav-icon">
+                <IoPersonCircleOutline />
+            </button>
+            <div className="dropdown-menu">
+                    <div className="dropdown-menu-contents">
+                        <div className="category-column">
+                            <p>Profile</p>
+                            {/* FIX APPLIED HERE: Using && for conditional rendering */}
+                            {isLoggedIn && (
+                                <a
+                                    href="#"
+                                        onClick={(e) => {
+                                        e.preventDefault(); // 🛑 Critical Fix: Prevents browser race condition
+                                        localStorage.removeItem('authToken');
+                                        localStorage.removeItem('userRole');
+                                        setIsStaff(false);
+                                        setIsLoggedIn(false); 
+                                        navigate('/login');; 
+                                    }}
+                                >
+                                Log out
+                                </a>
+                            )}
+                            <a href="#">Your Borrows</a>
+                            <a href="#">Your Holds</a>
+                            <a href="#">Account</a>
                         </div>
                     </div>
-                </li>
-                </ul>
-            </nav>
-        )
-    }
+                </div>
+            </li>
+            </ul>
+        </nav>
+    )
+}
 
     return (
-      <div className="nav-container">
-        <button
-            className="toggle-role-btn"
-            onClick={() => setIsStaff(prev => !prev)}
-            >
-            Switch to {isStaff ? 'User' : 'Staff'} Mode
-        </button>
-        {isStaff ? staffNavbar() : userNavbar()}
+        <div className="nav-container">
+        {
+          isLoggedIn
+            ? (isStaff ? staffNavbar() : userNavbar())
+            : guestNavbar()
+        }
       </div>
     );
 };
