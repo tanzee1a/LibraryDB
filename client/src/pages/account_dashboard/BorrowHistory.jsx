@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { IoTimeOutline } from 'react-icons/io5'; // <-- ADD THIS IMPORT
 // Remove IoTimeOutline if no longer needed
 
 export default function BorrowHistory() {
@@ -36,7 +37,7 @@ export default function BorrowHistory() {
       <div className="list-item" style={{ padding: '8px 0' }}>
          {/* You can keep an icon here if you like */}
         <div className="thumb-icon" aria-hidden="true"><IoTimeOutline /></div> 
-        <div>Your past borrows will appear here.</div>
+        <div>You haven't borrowed a book yet. Start reading today!</div>
       </div>
     );
   }

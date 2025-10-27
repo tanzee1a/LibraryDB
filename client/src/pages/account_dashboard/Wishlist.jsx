@@ -7,23 +7,27 @@ export default function Wishlist() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // Helper function to get headers (to avoid repetition)
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('authToken');
+    if (!token) return null; // Indicate missing token
+
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    };
+  };
+
   // --- Fetch Holds and Wishlist ---
   const fetchData = () => {
-    // 1. Retrieve the token from storage
-    const token = localStorage.getItem('authToken'); 
+    const headers = getAuthHeaders();
 
-    if (!token) {
+    if (!headers) {
         console.error("Authentication Error: No token found. User needs to log in.");
-        setError('Please log in to view your borrow history.');
+        setError('Please log in to view your items.');
         setLoading(false);
         return; 
     }
-
-    // 2. Construct the headers object with the Authorization header
-    const headers = {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}` // 🔑 KEY FIX: Attach the token
-    };
 
     setLoading(true);
     setError('');
@@ -49,8 +53,23 @@ export default function Wishlist() {
 
   // --- Handle Remove from Wishlist ---
   const handleUnsave = (itemId) => {
-    fetch(`http://localhost:5000/api/wishlist/${itemId}`, { method: 'DELETE' })
-      .then(r => { if (!r.ok) throw new Error('Unsave failed'); return r.json(); })
+    const headers = getAuthHeaders();
+
+    if (!headers) {
+        alert('Authentication required to remove items.');
+        return;
+    }
+    
+    // 🔑 FIX APPLIED HERE: Added headers and method to the fetch options
+    fetch(`http://localhost:5000/api/wishlist/${itemId}`, { 
+        method: 'DELETE', 
+        headers: headers // Send the Authorization header
+    })
+      .then(r => { 
+          if (r.status === 401) throw new Error('Unauthorized. Please re-login.');
+          if (!r.ok) throw new Error('Unsave failed on the server.'); 
+          return r.json(); 
+      })
       .then(() => {
          fetchData(); // Refresh lists
       })
@@ -62,11 +81,12 @@ export default function Wishlist() {
 
   // --- Render Logic ---
   if (loading) return <div>Loading items…</div>;
+  // NOTE: Updated error message for better clarity on a blank slate
   if (error) return <div>{error}</div>;
 
   return (
     <div>
-      {/* Section for Holds (Pending Pickup) */}
+      {/* Section for Holds (Pending Pickup) - No change needed here */}
       <h4>Requested for Pickup</h4>
       {holds.length === 0 ? (
         <div className="list-item" style={{ padding: '8px 0' }}>
@@ -77,7 +97,7 @@ export default function Wishlist() {
         <ul className="list">
           {holds.map(h => (
             <li key={`hold-${h.hold_id}`} className="list-item">
-              {/* Add Image */}
+              {/* Image */}
               <img 
                   src={h.thumbnail_url || '/placeholder-image.png'} 
                   alt={h.title} 
@@ -91,6 +111,7 @@ export default function Wishlist() {
               </div>
               <div>
                  {/* Optional: Add Cancel Hold button later */}
+                 
               </div>
             </li>
           ))}
@@ -108,7 +129,7 @@ export default function Wishlist() {
         <ul className="list">
           {wishlistItems.map(w => (
             <li key={`wish-${w.item_id}`} className="list-item">
-              {/* Add Image */}
+              {/* Image */}
               <img 
                   src={w.thumbnail_url || '/placeholder-image.png'} 
                   alt={w.title} 
