@@ -11,7 +11,6 @@ const Navbar = ({
     setIsLoggedIn = () => {}
   }) => {
     const navigate = useNavigate();
-    console.log("NAVBAR PROPS - isStaff:", isStaff, "isLoggedIn:", isLoggedIn);
     const filters = sampleData.item_filters;
 
     // --- 1. GUEST NAVBAR (NOT LOGGED IN) ---
@@ -124,7 +123,6 @@ const Navbar = ({
                         <div className="dropdown-menu-contents">
                             <div className="category-column">
                             <p>Profile</p>
-                            {window.location.pathname === '/account' && console.log("ON /ACCOUNT - isLoggedIn:", isLoggedIn)}
                             {/* FIX APPLIED HERE: Using && for conditional rendering */}
                             {isLoggedIn && (
                                 <a

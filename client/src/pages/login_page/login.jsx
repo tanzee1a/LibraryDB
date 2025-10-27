@@ -11,7 +11,6 @@ function Login({ setIsStaff, setIsLoggedIn }) {
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
-  console.log(email, password)
 
   const handleSubmit = async (e) => {
     e.preventDefault();
