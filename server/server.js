@@ -21,6 +21,7 @@ const { getMyProfile } = require('./controllers/userController');
 const { searchItems } = require('./controllers/searchController');
 const { getOverdueReport, getPopularityReport, getFineReport } = require('./controllers/reportController');
 const { protect } = require('./middleware/authMiddleware'); // <--- ADD THIS IMPORT
+const { getDashboardStats, getMyStaffProfile } = require('./controllers/staffController');
 
 const server = http.createServer((req, res) => {
     // --- CORS Headers ---
@@ -152,6 +153,12 @@ const server = http.createServer((req, res) => {
         // --- STAFF manages BORROW ROUTE ---
         else if (req.url === '/api/borrows' && req.method === 'GET') {
             getAllBorrows(req, res);
+        }
+        else if (req.url === '/api/staff/dashboard-stats' && req.method === 'GET') {
+            getDashboardStats(req, res);
+        }
+        else if (req.url === '/api/staff/my-profile' && req.method === 'GET') {
+            getMyStaffProfile(req, res);
         }
         // Use startsWith to ignore potential query strings like '?'
         else if (req.url.startsWith('/api/holds') && req.method === 'GET') { // Get all active holds

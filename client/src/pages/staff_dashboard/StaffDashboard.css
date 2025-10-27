@@ -88,3 +88,26 @@
     border-top: 1px solid var(--border);
     margin: 2rem 0;
 }
+
+/* Add to StaffDashboard.css */
+.staff-profile-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem; /* Space below profile */
+  padding: 1rem 1.5rem; /* Adjust padding */
+  background-color: var(--panel-2); /* Slightly different background */
+}
+
+.staff-profile-header .action-icon {
+  font-size: 3rem; /* Larger icon */
+  margin-bottom: 0; /* Remove bottom margin */
+}
+
+.staff-profile-header h3 {
+  margin: 0 0 0.25rem 0;
+}
+
+.staff-profile-header small {
+  color: var(--muted);
+}
