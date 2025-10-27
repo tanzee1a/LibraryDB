@@ -1,144 +1,247 @@
-import './manage_holds.css'
-import bookThumbnail from '../../assets/book_thumbnail.jpeg'
-import mediaThumbnail from '../../assets/media_thumbnail.jpg'
-import deviceThumbnail from '../../assets/device_thumbnail.jpeg'
-import sampleData from '../../assets/sample_data.json'
+import './manage_holds.css'; // Assuming you have this CSS file
+import React, { useState, useEffect } from 'react'; // --- ADDED React hooks ---
+// import { FaPlus } from 'react-icons/fa'; // --- REMOVED: No Add button ---
+import { Link, useSearchParams } from 'react-router-dom';
+// --- REMOVED sample data/thumbnails ---
 
-import { useState } from 'react'
-import { FaPlus } from 'react-icons/fa'
+
+// --- ADDED: Define filter options for Holds ---
+const holdFilterOptions = [
+    {
+        category: 'Status',
+        param: 'status', // URL parameter
+        options: ['Pending Pickup', 'Picked Up', 'Canceled', 'Expired']
+    },
+    // TODO: Add filters for User Search, Item Search, Date Range?
+];
 
 function ManageHolds() {
-    const holds = sampleData.holds;
-    const multipleHolds = [...holds, ...holds, ...holds];
+    // --- ADDED State for holds, loading, error ---
+    const [holds, setHolds] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    const [searchParams, setSearchParams] = useSearchParams(); // --- ADDED ---
+    // under: const [error, setError] = useState('');
 
-    const filter = sampleData.user_filters.find(filter => filter.category === "Holds");
+    // --- END ADDED ---
 
-    const [showAddHoldSheet, setShowAddHoldSheet] = useState(false);
-    const [newHold, setNewHold] = useState({
-        user_email: '',
-        item_id: ''
-    });
+    // --- REMOVED Add Hold Sheet state/handlers ---
+    // --- End REMOVED ---
 
-    const getThumbnail = (item) => {
-        switch(item.item_category) {
-            case "BOOK":
-                return bookThumbnail;
-            case "MEDIA":
-                return mediaThumbnail;
-            case "DEVICE":
-                return deviceThumbnail;
-            default:
-                return null;
-        }
-    }
+    // --- Fetch Holds (Update to include filters later) ---
+    const fetchHolds = () => {
+        setLoading(true);
+        setError('');
+        // TODO: Add filter params from selectedFilters to the fetch URL
+        const queryString = searchParams.toString(); // For now, just use existing URL params
 
-    const renderHoldActionButtons = (hold) => {
-        const buttons = [];
-        switch (hold.status_id) {
-            case 'Active':
-                buttons.push(<button key="return" className="action-button primary-button">Convert to Borrow</button>);
-                buttons.push(<button key="cancel" className="action-button secondary-button">Cancel</button>);
-                break;
-            case 'Fulfilled':
-                buttons.push(<a href="#" className="simple-link">View Borrow</a>);
-                break;
-            case 'Returned':
-                // No action buttons for returned holds
-                break;
-            default:
-                break;
-        }
-        return buttons;
-    }
+        fetch(`http://localhost:5000/api/holds?${queryString}`) // Include query string
+            .then(r => { if (!r.ok) throw new Error('Network response failed'); return r.json(); })
+            .then(data => { setHolds(data || []); setLoading(false); })
+            .catch(err => { console.error("Fetch Holds Error:", err); setError('Could not load holds.'); setLoading(false); });
+    };
 
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setNewHold(prev => ({
-            ...prev,
-            [name]: value
-        }));
-    }
+    // --- MODIFIED useEffect dependencies ---
+    useEffect(() => {
+        setLoading(true); // Start loading when params change
+        setError('');
 
-    const handleAddHoldSubmit = (e) => {
-        e.preventDefault();
-        // Implement submission logic here
-        // For now, just close the sheet and reset form
-        setShowAddHoldSheet(false);
-        setNewHold({
-            user_email: '',
-            item_id: ''
+        // Derive current filters directly from searchParams for the fetch
+        const currentFilters = {};
+        holdFilterOptions.forEach(group => {
+            const paramValue = searchParams.get(group.param);
+            currentFilters[group.param] = paramValue ? paramValue.split(',') : [];
         });
+
+        // Construct query string for the API call
+        const queryString = searchParams.toString();
+        console.log("FETCHING with:", queryString); // Debug log
+
+        fetch(`http://localhost:5000/api/holds?${queryString}`)
+            .then(r => {
+                if (!r.ok) throw new Error(`Network response failed (${r.status})`);
+                return r.json();
+            })
+            .then(data => {
+                console.log("Received holds:", data.length); // Debug log
+                setHolds(data || []);
+                setLoading(false); // Stop loading on success
+            })
+            .catch(err => {
+                console.error("Fetch Holds Error:", err);
+                setError('Could not load holds.');
+                setLoading(false); // Stop loading on error
+            });
+
+        // No need to call setSelectedFilters here anymore
+
+    }, [searchParams]); // Depend ONLY on searchParams
+
+    // --- END MODIFIED ---
+
+    // --- ADDED Action Handlers ---
+    const handlePickup = (holdId) => {
+        fetch(`http://localhost:5000/api/holds/${holdId}/pickup`, { method: 'POST' })
+            .then(r => { if (!r.ok) throw new Error('Pickup failed'); return r.json(); })
+            .then((data) => {
+                 console.log(data.message); // Log success
+                 fetchHolds(); // Refresh list
+            })
+            .catch(err => alert(`Error processing pickup: ${err.message}`));
+    };
+
+    const handleCancel = (holdId) => {
+        if (!window.confirm('Are you sure you want to cancel this hold? The item will become available.')) {
+             return;
+        }
+        fetch(`http://localhost:5000/api/holds/${holdId}/cancel`, { method: 'POST' })
+            .then(r => { if (!r.ok) throw new Error('Cancel failed'); return r.json(); })
+            .then((data) => {
+                console.log(data.message); // Log success
+                fetchHolds(); // Refresh list
+            })
+            .catch(err => alert(`Error canceling hold: ${err.message}`));
+    };
+    // --- END ADDED ---
+
+    // --- REMOVED getThumbnail function ---
+
+    // --- REMOVED old renderHoldActionButtons function ---
+
+    // --- ADDED: Filter Change Handler ---
+    const handleFilterChange = (param, option) => {
+    const currentValues = (searchParams.get(param) || '')
+        .split(',')
+        .filter(Boolean);
+
+    let newValues;
+    if (currentValues.includes(option)) {
+        newValues = currentValues.filter(v => v !== option);
+    } else {
+        newValues = [...currentValues, option];
     }
+
+    // Push back to URL so useEffect + fetchHolds run
+    const next = new URLSearchParams(searchParams);
+    if (newValues.length) {
+        next.set(param, newValues.join(','));
+    } else {
+        next.delete(param);
+    }
+    setSearchParams(next);
+    };
+
 
     return (
         <div>
         <div className="page-container">
-            <div className='search-result-page-container'>
+            {/* Use existing search result styles? Adapt class names if needed */}
+            <div className='search-result-page-container'> 
                 <div className="search-result-header">
-                    <h1>Manage Holds</h1>
+                    <h1>Manage Holds (Pending Pickups)</h1>
                     <div className="search-result-search-bar-container">
-                        <button
-                            className="action-circle-button primary-button"
-                            onClick={() => setShowAddHoldSheet(true)}
-                        >
-                            <FaPlus />
-                        </button>
-                        <input type="text" placeholder="Search holds..." className="search-result-search-bar" />
+                        {/* --- REMOVED Add Button --- */}
+                        {/* TODO: Implement search/filter functionality */}
+                        <input type="text" placeholder="Search holds (by user, item...)" className="search-result-search-bar" />
                     </div>
                 </div>
-                <div className="search-results-contents">
-                    <div className="filter-section">
-                    {
-                        <div key={filter.category} className="filter-category">
-                            <h3>{filter.category}</h3>
-                            <hr className="divider divider--tight" />
-                            <ul>
-                                {filter.topics.map((topic) => (
-                                <li key={topic.name}>
-                                    <strong>{topic.name}</strong>
-                                    <ul>
-                                    {topic.options.map((option) => (
-                                        <li key={option}>
-                                        <label>
-                                            <input type="checkbox" /> {option}
-                                        </label>
-                                        </li>
-                                    ))}
-                                    </ul>
-                                </li>
-                                ))}
-                            </ul>
-                        </div>
-                    }
-                    </div>
+                <div className="search-results-contents"> 
+                     {/* --- RESTORED Filter section --- */}
+                     <div className="filter-section">
+                        {holdFilterOptions.map((filterGroup) => (
+                            
+                            <div key={filterGroup.param} className="filter-category">
+                                <h3>{filterGroup.category}</h3>
+                                <hr className='divider divider--tight' />
+                                <ul>
+                                    {filterGroup.options.map((option) => {
+                                        
+                                        // --- ADD isChecked calculation HERE ---
+                                        const isChecked = (searchParams.get(filterGroup.param) || '')
+                                                            .split(',')
+                                                            .includes(option);
+                                        // --- END ADD ---
+
+                                        return ( // Start returning the list item
+                                            <li key={option}>
+                                                <label>
+                                                    <input 
+                                                        type="checkbox" 
+                                                        value={option}
+                                                        // --- Use isChecked variable HERE ---
+                                                        checked={isChecked} 
+                                                        onChange={() => handleFilterChange(filterGroup.param, option)}
+                                                    /> {option}
+                                                </label>
+                                            </li>
+                                        ); // End returning list item
+                                    })} {/* End options.map */}
+                                </ul>
+                            </div>
+                        ))} {/* End filterOptions.map */}
+                     </div>
+                     {/* --- END RESTORED Filter --- */}
+
+                    {/* --- MODIFIED Results List --- */}
                     <div className="search-results-list">
-                        {multipleHolds.map((hold) => {
-                            const item = hold.item;
+                        {loading && <p>Loading pending pickups...</p>}
+                        {error && <p style={{ color: 'red' }}>{error}</p>}
+                        {!loading && !error && holds.length === 0 && <p>No items are currently pending pickup.</p>}
+
+                        {!loading && !error && holds.map((hold) => { // Use 'holds' state
                             return (
-                                <div key={`hold-${hold.hold_id}`} className={`search-result-item`}>
+                                // Use hold_id for the key
+                                <div key={hold.hold_id} className={`search-result-item ${hold.category?.toLowerCase() || 'default'}`}> 
                                     <div className="result-info">
                                     <div>
-                                        <img src={getThumbnail(item)} alt={item.title} className="result-thumbnail" />
+                                        {/* Use thumbnail_url from API */}
+                                        <img 
+                                            src={hold.thumbnail_url || '/placeholder-image.png'} 
+                                            alt={hold.item_title} 
+                                            className="result-thumbnail" 
+                                            onError={(e) => { e.target.onerror = null; e.target.src='/placeholder-image.png'; }}
+                                        />
                                     </div>
                                     <div className='result-text-info'>
                                         <div className='result-title-header'>
-                                            <h3 className="result-title">Hold #{hold.hold_id}</h3>
-                                            <p className="result-title">{hold.status_id}</p>
+                                            {/* Use hold_id from API */}
+                                            <h3 className="result-title">Hold #{hold.hold_id}</h3> 
+                                            {/* Status is implicitly 'Pending' */}
+                                            <p className={`result-status status-${hold.hold_status?.replace(/\s+/g, '-').toLowerCase()}`}>{hold.hold_status || 'Unknown'}</p>
                                         </div>
                                         <div className="result-description">
                                             <div className="result-details">
-                                                {/* `/user-profile/${hold.user.user_id}` */}
-                                                {/* `/item-details/${item.item_id}` */}
-                                                <p><strong>User:</strong> <a href={`/user`} className="result-link">{hold.user.user_first_name} {hold.user.user_last_name}</a></p>
-                                                <p><strong>Item:</strong> <a href={`/item-details`} className="result-link">{item.title}</a></p>
-                                                <p><strong>Item ID:</strong> {item.item_id}</p>
-                                                <p><strong>Requested Date:</strong> {hold.requested_date}</p>
-                                                <p><strong>Request Completed Date:</strong> {hold.request_completed_date || '-'}</p>
+                                                {/* Use Link and data from API */}
+                                                <p><Link to={`/item/${hold.item_id}`} className="result-link">{hold.item_title || 'Unknown Item'}</Link></p>
+                                                {/* TODO: Add link to user profile page if available */}
+                                                <p><small><strong>User:</strong> {hold.firstName} {hold.lastName} ({hold.user_id})</small></p>
+                                                <p><small><strong>Item ID:</strong> {hold.item_id}</small></p>
+                                                <p><small><strong>Requested:</strong> {hold.created_at ? new Date(hold.created_at).toLocaleString() : '-'}</small></p>
+                                                <p><small><strong>Expires:</strong> {hold.expires_at ? new Date(hold.expires_at).toLocaleString() : '-'}</small></p>
+                                                <p><small><strong>Location:</strong> {hold.shelf_location || '-'}</small></p>
                                             </div>
                                         </div>
                                     </div>
                                     <div className="result-actions">
-                                        {renderHoldActionButtons(hold)}
+                                        {/* --- MODIFIED: Show buttons only if Pending --- */}
+                                        {hold.hold_status === 'Pending Pickup' && (
+                                            <>
+                                                <button onClick={() => handlePickup(hold.hold_id)} className="action-button primary-button">Mark Picked Up</button>
+                                                <button onClick={() => handleCancel(hold.hold_id)} className="action-button secondary-button">Cancel Hold</button>
+                                            </>
+                                        )}
+                                         {/* Optionally show link to borrow record if Picked Up */}
+                                         {hold.hold_status === 'Picked Up' && (
+                                             <small>Picked up on {new Date(hold.picked_up_at).toLocaleDateString()}</small>
+                                             // TODO: Link to borrow record if possible
+                                         )}
+                                          {hold.hold_status === 'Canceled' && (
+                                             <small>Canceled on {new Date(hold.canceled_at).toLocaleDateString()}</small>
+                                         )}
+                                          {hold.hold_status === 'Expired' && (
+                                             <small>Expired on {new Date(hold.expires_at).toLocaleDateString()}</small>
+                                         )}
+                                        {/* --- END MODIFIED --- */}
                                     </div>
                                 </div>
                                 <hr className="divider" />
@@ -146,52 +249,14 @@ function ManageHolds() {
                             )
                         })}
                     </div>
+                     {/* --- END MODIFIED Results --- */}
                 </div>
             </div>
         </div>
-        {showAddHoldSheet && (
-        <div className="sheet-overlay" onClick={() => setShowAddHoldSheet(false)}>
-            <div className="sheet-container" onClick={(e) => e.stopPropagation()}>
-            <h2>Add New Hold</h2>
-            <form onSubmit={handleAddHoldSubmit}>
-                <label>
-                User Email:
-                <input
-                    type="email"
-                    name="user_email"
-                    className="edit-input"
-                    value={newHold.user_email}
-                    onChange={handleInputChange}
-                    required
-                />
-                </label>
-                <label>
-                Item ID:
-                <input
-                    type="number"
-                    name="item_id"
-                    className="edit-input"
-                    value={newHold.item_id}
-                    onChange={handleInputChange}
-                    required
-                />
-                </label>
-                <div className="sheet-actions">
-                <button type="submit" className="action-button primary-button">Add Hold</button>
-                <button
-                    type="button"
-                    className="action-button secondary-button"
-                    onClick={() => setShowAddHoldSheet(false)}
-                >
-                    Cancel
-                </button>
-                </div>
-            </form>
-            </div>
-        </div>
-        )}
+        {/* --- REMOVED Add Hold Sheet JSX --- */}
         </div>
     )
 }
 
-export default ManageHolds
+
+export default ManageHolds;

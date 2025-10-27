@@ -1,5 +1,6 @@
 const Loan = require('../models/loanModel');
 const { getPostData } = require('../utils');
+const url = require('url'); // <<< ADD THIS LINE
 
 // @desc User requests pickup for an available item
 // @route POST /api/request/:itemId
@@ -216,6 +217,44 @@ async function getAllBorrows(req, res) {
     }
 }
 
+// @desc Get ALL holds (active and historical) for Staff
+// @route GET /api/holds
+async function getAllHolds(req, res) {
+    try {
+        const parsedUrl = url.parse(req.url, true);
+        const filters = parsedUrl.query;
+        
+        // --- ADDED: Log received filters ---
+        console.log("getAllHolds controller: Received request. Filters:", filters); 
+        // --- END ADDED ---
+
+        const holds = await Loan.findAllHolds(filters); 
+        
+        console.log("getAllHolds controller: Sending response. Count:", holds.length); // Added count
+        res.writeHead(200, { /* ... headers ... */ });
+        return res.end(JSON.stringify(holds));
+    } catch (error) {
+         console.error("Error in getAllHolds:", error); // Make sure error is logged
+        res.writeHead(500, { /* ... error headers ... */ });
+        res.end(JSON.stringify({ message: 'Could not fetch holds', error: error.message }));
+    }
+}
+// @desc Staff cancels a hold
+// @route POST /api/holds/:holdId/cancel
+async function cancelHold(req, res, holdId) {
+    try {
+        // TODO: Add Auth check - Staff only
+        const staff_user_id = 'STAFF_ID_PLACEHOLDER'; // Replace with real staff auth later
+        const result = await Loan.cancelHold(Number(holdId), staff_user_id);
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        return res.end(JSON.stringify(result));
+    } catch (error) {
+        console.error("Error canceling hold:", error);
+        res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }); // 400 if hold not found/valid
+        res.end(JSON.stringify({ message: 'Could not cancel hold', error: error.message }));
+    }
+}
+
 
 module.exports = {
     requestPickup,
@@ -230,5 +269,7 @@ module.exports = {
     getMyFines,
     payFine,
     waiveFine,
-    getAllBorrows
+    getAllBorrows,
+    getAllHolds,
+    cancelHold
 };

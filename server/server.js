@@ -12,7 +12,7 @@ const {
 const { 
     requestPickup, pickupHold, returnItem, markLost, placeWaitlistHold, 
     getMyLoans, getMyHistory, getMyHolds, getMyWaitlist, getMyFines,
-    payFine, waiveFine, getAllBorrows
+    payFine, waiveFine, getAllBorrows, getAllHolds, cancelHold
 } = require('./controllers/loanController');
 
 const { registerUser, loginUser } = require('./controllers/loginRegisterController');
@@ -152,6 +152,15 @@ const server = http.createServer((req, res) => {
         // --- STAFF manages BORROW ROUTE ---
         else if (req.url === '/api/borrows' && req.method === 'GET') {
             getAllBorrows(req, res);
+        }
+        // Use startsWith to ignore potential query strings like '?'
+        else if (req.url.startsWith('/api/holds') && req.method === 'GET') { // Get all active holds
+            getAllHolds(req, res);
+        }
+        
+        else if (req.url.match(/^\/api\/holds\/([0-9]+)\/cancel$/) && req.method === 'POST') { // Cancel a hold
+            const holdId = req.url.split('/')[3];
+            cancelHold(req, res, holdId);
         }
         
         // --- Not Found ---

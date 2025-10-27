@@ -494,6 +494,116 @@ async function findAllBorrows(filters = {}) { // Add filters later if needed
     return rows;
 }
 
+async function findAllHolds(filters = {}) { // Add filters later
+    // TODO: Implement filtering based on status, user, item, date range
+    // --- ADDED: Build WHERE clause based on filters ---
+
+    let whereClauses = [];
+    let queryParams = [];
+
+    if (filters.status) {
+        const statusFilters = filters.status.split(','); // Expecting comma-separated if multiple
+        // Need to map status names back to the CASE statement string in SQL
+        // Or filter AFTER fetching (simpler for now, less efficient for large data)
+        // Let's filter after fetching for simplicity in this example.
+        // A more efficient approach would build a WHERE clause like:
+        // WHERE (CASE ... END) IN (?) 
+        // queryParams.push(statusFilters);
+    }
+    // --- TODO: Add WHERE clauses for user search, item search, date range ---
+    // --- END ADDED ---
+
+    const sql = `
+        SELECT 
+            h.hold_id, 
+            h.item_id,
+            h.user_id,
+            h.created_at,
+            h.expires_at,
+            h.picked_up_at,
+            h.canceled_at,
+            -- Calculate hold status based on dates
+            CASE
+                WHEN h.picked_up_at IS NOT NULL THEN 'Picked Up'
+                WHEN h.canceled_at IS NOT NULL THEN 'Canceled'
+                WHEN h.expires_at < NOW() AND h.picked_up_at IS NULL AND h.canceled_at IS NULL THEN 'Expired'
+                ELSE 'Pending Pickup' -- Active and not expired
+            END AS hold_status, 
+            u.firstName,
+            u.lastName,
+            COALESCE(bk.title, m.title, d.device_name) AS item_title,
+            i.thumbnail_url,
+            i.category,
+            i.shelf_location
+        FROM HOLD h
+        JOIN USER u ON h.user_id = u.user_id
+        JOIN ITEM i ON h.item_id = i.item_id
+        LEFT JOIN BOOK bk ON i.item_id = bk.item_id AND i.category = 'BOOK'
+        LEFT JOIN MOVIE m ON i.item_id = m.item_id AND i.category = 'MOVIE'
+        LEFT JOIN DEVICE d ON i.item_id = d.item_id AND i.category = 'DEVICE'
+        -- WHERE clauses for filtering would go here
+        ORDER BY h.created_at DESC; -- Show newest first
+    `;
+    console.log("findAllHolds: Fetching all holds..."); // Debugging
+    const [rows] = await db.query(sql, queryParams); // Pass params
+
+    // --- ADDED: Filter results in JavaScript (Simpler than complex SQL WHERE for CASE) ---
+    let filteredRows = rows;
+    if (filters.status) {
+        const statusFilters = filters.status.split(',');
+         console.log("Filtering by status:", statusFilters); // Debugging
+        filteredRows = rows.filter(row => statusFilters.includes(row.hold_status));
+    }
+    // --- END ADDED ---
+
+    console.log(`findAllHolds: Returning ${filteredRows.length} rows after filtering.`); // Debugging
+    return filteredRows; // Return the filtered results
+}
+
+/**
+ * Cancels an active hold (staff action).
+ * This is a transaction.
+ */
+async function cancelHold(holdId, staffUserId) { // staffUserId for auth later
+    const conn = await db.getConnection();
+    try {
+        await conn.beginTransaction();
+
+        // 1. Get Hold details & lock related item
+        const [holds] = await conn.query(
+            `SELECT item_id 
+             FROM HOLD 
+             WHERE hold_id = ? AND picked_up_at IS NULL AND canceled_at IS NULL AND expires_at >= NOW()
+             FOR UPDATE`, // Lock the HOLD row
+            [holdId]
+        );
+        if (holds.length === 0) throw new Error('Active hold not found or already processed/expired.');
+        
+        const { item_id: itemId } = holds[0];
+
+        // 2. Update HOLD status
+        await conn.query(
+            'UPDATE HOLD SET canceled_at = NOW() WHERE hold_id = ?', 
+            [holdId]
+        );
+
+        // 3. Update ITEM status (put item back into circulation)
+        await conn.query(
+            'UPDATE ITEM SET on_hold = on_hold - 1, available = available + 1 WHERE item_id = ?', 
+            [itemId]
+        );
+
+        await conn.commit();
+        return { hold_id: holdId, message: 'Hold canceled successfully. Item returned to available.' };
+
+    } catch (error) {
+        await conn.rollback();
+        console.error("Error in cancelHold transaction:", error);
+        throw error;
+    } finally {
+        conn.release();
+    }
+}
 
 module.exports = {
     requestPickup,
@@ -508,5 +618,7 @@ module.exports = {
     findFinesByUserId,
     payFine,
     waiveFine,
-    findAllBorrows
+    findAllBorrows,
+    findAllHolds,
+    cancelHold
 };
