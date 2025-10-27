@@ -20,7 +20,7 @@ const { saveItem, unsaveItem, getMyWishlist } = require('./controllers/wishlistC
 const { getMyProfile } = require('./controllers/userController');
 const { searchItems } = require('./controllers/searchController');
 const { getOverdueReport, getPopularityReport, getFineReport } = require('./controllers/reportController');
-const { protect } = require('./authMiddleware'); // <--- ADD THIS IMPORT
+const { protect } = require('./middleware/authMiddleware'); // <--- ADD THIS IMPORT
 
 const server = http.createServer((req, res) => {
     // --- CORS Headers ---
