@@ -23,6 +23,7 @@ function Reports() {
         setLoading(true);
         setError('');
         setReportData([]); // Clear previous data
+        
 
         fetch(`${API_BASE_URL}${selectedReport.endpoint}`) // Use selected endpoint
             .then(res => {

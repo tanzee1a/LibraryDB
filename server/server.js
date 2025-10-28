@@ -209,7 +209,23 @@ const server = http.createServer((req, res) => {
             const holdId = req.url.split('/')[3];
             cancelHold(req, res, holdId);
         }
-        
+        // reports routes
+        else if (req.url === '/api/reports/overdue' && req.method === 'GET') {
+            // Protect this route, then call the controller
+            protect(req, res, () => getOverdueReport(req, res));
+            return;
+        }
+        else if (req.url === '/api/reports/popular' && req.method === 'GET') {
+            // Protect this route, then call the controller
+            protect(req, res, () => getPopularityReport(req, res));
+            return;
+        }
+        else if (req.url === '/api/reports/fines' && req.method === 'GET') {
+            // Protect this route, then call the controller
+            protect(req, res, () => getFineReport(req, res));
+            return;
+        }
+    
         // --- Not Found ---
         else {
             res.writeHead(404, { 'Content-Type': 'application/json' });
