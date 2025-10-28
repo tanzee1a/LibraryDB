@@ -135,7 +135,7 @@ function StaffDashboard() {
       <h2>Management Tools</h2>
       <div className="action-grid">
         {/* --- Links remain the same --- */}
-        <Link to="/manage-items" className="action-card">
+        <Link to="/search" className="action-card">
           <IoBookOutline className="action-icon" />
           Manage Items
           <small>Add, edit, or remove books, movies, devices.</small>
