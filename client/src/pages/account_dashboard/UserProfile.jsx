@@ -24,8 +24,8 @@ export default function UserProfile() {
       'Authorization': `Bearer ${token}` 
     };
     // NOTE: You need to create this '/api/my-profile' endpoint on the backend!
-    fetch('${API_BASE_URL}/api/my-profile', { headers }) 
-      .then(res => res.ok ? res.json() : Promise.reject('Failed fetch'))
+    fetch(`${API_BASE_URL}/api/my-profile`, { headers })
+    .then(res => res.ok ? res.json() : Promise.reject('Failed fetch'))
       .then(data => {
         setUser(data);
         setLoading(false);

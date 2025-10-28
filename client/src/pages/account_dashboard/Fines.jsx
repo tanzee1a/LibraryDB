@@ -26,7 +26,7 @@ const Fines = () => {
 
     setLoading(true);
     setError(null);
-    fetch('${API_BASE_URL}/api/my-fines', { headers }) // Fetch from your fines endpoint
+    fetch(`${API_BASE_URL}/api/my-fines`, { headers }) // Fetch from your fines endpoint
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch fines');
         return res.json();

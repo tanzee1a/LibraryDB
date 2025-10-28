@@ -28,7 +28,7 @@ export default function Loans() {
 
     setLoading(true);
     setError(''); 
-    fetch('${API_BASE_URL}/api/my-loans', { headers })
+    fetch(`${API_BASE_URL}/api/my-loans`, { headers })
       .then(r => { if (!r.ok) throw new Error('Network response was not ok'); return r.json(); })
       .then(data => { setItems(data || []); setLoading(false); })
       .catch((err) => { console.error("Fetch Loans Error:", err); setError('Could not load loans.'); setLoading(false); });

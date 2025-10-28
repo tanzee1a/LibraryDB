@@ -32,8 +32,8 @@ export default function Wishlist() {
     setLoading(true);
     setError('');
     Promise.all([
-      fetch('${API_BASE_URL}/api/my-holds', { headers }).then(r => r.ok ? r.json() : Promise.reject('Failed holds fetch')),
-      fetch('${API_BASE_URL}/api/my-wishlist', { headers }).then(r => r.ok ? r.json() : Promise.reject('Failed wishlist fetch'))
+      fetch(`${API_BASE_URL}/api/my-holds`, { headers }).then(r => r.ok ? r.json() : Promise.reject('Failed holds fetch')),
+      fetch(`${API_BASE_URL}/api/my-wishlist`, { headers }).then(r => r.ok ? r.json() : Promise.reject('Failed wishlist fetch'))
     ])
     .then(([holdsData, wishlistData]) => {
       setHolds(holdsData || []);
