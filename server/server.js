@@ -17,7 +17,7 @@ const {
 
 const { registerUser, loginUser } = require('./controllers/loginRegisterController');
 const { saveItem, unsaveItem, getMyWishlist } = require('./controllers/wishlistController');
-const { getMyProfile } = require('./controllers/userController');
+const { getMyProfile, getAllUsers, staffCreateUser } = require('./controllers/userController');
 const { searchItems } = require('./controllers/searchController');
 const { getOverdueReport, getPopularityReport, getFineReport } = require('./controllers/reportController');
 const { protect } = require('./middleware/authMiddleware'); // <--- ADD THIS IMPORT
@@ -149,6 +149,12 @@ const server = http.createServer((req, res) => {
         }
         else if (req.url === '/api/staff/my-profile' && req.method === 'GET') {
             getMyStaffProfile(req, res);
+        }
+        else if (req.url === '/api/users' && req.method === 'GET') { // Get all users
+            getAllUsers(req, res); // TODO: Protect - Staff only
+        }
+        else if (req.url === '/api/users' && req.method === 'POST') { // Staff creates user
+            staffCreateUser(req, res); // TODO: Protect - Staff only
         }
         // Use startsWith to ignore potential query strings like '?'
         else if (req.url.startsWith('/api/holds') && req.method === 'GET') { // Get all active holds
