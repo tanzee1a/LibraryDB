@@ -12,7 +12,7 @@ const {
 const { 
     requestPickup, pickupHold, returnItem, markLost, placeWaitlistHold, 
     getMyLoans, getMyHistory, getMyHolds, getMyWaitlist, getMyFines,
-    payFine, waiveFine, getAllBorrows, getAllHolds, cancelHold, staffCheckoutItem
+    payFine, waiveFine, getAllBorrows, getAllHolds, cancelHold, staffCheckoutItem, getAllFines, staffCreateFine
 } = require('./controllers/loanController');
 
 const { registerUser, loginUser } = require('./controllers/loginRegisterController');
@@ -123,6 +123,13 @@ const server = http.createServer((req, res) => {
         else if (req.url === '/api/my-profile' && req.method === 'GET') {
             // FIX: Correctly wrap the controller function
             protect(req, res, (req, res) => getMyProfile(req, res));
+        }
+        
+        else if (req.url === '/api/fines' && req.method === 'GET') { // Get all fines
+            getAllFines(req, res); // TODO: Protect - Staff only
+        }
+        else if (req.url === '/api/fines' && req.method === 'POST') { // Staff creates fine
+            staffCreateFine(req, res); // TODO: Protect - Staff only
         }
         
         // --- Fine Management Routes (Staff) ---

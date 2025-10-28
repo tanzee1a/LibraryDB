@@ -656,6 +656,62 @@ async function staffCheckoutItem(itemId, userId, staffUserId) { // staffUserId f
     }
 }
 
+// --- ADDED: Find ALL Fines (for Staff) ---
+async function findAllFines(filters = {}) { // Add filters later
+    // TODO: Implement filtering (by status, user, date range)
+    const sql = `
+        SELECT 
+            f.fine_id,
+            f.borrow_id,
+            f.user_id,
+            u.firstName,
+            u.lastName,
+            f.fee_type,
+            f.amount,
+            f.date_issued,
+            f.date_paid,
+            f.notes,
+            f.waived_at,
+            f.waived_reason,
+            COALESCE(bk.title, m.title, d.device_name) AS item_title,
+            i.item_id
+        FROM FINE f
+        JOIN USER u ON f.user_id = u.user_id
+        LEFT JOIN BORROW b ON f.borrow_id = b.borrow_id -- Use LEFT JOIN in case borrow deleted?
+        LEFT JOIN ITEM i ON b.item_id = i.item_id
+        LEFT JOIN BOOK bk ON i.item_id = bk.item_id AND i.category = 'BOOK'
+        LEFT JOIN MOVIE m ON i.item_id = m.item_id AND i.category = 'MOVIE'
+        LEFT JOIN DEVICE d ON i.item_id = d.item_id AND i.category = 'DEVICE'
+        -- WHERE clauses for filtering go here
+        ORDER BY f.date_issued DESC; 
+    `;
+     const [rows] = await db.query(sql);
+    return rows;
+}
+
+// --- ADDED: Staff Manually Creates Fine ---
+async function staffCreateFine(fineData, staffUserId) { // staffUserId for logging/auth
+    const { borrow_id, user_id, fee_type, amount, notes } = fineData;
+
+    // Validation
+    if (!borrow_id || !user_id || !fee_type || !amount) {
+        throw new Error('Missing required fields (borrow_id, user_id, fee_type, amount).');
+    }
+    // Validate fee_type against ENUM ('LATE','LOST','DAMAGED')
+    const validFeeTypes = ['LATE', 'LOST', 'DAMAGED'];
+    if (!validFeeTypes.includes(fee_type.toUpperCase())) {
+        throw new Error(`Invalid fee_type. Must be one of: ${validFeeTypes.join(', ')}`);
+    }
+
+    const sql = `
+        INSERT INTO FINE (borrow_id, user_id, fee_type, amount, notes, date_issued)
+        VALUES (?, ?, ?, ?, ?, NOW()) 
+    `;
+    const [result] = await db.query(sql, [borrow_id, user_id, fee_type.toUpperCase(), amount, notes]);
+
+    return { fine_id: result.insertId, message: 'Fine created successfully.' };
+}
+
 module.exports = {
     requestPickup,
     pickupHold,
@@ -672,5 +728,7 @@ module.exports = {
     findAllBorrows,
     findAllHolds,
     cancelHold,
-    staffCheckoutItem
+    staffCheckoutItem,
+    findAllFines,
+    staffCreateFine
 };
