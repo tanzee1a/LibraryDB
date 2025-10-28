@@ -4,20 +4,30 @@ import mediaThumbnail from '../../assets/media_thumbnail.jpg'
 import deviceThumbnail from '../../assets/device_thumbnail.jpeg'
 import sampleData from '../../assets/sample_data.json'
 
-import { useState } from 'react'
+import React, { useState, useEffect } from 'react';
 import { FaPlus } from 'react-icons/fa'
+import { Link } from 'react-router-dom';
 
 function ManageBorrows() {
-    const borrows = sampleData.borrows;
-    const multipleBorrows = [...borrows, ...borrows, ...borrows];
 
-    const filter = sampleData.user_filters.find(filter => filter.category === "Borrows");
+    const [borrows, setBorrows] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+
+    // const borrows = sampleData.borrows;
+    // const multipleBorrows = [...borrows, ...borrows, ...borrows];
+
+    // const filter = sampleData.user_filters.find(filter => filter.category === "Borrows");
 
     const [showAddBorrowSheet, setShowAddBorrowSheet] = useState(false);
-    const [newBorrow, setNewBorrow] = useState({
-        user_email: '',
+    const initialBorrowState = {
+        user_id: '', // Changed from user_email
         item_id: ''
-    });
+    };
+    const [newBorrow, setNewBorrow] = useState(initialBorrowState);
+    const [isSubmitting, setIsSubmitting] = useState(false); // Add submitting state
+    const [submitError, setSubmitError] = useState('');     // Add error state
+    // --- END MODIFIED ---
 
     const getThumbnail = (item) => {
         switch(item.item_category) {
@@ -34,33 +44,51 @@ function ManageBorrows() {
 
     const renderBorrowActionButtons = (borrow) => {
         const buttons = [];
-        switch (borrow.status_id) {
-            case 'Overdue':
-                buttons.push(<button key="return" className="action-button primary-button">Mark as Returned</button>);
-                buttons.push(<button key="lost" className="action-button secondary-button">Mark as Lost</button>);
+        // Use status_name fetched from API
+        switch (borrow.status_name) { 
+            case 'Loaned Out': // Check includes Overdue implicitly via date
+                buttons.push(<button key="return" onClick={() => handleReturn(borrow.borrow_id)} className="action-button primary-button">Mark as Returned</button>);
+                buttons.push(<button key="lost" onClick={() => handleMarkLost(borrow.borrow_id)} className="action-button secondary-button">Mark as Lost</button>);
                 break;
-            case 'Loaned Out':
-                buttons.push(<button key="return" className="action-button primary-button">Mark as Returned</button>);
-                buttons.push(<button key="lost" className="action-button secondary-button">Mark as Lost</button>);
-                break;
-            case 'Pending':
-                buttons.push(<button key="ready" className="action-button primary-button">Ready for Pickup</button>);
-                buttons.push(<button key="cancel" className="action-button secondary-button">Cancel Request</button>);
-                break;
-            case 'Ready for Pickup':
-                buttons.push(<button key="cancel" className="action-button secondary-button">Cancel Request</button>);
-                break;
+            // -- Cases based on HOLD table status (Need to fetch Holds separately if managing them here) --
+            // case 'Pending': // This status is for BORROW, but action relates to HOLD
+            //     buttons.push(<button key="ready" onClick={() => handleReadyForPickup(borrow.hold_id)} className="action-button primary-button">Ready for Pickup</button>);
+            //     buttons.push(<button key="cancel" onClick={() => handleCancelRequest(borrow.hold_id)} className="action-button secondary-button">Cancel Request</button>);
+            //     break;
+             // case 'Ready for Pickup': // This isn't a BORROW_STATUS, maybe a HOLD status?
+                // buttons.push(<button key="cancel" onClick={() => handleCancelRequest(borrow.hold_id)} className="action-button secondary-button">Cancel Request</button>);
+                // break;
+             // -- End Hold logic --
             case 'Lost':
-                buttons.push(<button key="found" className="action-button secondary-button">Mark as Found</button>);
+                buttons.push(<button key="found" onClick={() => handleMarkFound(borrow.borrow_id)} className="action-button secondary-button">Mark as Found</button>);
                 break;
             case 'Returned':
-                // No action buttons for returned items
+                // No actions needed
                 break;
             default:
                 break;
         }
         return buttons;
     }
+
+    const handleReturn = (borrowId) => {
+        fetch(`http://localhost:5000/api/return/${borrowId}`, { method: 'POST' })
+            .then(r => { if (!r.ok) throw new Error('Marking return failed'); return r.json(); })
+            .then(() => fetchBorrows()) // Refresh list
+            .catch(err => alert(`Error: ${err.message}`));
+    };
+
+    const handleMarkLost = (borrowId) => {
+        fetch(`http://localhost:5000/api/borrows/${borrowId}/lost`, { method: 'POST' })
+            .then(r => { if (!r.ok) throw new Error('Marking lost failed'); return r.json(); })
+            .then(() => fetchBorrows()) // Refresh list
+            .catch(err => alert(`Error: ${err.message}`));
+    };
+
+    // TODO: Add backend logic & API for ReadyForPickup, CancelRequest, MarkAsFound if needed
+    const handleReadyForPickup = (holdId /* Need hold ID here */) => { alert('Ready for Pickup - Not implemented'); };
+    const handleCancelRequest = (holdId /* Need hold ID here */) => { alert('Cancel Request - Not implemented'); };
+    const handleMarkFound = (borrowId /* Or maybe Item ID? */) => { alert('Mark As Found - Not implemented'); };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -70,16 +98,52 @@ function ManageBorrows() {
         }));
     }
 
-    const handleAddBorrowSubmit = (e) => {
+    const handleAddBorrowSubmit = async (e) => { // Make async
         e.preventDefault();
-        // Implement submission logic here
-        // For now, just close the sheet and reset form
-        setShowAddBorrowSheet(false);
-        setNewBorrow({
-            user_email: '',
-            item_id: ''
-        });
-    }
+        setIsSubmitting(true);
+        setSubmitError('');
+
+        try {
+            const response = await fetch('http://localhost:5000/api/borrows/checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: newBorrow.user_id, // Pass user_id
+                    itemId: newBorrow.item_id  // Pass item_id
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `HTTP error ${response.status}`);
+            }
+
+            // Success!
+            console.log("Borrow Record Added:", await response.json());
+            setShowAddBorrowSheet(false);     // Close sheet
+            setNewBorrow(initialBorrowState); // Reset form
+            fetchBorrows();                  // Refresh the main borrow list
+
+        } catch (err) {
+            console.error("Add Borrow Error:", err);
+            setSubmitError(`Failed to add borrow: ${err.message}`);
+        } finally {
+            setIsSubmitting(false); // Re-enable button
+        }
+    };
+
+    const fetchBorrows = () => {
+        setLoading(true);
+        setError('');
+        fetch('http://localhost:5000/api/borrows') // Fetch all borrows
+            .then(r => { if (!r.ok) throw new Error('Network response failed'); return r.json(); })
+            .then(data => { setBorrows(data || []); setLoading(false); })
+            .catch(err => { console.error("Fetch Borrows Error:", err); setError('Could not load borrows.'); setLoading(false); });
+    };
+
+    useEffect(() => {
+        fetchBorrows(); // Fetch on initial mount
+    }, []);
 
     return (
         <div>
@@ -99,7 +163,7 @@ function ManageBorrows() {
                 </div>
                 <div className="search-results-contents">
                     <div className="filter-section">
-                    {
+                    {/*
                         <div key={filter.category} className="filter-category">
                             <h3>{filter.category}</h3>
                             <hr className="divider divider--tight" />
@@ -120,29 +184,40 @@ function ManageBorrows() {
                                 ))}
                             </ul>
                         </div>
-                    }
+                    */}
                     </div>
                     <div className="search-results-list">
-                        {multipleBorrows.map((borrow) => {
-                            const item = borrow.item;
+                        {loading && <p>Loading borrows...</p>}
+                        {error && <p style={{ color: 'red' }}>{error}</p>}
+                        {!loading && !error && borrows.length === 0 && <p>No borrow records found.</p>}
+
+                        {!loading && !error && borrows.map((borrow) => {
+                            // Use data fetched from API
                             return (
-                                <div key={`borrow-${borrow.borrow_id}`} className={`search-result-item ${item.item_category.toLowerCase()}`}>
+                                <div key={`borrow-${borrow.borrow_id}`} className={`search-result-item ${borrow.category?.toLowerCase() || 'default'}`}>
                                     <div className="result-info">
                                     <div>
-                                        <img src={getThumbnail(item)} alt={item.title} className="result-thumbnail" />
+                                        <img 
+                                            src={borrow.thumbnail_url || '/placeholder-image.png'} 
+                                            alt={borrow.item_title} 
+                                            className="result-thumbnail" 
+                                            onError={(e) => { e.target.onerror = null; e.target.src='/placeholder-image.png'; }}
+                                        />
                                     </div>
                                     <div className='result-text-info'>
                                         <div className='result-title-header'>
                                             <h3 className="result-title">Borrow #{borrow.borrow_id}</h3>
-                                            <p className="result-title">{borrow.status_id}</p>
+                                             {/* Display status_name from API */}
+                                            <p className={`result-status status-${borrow.status_name?.replace(/\s+/g, '-').toLowerCase()}`}>{borrow.status_name || 'Unknown'}</p> 
                                         </div>
                                         <div className="result-description">
                                             <div className="result-details">
-                                                <p><a href={`/item/${item.item_id}`} className="result-link">{item.title}</a></p>
-                                                <p><strong>User:</strong> <a href={`/user`} className="result-link">{borrow.user.user_first_name} {borrow.user.user_last_name}</a></p>
-                                                <p><strong>Item ID:</strong> {item.item_id}</p>
-                                                <p><strong>Borrow Date:</strong> {borrow.borrow_date || '-'}</p>
-                                                <p><strong>Return Date:</strong> {borrow.return_date || '-'}</p>
+                                                <p><Link to={`/item/${borrow.item_id}`} className="result-link">{borrow.item_title || 'Unknown Item'}</Link></p>
+                                                <p><small><strong>User:</strong> {borrow.firstName} {borrow.lastName} ({borrow.user_id})</small></p>
+                                                <p><small><strong>Item ID:</strong> {borrow.item_id}</small></p>
+                                                <p><small><strong>Borrowed:</strong> {borrow.borrow_date ? new Date(borrow.borrow_date).toLocaleDateString() : '-'}</small></p>
+                                                <p><small><strong>Due:</strong> {borrow.due_date ? new Date(borrow.due_date).toLocaleDateString() : '-'}</small></p>
+                                                <p><small><strong>Returned:</strong> {borrow.return_date ? new Date(borrow.return_date).toLocaleDateString() : '-'}</small></p>
                                             </div>
                                         </div>
                                     </div>
@@ -159,46 +234,54 @@ function ManageBorrows() {
             </div>
         </div>
         {showAddBorrowSheet && (
-        <div className="sheet-overlay" onClick={() => setShowAddBorrowSheet(false)}>
-            <div className="sheet-container" onClick={(e) => e.stopPropagation()}>
-            <h2>Add New Borrow</h2>
-            <form onSubmit={handleAddBorrowSubmit}>
-                <label>
-                User Email:
-                <input
-                    type="email"
-                    name="user_email"
-                    className="edit-input"
-                    value={newBorrow.user_email}
-                    onChange={handleInputChange}
-                    required
-                />
-                </label>
-                <label>
-                Item ID:
-                <input
-                    type="number"
-                    name="item_id"
-                    className="edit-input"
-                    value={newBorrow.item_id}
-                    onChange={handleInputChange}
-                    required
-                />
-                </label>
-                <div className="sheet-actions">
-                <button type="submit" className="action-button primary-button">Add Borrow</button>
-                <button
-                    type="button"
-                    className="action-button secondary-button"
-                    onClick={() => setShowAddBorrowSheet(false)}
-                >
-                    Cancel
-                </button>
+            <div className="sheet-overlay" onClick={() => !isSubmitting && setShowAddBorrowSheet(false)}>
+                <div className="sheet-container" onClick={(e) => e.stopPropagation()}>
+                <h2>Add New Borrow (Direct Checkout)</h2>
+                {/* Display submission error */}
+                {submitError && <p style={{color: 'red'}}>{submitError}</p>}
+                <form onSubmit={handleAddBorrowSubmit}>
+                    <label>
+                    User ID: {/* Changed from User Email */}
+                    <input
+                        type="text" // Changed from email
+                        name="user_id" // Changed from user_email
+                        className="edit-input"
+                        value={newBorrow.user_id}
+                        onChange={handleInputChange}
+                        required
+                        placeholder="Enter Patron's User ID (e.g., U176...)"
+                    />
+                    </label>
+                    <label>
+                    Item ID:
+                    <input
+                        type="text" // Changed from number, item_id is char(13)
+                        name="item_id"
+                        className="edit-input"
+                        value={newBorrow.item_id}
+                        onChange={handleInputChange}
+                        required
+                        placeholder="Enter Item ID (e.g., 978... or DEV...)"
+                    />
+                    </label>
+                    <div className="sheet-actions">
+                    <button type="submit" className="action-button primary-button" disabled={isSubmitting}>
+                         {isSubmitting ? 'Processing...' : 'Checkout Item'}
+                    </button>
+                    <button
+                        type="button"
+                        className="action-button secondary-button"
+                        onClick={() => setShowAddBorrowSheet(false)}
+                        disabled={isSubmitting}
+                    >
+                        Cancel
+                    </button>
+                    </div>
+                </form>
                 </div>
-            </form>
             </div>
-        </div>
-        )}
+            )}
+            {/* --- END MODIFIED --- */}
         </div>
     )
 }

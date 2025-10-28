@@ -12,14 +12,16 @@ const {
 const { 
     requestPickup, pickupHold, returnItem, markLost, placeWaitlistHold, 
     getMyLoans, getMyHistory, getMyHolds, getMyWaitlist, getMyFines,
-    payFine, waiveFine
+    payFine, waiveFine, getAllBorrows, getAllHolds, cancelHold, staffCheckoutItem
 } = require('./controllers/loanController');
 
 const { registerUser, loginUser } = require('./controllers/loginRegisterController');
 const { saveItem, unsaveItem, getMyWishlist } = require('./controllers/wishlistController');
 const { getMyProfile } = require('./controllers/userController');
 const { searchItems } = require('./controllers/searchController');
+const { getOverdueReport, getPopularityReport, getFineReport } = require('./controllers/reportController');
 const { protect } = require('./middleware/authMiddleware'); // <--- ADD THIS IMPORT
+const { getDashboardStats, getMyStaffProfile } = require('./controllers/staffController');
 
 const server = http.createServer((req, res) => {
     // --- CORS Headers ---
@@ -136,6 +138,28 @@ const server = http.createServer((req, res) => {
         // --- Search Route --- (Unchanged, not protected)
         else if (req.url.startsWith('/api/search') && req.method === 'GET') {
             searchItems(req, res);
+        }
+
+        // --- STAFF manages BORROW ROUTE ---
+        else if (req.url === '/api/borrows' && req.method === 'GET') {
+            getAllBorrows(req, res);
+        }
+        else if (req.url === '/api/staff/dashboard-stats' && req.method === 'GET') {
+            getDashboardStats(req, res);
+        }
+        else if (req.url === '/api/staff/my-profile' && req.method === 'GET') {
+            getMyStaffProfile(req, res);
+        }
+        // Use startsWith to ignore potential query strings like '?'
+        else if (req.url.startsWith('/api/holds') && req.method === 'GET') { // Get all active holds
+            getAllHolds(req, res);
+        }
+        else if (req.url === '/api/borrows/checkout' && req.method === 'POST') {
+            staffCheckoutItem(req, res);
+        }
+        else if (req.url.match(/^\/api\/holds\/([0-9]+)\/cancel$/) && req.method === 'POST') { // Cancel a hold
+            const holdId = req.url.split('/')[3];
+            cancelHold(req, res, holdId);
         }
         
         // --- Not Found ---

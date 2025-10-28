@@ -1,0 +1,132 @@
+/* StaffDashboard.css */
+.staff-dashboard-container {
+  /* Add enough padding to clear your 50px navbar + some space */
+  padding-top: 70px; 
+  padding-left: 2rem; /* Keep existing side padding */
+  padding-right: 2rem;
+  padding-bottom: 2rem;
+}
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background-color: var(--panel); /* Use variables from AccountDashboard.css */
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: var(--shadow);
+}
+
+.stat-icon {
+  font-size: 2rem; /* Adjust size */
+  padding: 0.5rem;
+  border-radius: 50%;
+  color: white;
+}
+.stat-icon.loans { background-color: #3b82f6; } /* Blue */
+.stat-icon.overdue { background-color: #f59e0b; } /* Amber */
+.stat-icon.pending { background-color: #8b5cf6; } /* Violet */
+.stat-icon.fines { background-color: #ef4444; } /* Red */
+
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.action-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.action-card {
+  background-color: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  text-decoration: none;
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: var(--shadow);
+}
+
+.action-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 6px rgba(16, 24, 40, 0.08), 0 2px 4px rgba(16, 24, 40, 0.06);
+  border-color: var(--primary);
+}
+
+.action-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.75rem;
+  color: var(--primary);
+}
+
+.action-card small {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-top: 0.5rem;
+}
+
+.divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 2rem 0;
+}
+
+/* In StaffDashboard.css */
+.staff-profile-header {
+  display: flex;
+  align-items: center; /* Vertically center icon and text block */
+  gap: 1rem;
+  margin-bottom: 1.5rem; 
+  padding: 1rem 1.5rem; 
+  background-color: var(--panel-2); 
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+/* Adjust icon styling if needed */
+.staff-profile-header .action-icon {
+  font-size: 3rem; 
+  margin-bottom: 0; 
+  color: var(--primary); 
+  flex-shrink: 0; /* Prevent icon from shrinking */
+}
+
+/* Ensure the text block takes up the remaining space */
+.staff-profile-header div { 
+  flex-grow: 1; 
+}
+
+.staff-profile-header h3 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.2rem;
+  line-height: 1.3; /* Adjust line height if needed */
+}
+
+.staff-profile-header small {
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.4; /* Adjust line height */
+  display: block; /* Ensure it takes its own line */
+}

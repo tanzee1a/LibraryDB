@@ -1,5 +1,6 @@
 const Loan = require('../models/loanModel');
-const { getPostData } = require('../utils'); // We need this for waiveFine reason
+const { getPostData } = require('../utils');
+const url = require('url'); // <<< ADD THIS LINE
 
 // @desc User requests pickup for an available item
 // @route POST /api/request/:itemId
@@ -200,6 +201,89 @@ async function waiveFine(req, res, fineId) {
     }
 }
 
+// @desc Get ALL borrow records (for Staff)
+// @route GET /api/borrows
+async function getAllBorrows(req, res) {
+    try {
+        // TODO: Add authentication check - only staff allowed
+        // TODO: Get filter parameters from req.url query string
+        const borrows = await Loan.findAllBorrows(/* pass filters */);
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        return res.end(JSON.stringify(borrows));
+    } catch (error) {
+        console.error("Error in getAllBorrows:", error);
+        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ message: 'Could not fetch borrow records', error: error.message }));
+    }
+}
+
+// @desc Get ALL holds (active and historical) for Staff
+// @route GET /api/holds
+async function getAllHolds(req, res) {
+    try {
+        const parsedUrl = url.parse(req.url, true);
+        const filters = parsedUrl.query;
+        
+        // --- ADDED: Log received filters ---
+        console.log("getAllHolds controller: Received request. Filters:", filters); 
+        // --- END ADDED ---
+
+        const holds = await Loan.findAllHolds(filters); 
+        
+        console.log("getAllHolds controller: Sending response. Count:", holds.length); // Added count
+        res.writeHead(200, { /* ... headers ... */ });
+        return res.end(JSON.stringify(holds));
+    } catch (error) {
+         console.error("Error in getAllHolds:", error); // Make sure error is logged
+        res.writeHead(500, { /* ... error headers ... */ });
+        res.end(JSON.stringify({ message: 'Could not fetch holds', error: error.message }));
+    }
+}
+// @desc Staff cancels a hold
+// @route POST /api/holds/:holdId/cancel
+async function cancelHold(req, res, holdId) {
+    try {
+        // TODO: Add Auth check - Staff only
+        const staff_user_id = 'STAFF_ID_PLACEHOLDER'; // Replace with real staff auth later
+        const result = await Loan.cancelHold(Number(holdId), staff_user_id);
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        return res.end(JSON.stringify(result));
+    } catch (error) {
+        console.error("Error canceling hold:", error);
+        res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }); // 400 if hold not found/valid
+        res.end(JSON.stringify({ message: 'Could not cancel hold', error: error.message }));
+    }
+}
+
+// @desc Staff directly checks out an item
+// @route POST /api/borrows/checkout
+async function staffCheckoutItem(req, res) {
+    try {
+        // TODO: Add Auth check - Staff only
+        const staff_user_id = 'STAFF_ID_PLACEHOLDER'; // Replace with real staff auth later
+
+        const body = await getPostData(req);
+        const { userId, itemId } = JSON.parse(body); // Get IDs from request body
+
+        if (!userId || !itemId) {
+            throw new Error('User ID and Item ID are required.');
+        }
+
+        const result = await Loan.staffCheckoutItem(itemId, userId, staff_user_id);
+        
+        res.writeHead(201, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        return res.end(JSON.stringify(result));
+
+    } catch (error) {
+        console.error("Error in staffCheckoutItem controller:", error);
+        res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }); // 400 for bad input/unavailable item
+        res.end(JSON.stringify({ 
+            message: 'Could not checkout item', 
+            error: error.message 
+        }));
+    }
+}
+
 
 module.exports = {
     requestPickup,
@@ -209,9 +293,13 @@ module.exports = {
     placeWaitlistHold,
     getMyLoans,
     getMyHistory,
-    getMyHolds, // Added
+    getMyHolds,
     getMyWaitlist,
-    getMyFines, // Added
-    payFine,    // Added
-    waiveFine   // Added
+    getMyFines,
+    payFine,
+    waiveFine,
+    getAllBorrows,
+    getAllHolds,
+    cancelHold,
+    staffCheckoutItem
 };
