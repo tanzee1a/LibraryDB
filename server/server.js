@@ -185,10 +185,12 @@ const server = http.createServer((req, res) => {
             getAllBorrows(req, res);
         }
         else if (req.url === '/api/staff/dashboard-stats' && req.method === 'GET') {
-            getDashboardStats(req, res);
+            protect(req, res, () => getDashboardStats(req, res));
+            return;
         }
         else if (req.url === '/api/staff/my-profile' && req.method === 'GET') {
-            getMyStaffProfile(req, res);
+            protect(req, res, () => getMyStaffProfile(req, res));
+            return;
         }
         else if (req.url === '/api/users' && req.method === 'GET') { // Get all users
             getAllUsers(req, res); // TODO: Protect - Staff only

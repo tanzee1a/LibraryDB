@@ -1,10 +1,23 @@
 // controllers/staffController.js
 const Staff = require('../models/staffModel');
 
+async function isUserStaff(userId) {
+    // This model method needs to check the USER table for role='Staff'
+    // or check if an entry exists in the STAFF table.
+    return await Staff.checkStaffRole(userId); 
+}
+
 // @desc Get dashboard statistics
 // @route GET /api/staff/dashboard-stats
 async function getDashboardStats(req, res) {
     try {
+        const logged_in_user_id = req.userId; // Provided by 'protect' middleware
+
+        if (!logged_in_user_id || !(await isUserStaff(logged_in_user_id))) {
+            res.writeHead(403, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+            return res.end(JSON.stringify({ message: 'Forbidden: Staff access required.' }));
+       }
+
         // TODO: Add Auth check - Staff only
         const stats = await Staff.getDashboardStats();
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
@@ -20,15 +33,18 @@ async function getDashboardStats(req, res) {
 // @route GET /api/staff/my-profile 
 async function getMyStaffProfile(req, res) {
     try {
-        // TODO: Add Auth check - Staff only
+        const logged_in_user_id = req.userId;
+        if (!logged_in_user_id) {
+            // If for some reason the ID is missing after auth, return unauthorized
+            res.writeHead(401, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+            return res.end(JSON.stringify({ message: 'Authentication required: User ID missing.' }));
+       }
+        const profile = await Staff.findStaffProfileById(logged_in_user_id);
         
-        // !!! --- TEMPORARY --- !!!
-        // Hardcode a known STAFF user_id for testing 
-        // Ensure this user exists in USER table with role='Staff' AND in STAFF table
-        const test_staff_user_id = 'A123456789013';
-        // !!! ----------------- !!!
-
-        const profile = await Staff.findStaffProfileById(test_staff_user_id);
+        if (!(await isUserStaff(logged_in_user_id))) {
+            res.writeHead(403, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+            return res.end(JSON.stringify({ message: 'Forbidden: Staff access required.' }));
+       }
 
         if (!profile) {
             res.writeHead(404, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });

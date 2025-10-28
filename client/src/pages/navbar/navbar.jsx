@@ -204,9 +204,7 @@ const Navbar = ({
                                 Log out
                                 </a>
                             )}
-                            <a href="#">Your Borrows</a>
-                            <a href="#">Your Holds</a>
-                            <a href="#">Account</a>
+                            <a href="/staff_page">Account</a>
                         </div>
                     </div>
                 </div>

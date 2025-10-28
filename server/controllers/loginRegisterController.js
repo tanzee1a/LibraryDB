@@ -101,7 +101,6 @@ async function loginUser(req, res) {
         SECRET,
         { expiresIn: '1h' }
       );
-
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
         message: 'Login successful',

@@ -1,6 +1,13 @@
 // models/staffModel.js
 const db = require('../config/db');
 
+
+async function checkStaffRole(userId) {
+    const sql = 'SELECT role FROM USER WHERE user_id = ? AND role = "Staff"';
+    const [rows] = await db.query(sql, [userId]);
+    return rows.length > 0; // Returns true if a row is found
+}
+
 /**
  * Fetches dashboard statistics.
  */
@@ -60,5 +67,6 @@ async function findStaffProfileById(userId) {
 
 module.exports = {
     getDashboardStats,
-    findStaffProfileById
+    findStaffProfileById,
+    checkStaffRole
 };

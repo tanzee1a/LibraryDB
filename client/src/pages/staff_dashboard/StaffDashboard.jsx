@@ -24,9 +24,25 @@ function StaffDashboard() {
     setLoadingProfile(true);
     setError('');
 
+    // 1. Retrieve the token and setup headers
+    const token = localStorage.getItem('authToken'); 
+    const authHeaders = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}` 
+    };
+    
+    // Check for token existence before fetching
+    if (!token) {
+        setError('Authentication token missing. Please log in.');
+        setLoadingStats(false);
+        setLoadingProfile(false);
+        return; // Stop execution if no token is found
+    }
+
     // Fetch Stats
-    fetch(`${API_BASE_URL}/api/staff/dashboard-stats`) // Or Render URL
-      .then(res => res.ok ? res.json() : Promise.reject('Stats fetch failed'))
+    // CRITICAL FIX: Pass authHeaders here as well!
+    fetch(`${API_BASE_URL}/api/staff/dashboard-stats`, { headers: authHeaders }) 
+      .then(res => res.ok ? res.json() : Promise.reject('Stats fetch failed (Auth/Server Error)'))
       .then(data => setStats(data))
       .catch(err => {
         console.error("Fetch Stats Error:", err);
@@ -34,13 +50,12 @@ function StaffDashboard() {
       })
       .finally(() => {
           setLoadingStats(false);
-          // Update overall error state after both fetches attempt
           if (statsError || profileError) setError((statsError + profileError).trim());
       });
 
     // Fetch Profile
-    fetch(`${API_BASE_URL}/api/staff/my-profile`) // Or Render URL
-      .then(res => res.ok ? res.json() : Promise.reject('Profile fetch failed'))
+    fetch(`${API_BASE_URL}/api/staff/my-profile`, { headers: authHeaders })
+      .then(res => res.ok ? res.json() : Promise.reject('Profile fetch failed (Auth/Server Error)'))
       .then(data => setProfile(data))
       .catch(err => {
         console.error("Fetch Profile Error:", err);
@@ -48,8 +63,7 @@ function StaffDashboard() {
       })
       .finally(() => {
           setLoadingProfile(false);
-           // Update overall error state after both fetches attempt
-          if (statsError || profileError) setError((statsError + profileError).trim());
+           if (statsError || profileError) setError((statsError + profileError).trim());
       });
 
   }, []); // Run once on mount
