@@ -12,7 +12,7 @@ const {
 const { 
     requestPickup, pickupHold, returnItem, markLost, placeWaitlistHold, 
     getMyLoans, getMyHistory, getMyHolds, getMyWaitlist, getMyFines,
-    payFine, waiveFine, getAllBorrows, getAllHolds, cancelHold
+    payFine, waiveFine, getAllBorrows, getAllHolds, cancelHold, staffCheckoutItem
 } = require('./controllers/loanController');
 
 const { registerUser, loginUser } = require('./controllers/loginRegisterController');
@@ -164,7 +164,9 @@ const server = http.createServer((req, res) => {
         else if (req.url.startsWith('/api/holds') && req.method === 'GET') { // Get all active holds
             getAllHolds(req, res);
         }
-        
+        else if (req.url === '/api/borrows/checkout' && req.method === 'POST') {
+            staffCheckoutItem(req, res);
+        }
         else if (req.url.match(/^\/api\/holds\/([0-9]+)\/cancel$/) && req.method === 'POST') { // Cancel a hold
             const holdId = req.url.split('/')[3];
             cancelHold(req, res, holdId);

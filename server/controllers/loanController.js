@@ -255,6 +255,35 @@ async function cancelHold(req, res, holdId) {
     }
 }
 
+// @desc Staff directly checks out an item
+// @route POST /api/borrows/checkout
+async function staffCheckoutItem(req, res) {
+    try {
+        // TODO: Add Auth check - Staff only
+        const staff_user_id = 'STAFF_ID_PLACEHOLDER'; // Replace with real staff auth later
+
+        const body = await getPostData(req);
+        const { userId, itemId } = JSON.parse(body); // Get IDs from request body
+
+        if (!userId || !itemId) {
+            throw new Error('User ID and Item ID are required.');
+        }
+
+        const result = await Loan.staffCheckoutItem(itemId, userId, staff_user_id);
+        
+        res.writeHead(201, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        return res.end(JSON.stringify(result));
+
+    } catch (error) {
+        console.error("Error in staffCheckoutItem controller:", error);
+        res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }); // 400 for bad input/unavailable item
+        res.end(JSON.stringify({ 
+            message: 'Could not checkout item', 
+            error: error.message 
+        }));
+    }
+}
+
 
 module.exports = {
     requestPickup,
@@ -271,5 +300,6 @@ module.exports = {
     waiveFine,
     getAllBorrows,
     getAllHolds,
-    cancelHold
+    cancelHold,
+    staffCheckoutItem
 };

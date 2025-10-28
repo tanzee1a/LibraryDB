@@ -20,10 +20,14 @@ function ManageBorrows() {
     // const filter = sampleData.user_filters.find(filter => filter.category === "Borrows");
 
     const [showAddBorrowSheet, setShowAddBorrowSheet] = useState(false);
-    const [newBorrow, setNewBorrow] = useState({
-        user_email: '',
+    const initialBorrowState = {
+        user_id: '', // Changed from user_email
         item_id: ''
-    });
+    };
+    const [newBorrow, setNewBorrow] = useState(initialBorrowState);
+    const [isSubmitting, setIsSubmitting] = useState(false); // Add submitting state
+    const [submitError, setSubmitError] = useState('');     // Add error state
+    // --- END MODIFIED ---
 
     const getThumbnail = (item) => {
         switch(item.item_category) {
@@ -94,16 +98,39 @@ function ManageBorrows() {
         }));
     }
 
-    const handleAddBorrowSubmit = (e) => {
+    const handleAddBorrowSubmit = async (e) => { // Make async
         e.preventDefault();
-        // Implement submission logic here
-        // For now, just close the sheet and reset form
-        setShowAddBorrowSheet(false);
-        setNewBorrow({
-            user_email: '',
-            item_id: ''
-        });
-    }
+        setIsSubmitting(true);
+        setSubmitError('');
+
+        try {
+            const response = await fetch('http://localhost:5000/api/borrows/checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: newBorrow.user_id, // Pass user_id
+                    itemId: newBorrow.item_id  // Pass item_id
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `HTTP error ${response.status}`);
+            }
+
+            // Success!
+            console.log("Borrow Record Added:", await response.json());
+            setShowAddBorrowSheet(false);     // Close sheet
+            setNewBorrow(initialBorrowState); // Reset form
+            fetchBorrows();                  // Refresh the main borrow list
+
+        } catch (err) {
+            console.error("Add Borrow Error:", err);
+            setSubmitError(`Failed to add borrow: ${err.message}`);
+        } finally {
+            setIsSubmitting(false); // Re-enable button
+        }
+    };
 
     const fetchBorrows = () => {
         setLoading(true);
@@ -207,46 +234,54 @@ function ManageBorrows() {
             </div>
         </div>
         {showAddBorrowSheet && (
-        <div className="sheet-overlay" onClick={() => setShowAddBorrowSheet(false)}>
-            <div className="sheet-container" onClick={(e) => e.stopPropagation()}>
-            <h2>Add New Borrow</h2>
-            <form onSubmit={handleAddBorrowSubmit}>
-                <label>
-                User Email:
-                <input
-                    type="email"
-                    name="user_email"
-                    className="edit-input"
-                    value={newBorrow.user_email}
-                    onChange={handleInputChange}
-                    required
-                />
-                </label>
-                <label>
-                Item ID:
-                <input
-                    type="number"
-                    name="item_id"
-                    className="edit-input"
-                    value={newBorrow.item_id}
-                    onChange={handleInputChange}
-                    required
-                />
-                </label>
-                <div className="sheet-actions">
-                <button type="submit" className="action-button primary-button">Add Borrow</button>
-                <button
-                    type="button"
-                    className="action-button secondary-button"
-                    onClick={() => setShowAddBorrowSheet(false)}
-                >
-                    Cancel
-                </button>
+            <div className="sheet-overlay" onClick={() => !isSubmitting && setShowAddBorrowSheet(false)}>
+                <div className="sheet-container" onClick={(e) => e.stopPropagation()}>
+                <h2>Add New Borrow (Direct Checkout)</h2>
+                {/* Display submission error */}
+                {submitError && <p style={{color: 'red'}}>{submitError}</p>}
+                <form onSubmit={handleAddBorrowSubmit}>
+                    <label>
+                    User ID: {/* Changed from User Email */}
+                    <input
+                        type="text" // Changed from email
+                        name="user_id" // Changed from user_email
+                        className="edit-input"
+                        value={newBorrow.user_id}
+                        onChange={handleInputChange}
+                        required
+                        placeholder="Enter Patron's User ID (e.g., U176...)"
+                    />
+                    </label>
+                    <label>
+                    Item ID:
+                    <input
+                        type="text" // Changed from number, item_id is char(13)
+                        name="item_id"
+                        className="edit-input"
+                        value={newBorrow.item_id}
+                        onChange={handleInputChange}
+                        required
+                        placeholder="Enter Item ID (e.g., 978... or DEV...)"
+                    />
+                    </label>
+                    <div className="sheet-actions">
+                    <button type="submit" className="action-button primary-button" disabled={isSubmitting}>
+                         {isSubmitting ? 'Processing...' : 'Checkout Item'}
+                    </button>
+                    <button
+                        type="button"
+                        className="action-button secondary-button"
+                        onClick={() => setShowAddBorrowSheet(false)}
+                        disabled={isSubmitting}
+                    >
+                        Cancel
+                    </button>
+                    </div>
+                </form>
                 </div>
-            </form>
             </div>
-        </div>
-        )}
+            )}
+            {/* --- END MODIFIED --- */}
         </div>
     )
 }

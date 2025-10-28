@@ -605,6 +605,57 @@ async function cancelHold(holdId, staffUserId) { // staffUserId for auth later
     }
 }
 
+/**
+ * Allows Staff to directly check out an available item to a user.
+ * This is a transaction.
+ */
+async function staffCheckoutItem(itemId, userId, staffUserId) { // staffUserId for logging/auth later
+    const conn = await db.getConnection();
+    try {
+        await conn.beginTransaction();
+        const loanedOutStatusId = await getStatusId(conn, 'Loaned Out');
+
+        // 1. Check Availability & Lock Item
+        const [items] = await conn.query(
+            'SELECT available, category FROM ITEM WHERE item_id = ? FOR UPDATE', 
+            [itemId]
+        );
+        if (items.length === 0) throw new Error('Item not found.');
+        if (items[0].available <= 0) throw new Error('Item is not currently available for checkout.');
+        
+        const { category } = items[0];
+
+        // 2. Get Loan Policy
+        const policy = await getLoanPolicyForItem(conn, itemId);
+        const dueDate = new Date();
+        dueDate.setDate(dueDate.getDate() + policy.loan_days);
+
+        // 3. Update ITEM status
+        await conn.query(
+            'UPDATE ITEM SET available = available - 1, loaned_out = loaned_out + 1 WHERE item_id = ?', 
+            [itemId]
+        );
+
+        // 4. Create BORROW record
+        const borrowId = `B${Date.now()}${Math.floor(Math.random()*100)}`; // Simple unique ID
+        const borrowSql = `
+            INSERT INTO BORROW (borrow_id, borrow_date, due_date, status_id, user_id, item_id)
+            VALUES (?, CURDATE(), ?, ?, ?, ?)
+        `;
+        await conn.query(borrowSql, [borrowId, dueDate, loanedOutStatusId, userId, itemId]);
+
+        await conn.commit();
+        return { borrow_id: borrowId, message: `Item checked out to user ${userId}. Due: ${dueDate.toLocaleDateString()}` };
+
+    } catch (error) {
+        await conn.rollback();
+        console.error("Error in staffCheckoutItem transaction:", error);
+        throw error;
+    } finally {
+        conn.release();
+    }
+}
+
 module.exports = {
     requestPickup,
     pickupHold,
@@ -620,5 +671,6 @@ module.exports = {
     waiveFine,
     findAllBorrows,
     findAllHolds,
-    cancelHold
+    cancelHold,
+    staffCheckoutItem
 };
