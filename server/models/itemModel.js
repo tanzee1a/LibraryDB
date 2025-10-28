@@ -169,6 +169,13 @@ async function remove(id) {
     await db.query(sql, [id]);
 }
 
+async function findAllLanguages() {
+    // Select only the needed columns from the LANGUAGE table
+    const sql = 'SELECT language_id, name FROM LANGUAGE ORDER BY name'; // Order by most popular
+    const [rows] = await db.query(sql);
+    return rows;
+}
+
 // --- CREATE BOOK (Updated for new schema) ---
 async function createBook(bookData) {
     const conn = await db.getConnection();
@@ -515,6 +522,7 @@ async function updateDevice(id, deviceData) {
 module.exports = {
     findAll,
     findById,
+    findAllLanguages,
     remove,
     createBook,
     updateBook,

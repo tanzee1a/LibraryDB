@@ -29,6 +29,10 @@ function SearchResults({ isStaff }) {
     const query = searchParams.get('q') || '';
     const [localSearchTerm, setLocalSearchTerm] = useState(query);
 
+    const [languages, setLanguages] = useState([]);
+    const [languagesLoading, setLanguagesLoading] = useState(true);
+    const [languagesError, setLanguagesError] = useState('');
+
     const initialFilters = () => {
         const filters = {};
         filterOptions.forEach(group => {
@@ -63,7 +67,27 @@ function SearchResults({ isStaff }) {
             .then(data => { setResults(data || []); setLoading(false); })
             .catch((err) => { setError(`Could not load results.`); setLoading(false); });
 
-    }, [query, selectedFilters]);
+        const fetchLanguages = async () => {
+            setLanguagesLoading(true);
+            setLanguagesError('');
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/languages`); // Call your new endpoint
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                setLanguages(data); // Store fetched languages
+            } catch (e) {
+                console.error("Failed to fetch languages:", e);
+                setLanguagesError("Failed to load languages."); 
+            } finally {
+                setLanguagesLoading(false); 
+            }
+        };
+
+        fetchLanguages();
+
+    }, [query, searchParams]);
 
 
     const handleSearch = (event) => {
@@ -400,14 +424,25 @@ function SearchResults({ isStaff }) {
                         <label>Authors (comma-separated): <input type="text" name="authors" value={newItem.authors} onChange={handleItemInputChange} className="edit-input" /></label>
                         <label>Publisher: <input type="text" name="publisher" value={newItem.publisher} onChange={handleItemInputChange} className="edit-input" /></label>
                         <label>Published Date: <input type="date" name="published_date" value={newItem.published_date} onChange={handleItemInputChange} className="edit-input" required/></label>
-                        <label>Language ID: 
-                            <select name="language_id" value={newItem.language_id} onChange={handleItemInputChange} className="edit-input">
-                                <option value="1">English</option> 
-                                <option value="2">Spanish</option>
-                                <option value="6">Japanese</option> 
-                                {/* TODO: Fetch languages dynamically */}
-                            </select>
-                        </label>
+                        <label>Language: 
+                                <select 
+                                    name="language_id" 
+                                    value={newItem.language_id} 
+                                    onChange={handleItemInputChange} 
+                                    className="edit-input"
+                                    disabled={languagesLoading || languagesError}
+                                >
+                                    <option value="" disabled>
+                                        {languagesLoading ? 'Loading...' : languagesError ? 'Error' : '-- Select --'}
+                                    </option>
+                                    {!languagesLoading && !languagesError && languages.map(lang => (
+                                        <option key={lang.language_id} value={lang.language_id}>
+                                            {lang.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                {languagesError && <span style={{ color: 'red', fontSize: '0.8em' }}> {languagesError}</span>}
+                            </label>
                         <label>Page Number: <input type="number" name="page_number" min="1" value={newItem.page_number} onChange={handleItemInputChange} className="edit-input" required/></label>
                     </>
                     )}
@@ -417,15 +452,25 @@ function SearchResults({ isStaff }) {
                         <label>Directors (comma-separated): <input type="text" name="directors" value={newItem.directors} onChange={handleItemInputChange} className="edit-input" /></label>
                         <label>Release Year: <input type="number" name="release_year" min="1800" max={new Date().getFullYear()+1} value={newItem.release_year} onChange={handleItemInputChange} className="edit-input" required/></label>
                         <label>Runtime (mins): <input type="number" name="runtime" min="1" value={newItem.runtime} onChange={handleItemInputChange} className="edit-input" required/></label>
-                        <label>Language ID: 
-                             <select name="language_id" value={newItem.language_id} onChange={handleItemInputChange} className="edit-input">
-                                <option value="1">English</option> 
-                                <option value="2">Spanish</option>
-                                <option value="6">Japanese</option> 
-                                <option value="12">Korean</option>
-                                {/* TODO: Fetch languages dynamically */}
-                            </select>
-                        </label>
+                        <label>Language: 
+                                <select 
+                                    name="language_id" 
+                                    value={newItem.language_id} 
+                                    onChange={handleItemInputChange} 
+                                    className="edit-input"
+                                    disabled={languagesLoading || languagesError}
+                                >
+                                     <option value="" disabled>
+                                        {languagesLoading ? 'Loading...' : languagesError ? 'Error' : '-- Select --'}
+                                    </option>
+                                    {!languagesLoading && !languagesError && languages.map(lang => (
+                                        <option key={lang.language_id} value={lang.language_id}>
+                                            {lang.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                {languagesError && <span style={{ color: 'red', fontSize: '0.8em' }}> {languagesError}</span>}
+                            </label>
                         <label>Format ID: 
                              <select name="format_id" value={newItem.format_id} onChange={handleItemInputChange} className="edit-input">
                                 <option value="1">DVD</option> 

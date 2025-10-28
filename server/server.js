@@ -2,7 +2,7 @@ const http = require('http');
 
 // Import controllers
 const { 
-    getItems, getItem, 
+    getItems, getItem, getLanguages,
     createBook, updateBook, 
     createMovie, updateMovie, 
     createDevice, updateDevice,
@@ -41,6 +41,8 @@ const server = http.createServer((req, res) => {
         // --- Item Routes --- (Unchanged)
         if (req.url === '/api/items' && req.method === 'GET') {
             getItems(req, res);
+        } else if (req.url === '/api/languages' && req.method === 'GET') {
+            getLanguages(req, res); // Call the controller function for languages
         } else if (req.url.match(/^\/api\/items\/([a-zA-Z0-9-]+)$/) && req.method === 'GET') {
             const id = req.url.split('/')[3];
             getItem(req, res, id);
