@@ -22,8 +22,8 @@ function protect(req, res, next) {
         
         // 4. Proceed to the next middleware or controller function
         // 🔑 THE FIX: Pass req and res so the controller wrapper receives them!
-        next(req, res); // <--- CHANGE THIS LINE
-        
+        next();
+                
     } catch (error) {
         console.error("Token verification error:", error.message);
         res.writeHead(401, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });

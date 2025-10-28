@@ -25,7 +25,7 @@ export default function BorrowHistory() {
       'Authorization': `Bearer ${token}` // 🔑 KEY FIX: Attach the token
     };
 
-    fetch('${API_BASE_URL}/api/my-history', { headers }) // Or Render URL
+    fetch(`${API_BASE_URL}/api/my-history`, { headers }) // Or Render URL
       .then(r => { if (!r.ok) throw new Error('Network response was not ok'); return r.json(); })
       .then(data => { setHistory(data || []); setLoading(false); })
       .catch((err) => { console.error("Fetch History Error:", err); setError('Could not load borrow history.'); setLoading(false); });
