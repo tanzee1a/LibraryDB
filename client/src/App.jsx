@@ -76,6 +76,7 @@ function App() {
         {/* STAFF */}
         <Route path="/user" element={<UserProfile />} />
         <Route path="/manage-users" element={<ManageUsers />} />
+        <Route path="/user/:userId" element={<UserProfile />} />
         <Route path="/manage-borrows" element={<ManageBorrows />} />
         <Route path="/manage-holds" element={<ManageHolds />} />
         <Route path="/manage-fines" element={<ManageFines />} />

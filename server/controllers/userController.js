@@ -84,8 +84,85 @@ async function staffCreateUser(req, res) {
     }
 }
 
+// --- ADDED: Get Specific User Profile (for Staff) ---
+// @desc Get detailed profile for a specific user ID
+// @route GET /api/users/:userId
+async function getUserProfile(req, res, userId) {
+    try {
+        // TODO: Add Auth check - Staff only
+        const userProfile = await User.findUserProfileById(userId);
+
+        if (!userProfile) {
+            res.writeHead(404, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+            return res.end(JSON.stringify({ message: 'User profile not found' }));
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        return res.end(JSON.stringify(userProfile));
+
+    } catch (error) {
+        console.error(`Error in getUserProfile for ${userId}:`, error);
+        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ message: 'Could not fetch user profile', error: error.message }));
+    }
+}
+
+// --- ADDED: Get Borrow History for a specific User ---
+// @desc Get borrow history list for a specific user ID
+// @route GET /api/users/:userId/borrows
+async function getUserBorrowHistory(req, res, userId) {
+    try {
+        // TODO: Add Auth check - Staff only or check if userId matches logged-in user
+        const history = await User.findBorrowHistoryForUser(userId);
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        return res.end(JSON.stringify(history));
+    } catch (error) {
+        console.error(`Error getting borrow history for ${userId}:`, error);
+        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ message: 'Could not fetch borrow history', error: error.message }));
+    }
+}
+
+// --- ADDED: Get Hold History for a specific User ---
+// @desc Get hold history list for a specific user ID
+// @route GET /api/users/:userId/holds
+async function getUserHoldHistory(req, res, userId) {
+     try {
+        // TODO: Add Auth check
+        const history = await User.findHoldHistoryForUser(userId);
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        return res.end(JSON.stringify(history));
+    } catch (error) {
+        console.error(`Error getting hold history for ${userId}:`, error);
+        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ message: 'Could not fetch hold history', error: error.message }));
+    }
+}
+
+// --- ADDED: Get Fine History for a specific User ---
+// @desc Get fine history list for a specific user ID
+// @route GET /api/users/:userId/fines
+async function getUserFineHistory(req, res, userId) {
+      try {
+        // TODO: Add Auth check
+        const history = await User.findFineHistoryForUser(userId);
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        return res.end(JSON.stringify(history));
+    } catch (error) {
+        console.error(`Error getting fine history for ${userId}:`, error);
+        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ message: 'Could not fetch fine history', error: error.message }));
+    }
+}
+
+
+// Update exports
 module.exports = {
     getMyProfile,
     getAllUsers,
-    staffCreateUser
+    staffCreateUser,
+    getUserProfile,
+    getUserBorrowHistory, // <-- Add this
+    getUserHoldHistory,   // <-- Add this
+    getUserFineHistory    // <-- Add this
 };

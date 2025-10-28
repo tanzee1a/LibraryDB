@@ -128,9 +128,11 @@ function ManageUsers() {
                                     <div className='result-text-info'>
                                         {/* Link to a user profile page (optional) */}
                                         <h2 className='result-title'>
-                                           {/* <Link to={`/user/${user.user_id}`} className="result-link"> */}
+                                           {/* --- MODIFIED: Use Link with dynamic user_id --- */}
+                                            <Link to={`/user/${user.user_id}`} className="result-link">
                                                 {user.firstName} {user.lastName}
-                                           {/* </Link> */}
+                                            </Link>
+                                            {/* --- END MODIFIED --- */}
                                         </h2>
                                         <div className="result-description">
                                             <div className="result-details">

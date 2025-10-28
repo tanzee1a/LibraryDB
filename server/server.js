@@ -17,7 +17,7 @@ const {
 
 const { registerUser, loginUser } = require('./controllers/loginRegisterController');
 const { saveItem, unsaveItem, getMyWishlist } = require('./controllers/wishlistController');
-const { getMyProfile, getAllUsers, staffCreateUser } = require('./controllers/userController');
+const { getMyProfile, getAllUsers, staffCreateUser, getUserProfile, getUserBorrowHistory, getUserHoldHistory, getUserFineHistory } = require('./controllers/userController');
 const { searchItems } = require('./controllers/searchController');
 const { getOverdueReport, getPopularityReport, getFineReport } = require('./controllers/reportController');
 const { protect } = require('./middleware/authMiddleware'); // <--- ADD THIS IMPORT
@@ -62,6 +62,23 @@ const server = http.createServer((req, res) => {
         } else if (req.url.match(/^\/api\/items\/([a-zA-Z0-9-]+)$/) && req.method === 'DELETE') {
             const id = req.url.split('/')[3];
             deleteItem(req, res, id);
+        }
+
+        else if (req.url.match(/^\/api\/users\/([a-zA-Z0-9-]+)$/) && req.method === 'GET') { // Get specific user
+            const userId = req.url.split('/')[3];
+            getUserProfile(req, res, userId); // TODO: Protect - Staff only
+        }
+        else if (req.url.match(/^\/api\/users\/([a-zA-Z0-9-]+)\/borrows$/) && req.method === 'GET') { 
+            const userId = req.url.split('/')[3];
+            getUserBorrowHistory(req, res, userId); // TODO: Protect 
+        }
+         else if (req.url.match(/^\/api\/users\/([a-zA-Z0-9-]+)\/holds$/) && req.method === 'GET') { 
+            const userId = req.url.split('/')[3];
+            getUserHoldHistory(req, res, userId); // TODO: Protect 
+        }
+         else if (req.url.match(/^\/api\/users\/([a-zA-Z0-9-]+)\/fines$/) && req.method === 'GET') { 
+            const userId = req.url.split('/')[3];
+            getUserFineHistory(req, res, userId); // TODO: Protect 
         }
 
         // --- Loan/Hold/Waitlist Routes (User Actions) ---
