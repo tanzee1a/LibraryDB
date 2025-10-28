@@ -284,6 +284,49 @@ async function staffCheckoutItem(req, res) {
     }
 }
 
+// --- ADDED: Get All Fines (for Staff) ---
+// @desc Get ALL fine records (for Staff)
+// @route GET /api/fines
+async function getAllFines(req, res) {
+    try {
+        // TODO: Add Auth check - Staff only
+        // TODO: Get filter parameters from req.url query string
+        const fines = await Loan.findAllFines(/* pass filters */);
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        return res.end(JSON.stringify(fines));
+    } catch (error) {
+        console.error("Error getting all fines:", error);
+        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ message: 'Could not fetch fines', error: error.message }));
+    }
+}
+
+// --- ADDED: Staff Manually Creates Fine ---
+// @desc Staff manually adds a new fine
+// @route POST /api/fines
+async function staffCreateFine(req, res) {
+    try {
+        // TODO: Add Auth check - Staff only
+        const staff_user_id = 'STAFF_ID_PLACEHOLDER'; // Auth placeholder
+
+        const body = await getPostData(req);
+        // Expecting borrow_id, user_id, fee_type, amount, notes
+        const fineData = JSON.parse(body); 
+
+        const newFine = await Loan.staffCreateFine(fineData, staff_user_id);
+        
+        res.writeHead(201, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        return res.end(JSON.stringify(newFine));
+
+    } catch (error) {
+        console.error("Error in staffCreateFine controller:", error);
+        res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }); // 400 for bad input
+        res.end(JSON.stringify({ 
+            message: 'Could not create fine', 
+            error: error.message 
+        }));
+    }
+}
 
 module.exports = {
     requestPickup,
@@ -301,5 +344,7 @@ module.exports = {
     getAllBorrows,
     getAllHolds,
     cancelHold,
-    staffCheckoutItem
+    staffCheckoutItem,
+    getAllFines,
+    staffCreateFine
 };
