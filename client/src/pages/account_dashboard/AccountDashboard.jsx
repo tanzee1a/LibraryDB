@@ -15,7 +15,7 @@ const SECTIONS = [
   { key: 'loans', label: 'Loans', icon: <IoBookOutline className="nav-icon" /> },
   { key: 'fines', label: 'Fines', icon: <IoWalletOutline className="nav-icon" /> },
   { key: 'history', label: 'Borrow History', icon: <IoTimeOutline className="nav-icon" /> },
-  { key: 'wishlist', label: 'Wishlist', icon: <IoHeartOutline className="nav-icon" /> },
+  { key: 'wishlist', label: 'Holds', icon: <IoHeartOutline className="nav-icon" /> },
   { key: 'profile', label: 'Profile', icon: <IoPersonCircleOutline className="nav-icon" /> },
 ];
 
@@ -29,6 +29,7 @@ export default function AccountDashboard({ isLoggedIn, setIsLoggedIn, isStaff, s
         setIsLoggedIn={setIsLoggedIn}
         isStaff={isStaff}
         setIsStaff={setIsStaff}
+        onNavigateDashboard={setActive}
       />
 
       <div className="dashboard-inner">
@@ -73,7 +74,7 @@ export default function AccountDashboard({ isLoggedIn, setIsLoggedIn, isStaff, s
                   <Fines />
                 </div>
                 <div className="card">
-                  <div className="section-header"><IoHeartOutline className="icon" /><h3>Wishlist</h3></div>
+                  <div className="section-header"><IoHeartOutline className="icon" /><h3>Holds</h3></div>
                   <Wishlist />
                 </div>
               </section>
@@ -102,7 +103,7 @@ export default function AccountDashboard({ isLoggedIn, setIsLoggedIn, isStaff, s
 
             {active === 'wishlist' && (
               <section className="card">
-                <div className="section-header"><IoHeartOutline className="icon" /><h2 className="section-title">Wishlist</h2></div>
+                <div className="section-header"><IoHeartOutline className="icon" /><h2 className="section-title">Holds</h2></div>
                 <Wishlist />
               </section>
             )}

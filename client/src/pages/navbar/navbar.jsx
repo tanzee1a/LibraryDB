@@ -8,7 +8,8 @@ const Navbar = ({
     isStaff = false, 
     setIsStaff = () => {}, 
     isLoggedIn = false, 
-    setIsLoggedIn = () => {}
+    setIsLoggedIn = () => {},
+    onNavigateDashboard = () => {}
   }) => {
     const navigate = useNavigate();
     const filters = sampleData.item_filters;
@@ -73,6 +74,15 @@ const Navbar = ({
 
 
     const userNavbar = () => {
+        const handleNavToSection = (sectionKey) => {
+            if (window.location.pathname === '/account') {
+                // If already on the account page, change the internal state
+                onNavigateDashboard(sectionKey);
+            } else {
+                // If on another page, navigate to the account page first
+                navigate(`/account?section=${sectionKey}`); // Optional: use query param for clean redirect
+            }
+        };
         return (
             <nav className="nav">
                 <ul className="nav-links">
@@ -139,8 +149,24 @@ const Navbar = ({
                                 Log out
                                 </a>
                             )}
-                            <a href="#">Your Borrows</a>
-                                <a href="#">Your Holds</a>
+                            <a 
+                                href="/account"
+                                onClick={(e) => {
+                                    e.preventDefault(); 
+                                    handleNavToSection('loans'); // Navigate to the 'loans' section
+                                }}
+                            >
+                            Your Loans
+                            </a>
+                            <a 
+                                href="/account"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    handleNavToSection('wishlist'); // Navigate to the 'wishlist' section
+                                }}
+                            >
+                            Your Holds
+                            </a>
                                 <a href="/account">Account</a>
                             </div>
                         </div>
@@ -204,7 +230,7 @@ const Navbar = ({
                                 Log out
                                 </a>
                             )}
-                            <a href="/staff_page">Account</a>
+                            <a href="/staff_page">Dashboard</a>
                         </div>
                     </div>
                 </div>
