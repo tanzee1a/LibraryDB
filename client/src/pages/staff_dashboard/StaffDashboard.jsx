@@ -25,7 +25,7 @@ function StaffDashboard() {
     setError('');
 
     // Fetch Stats
-    fetch('${API_BASE_URL}/api/staff/dashboard-stats') // Or Render URL
+    fetch(`${API_BASE_URL}/api/staff/dashboard-stats`) // Or Render URL
       .then(res => res.ok ? res.json() : Promise.reject('Stats fetch failed'))
       .then(data => setStats(data))
       .catch(err => {
@@ -39,7 +39,7 @@ function StaffDashboard() {
       });
 
     // Fetch Profile
-    fetch('${API_BASE_URL}/api/staff/my-profile') // Or Render URL
+    fetch(`${API_BASE_URL}/api/staff/my-profile`) // Or Render URL
       .then(res => res.ok ? res.json() : Promise.reject('Profile fetch failed'))
       .then(data => setProfile(data))
       .catch(err => {
