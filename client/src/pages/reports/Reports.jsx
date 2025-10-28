@@ -24,9 +24,24 @@ function Reports() {
         setError('');
         setReportData([]); // Clear previous data
         
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            setError('Authentication token missing. Please log in.');
+            setLoading(false);
+            return;
+        }
+        
+        const authHeaders = {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` 
+        };
 
-        fetch(`${API_BASE_URL}${selectedReport.endpoint}`) // Use selected endpoint
+        fetch(`${API_BASE_URL}${selectedReport.endpoint}`, { headers: authHeaders }) 
             .then(res => {
+                // Now this check will pass
+                if (res.status === 401) {
+                    throw new Error('Unauthorized');
+                }
                 if (!res.ok) throw new Error(`Network error ${res.status}`);
                 return res.json();
             })
