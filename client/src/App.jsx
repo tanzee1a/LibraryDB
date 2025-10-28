@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import HomePage from './pages/home_page/homepage.jsx';
-import Login from './pages/login_page/Login.jsx';
+import Login from './pages/login_page/login.jsx';
 import Notifications from './pages/notifications/notification.jsx';
 import ItemDetails from './pages/catalog_page/item_details.jsx';
 import SearchResults from './pages/catalog_page/search_results.jsx';
