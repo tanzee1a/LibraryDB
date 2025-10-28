@@ -89,8 +89,6 @@ const Navbar = ({
                 <li><a href="/" className="logo">LBRY
                 {/* <img className="navbar-logo" src={Logo} alt="" /> */}
                 </a></li>
-                <li><a href="/item">ItemDetails</a></li>
-                <li><a href="/search">SearchResults</a></li>
                 {filters.map(filter => (
                 <li key={filter.category} className="dropdown">
                     <a href="#">{filter.category}</a>
