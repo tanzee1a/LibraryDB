@@ -1,7 +1,7 @@
 // pages/reports/Reports.jsx
 import React, { useState, useEffect } from 'react';
 import './Reports.css'; // Create this CSS file
-
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'; 
 // Define available reports
 const reportOptions = [
     { key: 'overdue', label: 'Overdue Items', endpoint: '/api/reports/overdue' },
@@ -24,7 +24,7 @@ function Reports() {
         setError('');
         setReportData([]); // Clear previous data
 
-        fetch(`http://localhost:5000${selectedReport.endpoint}`) // Use selected endpoint
+        fetch(`${API_BASE_URL}${selectedReport.endpoint}`) // Use selected endpoint
             .then(res => {
                 if (!res.ok) throw new Error(`Network error ${res.status}`);
                 return res.json();

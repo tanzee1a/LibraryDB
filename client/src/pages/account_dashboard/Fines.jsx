@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { IoWalletOutline } from 'react-icons/io5';
-
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'; 
 const Fines = () => {
   const [fines, setFines] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -26,7 +26,7 @@ const Fines = () => {
 
     setLoading(true);
     setError(null);
-    fetch('http://localhost:5000/api/my-fines', { headers }) // Fetch from your fines endpoint
+    fetch('${API_BASE_URL}/api/my-fines', { headers }) // Fetch from your fines endpoint
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch fines');
         return res.json();
@@ -48,7 +48,7 @@ const Fines = () => {
 
   // --- Handle Pay Button Click ---
   const handlePayFine = (fineId) => {
-    fetch(`http://localhost:5000/api/fines/${fineId}/pay`, { method: 'POST' }) // Call pay endpoint
+    fetch(`${API_BASE_URL}/api/fines/${fineId}/pay`, { method: 'POST' }) // Call pay endpoint
       .then(res => {
         if (!res.ok) throw new Error('Payment failed');
         return res.json();

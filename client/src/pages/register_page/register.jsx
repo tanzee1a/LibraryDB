@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Navbar from "../navbar/navbar";
 import "./register.css";
-
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'; 
 export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -41,7 +41,7 @@ export default function Register() {
     if (!validate()) return;
 
     try {
-      const response = await fetch("http://localhost:5000/api/register", {
+      const response = await fetch("${API_BASE_URL}/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

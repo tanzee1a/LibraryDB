@@ -6,7 +6,7 @@ import sampleData from '../../assets/sample_data.json'
 import { IoCheckmark, IoTrash } from "react-icons/io5"
 import { MdEdit } from "react-icons/md"
 import { useState } from 'react'
-
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'; 
 function UserProfile() {
     const user = sampleData.users[0];
     const [isEditing, setIsEditing] = useState(false)

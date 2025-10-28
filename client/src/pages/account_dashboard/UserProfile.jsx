@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { IoPersonCircleOutline } from 'react-icons/io5';
-
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'; 
 export default function UserProfile() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -24,7 +24,7 @@ export default function UserProfile() {
       'Authorization': `Bearer ${token}` 
     };
     // NOTE: You need to create this '/api/my-profile' endpoint on the backend!
-    fetch('http://localhost:5000/api/my-profile', { headers }) 
+    fetch('${API_BASE_URL}/api/my-profile', { headers }) 
       .then(res => res.ok ? res.json() : Promise.reject('Failed fetch'))
       .then(data => {
         setUser(data);

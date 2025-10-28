@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 // Remove IoBookOutline if no longer needed
-
+// --- ADD THIS LINE AT THE TOP of Loans.jsx ---
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'; 
+// --- END ADD ---
 export default function Loans() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -26,7 +28,7 @@ export default function Loans() {
 
     setLoading(true);
     setError(''); 
-    fetch('http://localhost:5000/api/my-loans', { headers }) // Or your Render URL
+    fetch('${API_BASE_URL}/api/my-loans', { headers })
       .then(r => { if (!r.ok) throw new Error('Network response was not ok'); return r.json(); })
       .then(data => { setItems(data || []); setLoading(false); })
       .catch((err) => { console.error("Fetch Loans Error:", err); setError('Could not load loans.'); setLoading(false); });

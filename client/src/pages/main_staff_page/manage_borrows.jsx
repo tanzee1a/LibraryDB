@@ -7,7 +7,7 @@ import sampleData from '../../assets/sample_data.json'
 import React, { useState, useEffect } from 'react';
 import { FaPlus } from 'react-icons/fa'
 import { Link } from 'react-router-dom';
-
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'; 
 function ManageBorrows() {
 
     const [borrows, setBorrows] = useState([]);
@@ -72,14 +72,14 @@ function ManageBorrows() {
     }
 
     const handleReturn = (borrowId) => {
-        fetch(`http://localhost:5000/api/return/${borrowId}`, { method: 'POST' })
+        fetch(`${API_BASE_URL}/api/return/${borrowId}`, { method: 'POST' })
             .then(r => { if (!r.ok) throw new Error('Marking return failed'); return r.json(); })
             .then(() => fetchBorrows()) // Refresh list
             .catch(err => alert(`Error: ${err.message}`));
     };
 
     const handleMarkLost = (borrowId) => {
-        fetch(`http://localhost:5000/api/borrows/${borrowId}/lost`, { method: 'POST' })
+        fetch(`${API_BASE_URL}/api/borrows/${borrowId}/lost`, { method: 'POST' })
             .then(r => { if (!r.ok) throw new Error('Marking lost failed'); return r.json(); })
             .then(() => fetchBorrows()) // Refresh list
             .catch(err => alert(`Error: ${err.message}`));
@@ -104,7 +104,7 @@ function ManageBorrows() {
         setSubmitError('');
 
         try {
-            const response = await fetch('http://localhost:5000/api/borrows/checkout', {
+            const response = await fetch('${API_BASE_URL}/api/borrows/checkout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -135,7 +135,7 @@ function ManageBorrows() {
     const fetchBorrows = () => {
         setLoading(true);
         setError('');
-        fetch('http://localhost:5000/api/borrows') // Fetch all borrows
+        fetch('${API_BASE_URL}/api/borrows') // Fetch all borrows
             .then(r => { if (!r.ok) throw new Error('Network response failed'); return r.json(); })
             .then(data => { setBorrows(data || []); setLoading(false); })
             .catch(err => { console.error("Fetch Borrows Error:", err); setError('Could not load borrows.'); setLoading(false); });

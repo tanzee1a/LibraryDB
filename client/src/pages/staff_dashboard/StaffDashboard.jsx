@@ -5,6 +5,7 @@ import { IoBookOutline, IoPeopleOutline, IoSwapHorizontalOutline, IoHourglassOut
 import './StaffDashboard.css';
 
 // --- REMOVED hardcoded quickStats ---
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'; 
 
 function StaffDashboard() {
   // --- ADDED State for stats, profile, loading, error ---
@@ -24,7 +25,7 @@ function StaffDashboard() {
     setError('');
 
     // Fetch Stats
-    fetch('http://localhost:5000/api/staff/dashboard-stats') // Or Render URL
+    fetch('${API_BASE_URL}/api/staff/dashboard-stats') // Or Render URL
       .then(res => res.ok ? res.json() : Promise.reject('Stats fetch failed'))
       .then(data => setStats(data))
       .catch(err => {
@@ -38,7 +39,7 @@ function StaffDashboard() {
       });
 
     // Fetch Profile
-    fetch('http://localhost:5000/api/staff/my-profile') // Or Render URL
+    fetch('${API_BASE_URL}/api/staff/my-profile') // Or Render URL
       .then(res => res.ok ? res.json() : Promise.reject('Profile fetch failed'))
       .then(data => setProfile(data))
       .catch(err => {

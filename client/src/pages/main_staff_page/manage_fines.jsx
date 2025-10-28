@@ -3,7 +3,7 @@ import sampleData from '../../assets/sample_data.json'
 
 import { useState } from 'react'
 import { FaPlus } from 'react-icons/fa'
-
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'; 
 function ManageFines() {
     const fines = sampleData.fines;
     const multipleFines = [...fines, ...fines, ...fines];

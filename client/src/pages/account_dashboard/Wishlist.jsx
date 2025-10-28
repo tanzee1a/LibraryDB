@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { IoHeartOutline, IoHourglassOutline } from 'react-icons/io5';
-
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'; 
 export default function Wishlist() {
   const [holds, setHolds] = useState([]);
   const [wishlistItems, setWishlistItems] = useState([]);
@@ -32,8 +32,8 @@ export default function Wishlist() {
     setLoading(true);
     setError('');
     Promise.all([
-      fetch('http://localhost:5000/api/my-holds', { headers }).then(r => r.ok ? r.json() : Promise.reject('Failed holds fetch')),
-      fetch('http://localhost:5000/api/my-wishlist', { headers }).then(r => r.ok ? r.json() : Promise.reject('Failed wishlist fetch'))
+      fetch('${API_BASE_URL}/api/my-holds', { headers }).then(r => r.ok ? r.json() : Promise.reject('Failed holds fetch')),
+      fetch('${API_BASE_URL}/api/my-wishlist', { headers }).then(r => r.ok ? r.json() : Promise.reject('Failed wishlist fetch'))
     ])
     .then(([holdsData, wishlistData]) => {
       setHolds(holdsData || []);
@@ -61,7 +61,7 @@ export default function Wishlist() {
     }
     
     // 🔑 FIX APPLIED HERE: Added headers and method to the fetch options
-    fetch(`http://localhost:5000/api/wishlist/${itemId}`, { 
+    fetch(`${API_BASE_URL}/api/wishlist/${itemId}`, { 
         method: 'DELETE', 
         headers: headers // Send the Authorization header
     })

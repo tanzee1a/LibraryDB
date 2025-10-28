@@ -8,6 +8,8 @@ import BorrowHistory from './BorrowHistory';
 import Wishlist from './Wishlist';
 import { IoHomeOutline, IoBookOutline, IoWalletOutline, IoTimeOutline, IoHeartOutline, IoPersonCircleOutline } from 'react-icons/io5';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'; 
+
 const SECTIONS = [
   { key: 'overview', label: 'Overview', icon: <IoHomeOutline className="nav-icon" /> },
   { key: 'loans', label: 'Loans', icon: <IoBookOutline className="nav-icon" /> },

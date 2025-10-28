@@ -5,6 +5,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { FaPlus } from "react-icons/fa"
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'; 
+
 const filterOptions = [
     { 
         category: 'Item Type', 
@@ -56,7 +58,7 @@ function SearchResults({ isStaff }) {
         });
         const queryString = params.toString();
 
-        fetch(`http://localhost:5000/api/search?${queryString}`) 
+        fetch(`${API_BASE_URL}/api/search?${queryString}`) 
             .then(r => { if (!r.ok) throw new Error('Network response failed'); return r.json(); })
             .then(data => { setResults(data || []); setLoading(false); })
             .catch((err) => { setError(`Could not load results.`); setLoading(false); });
@@ -200,7 +202,7 @@ function SearchResults({ isStaff }) {
         console.log("Submitting:", endpoint, payload); // For debugging
 
         try {
-            const response = await fetch(`http://localhost:5000${endpoint}`, {
+            const response = await fetch(`${API_BASE_URL}${endpoint}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)

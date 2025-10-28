@@ -8,6 +8,7 @@ import { MdDevicesOther } from "react-icons/md";
 import { TbBuildingFactory2 } from "react-icons/tb";
 import { BsTicketPerforated } from "react-icons/bs";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'; 
 
 function ItemDetails({ isStaff }) {
   const { itemId } = useParams();
@@ -19,7 +20,7 @@ function ItemDetails({ isStaff }) {
     if (itemId) {
       setLoading(true);
       setError('');
-      fetch(`http://localhost:5000/api/items/${itemId}`)
+      fetch(`${API_BASE_URL}/api/items/${itemId}`)
         .then(r => {
           if (r.status === 404) throw new Error('Item not found');
           if (!r.ok) throw new Error('Network response failed');

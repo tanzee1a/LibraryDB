@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'; // --- ADDED React hooks ---
 import { Link, useSearchParams } from 'react-router-dom';
 // --- REMOVED sample data/thumbnails ---
 
-
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'; 
 // --- ADDED: Define filter options for Holds ---
 const holdFilterOptions = [
     {
@@ -35,7 +35,7 @@ function ManageHolds() {
         // TODO: Add filter params from selectedFilters to the fetch URL
         const queryString = searchParams.toString(); // For now, just use existing URL params
 
-        fetch(`http://localhost:5000/api/holds?${queryString}`) // Include query string
+        fetch(`${API_BASE_URL}/api/holds?${queryString}`) // Include query string
             .then(r => { if (!r.ok) throw new Error('Network response failed'); return r.json(); })
             .then(data => { setHolds(data || []); setLoading(false); })
             .catch(err => { console.error("Fetch Holds Error:", err); setError('Could not load holds.'); setLoading(false); });
@@ -57,7 +57,7 @@ function ManageHolds() {
         const queryString = searchParams.toString();
         console.log("FETCHING with:", queryString); // Debug log
 
-        fetch(`http://localhost:5000/api/holds?${queryString}`)
+        fetch(`${API_BASE_URL}/api/holds?${queryString}`)
             .then(r => {
                 if (!r.ok) throw new Error(`Network response failed (${r.status})`);
                 return r.json();
@@ -81,7 +81,7 @@ function ManageHolds() {
 
     // --- ADDED Action Handlers ---
     const handlePickup = (holdId) => {
-        fetch(`http://localhost:5000/api/holds/${holdId}/pickup`, { method: 'POST' })
+        fetch(`${API_BASE_URL}/api/holds/${holdId}/pickup`, { method: 'POST' })
             .then(r => { if (!r.ok) throw new Error('Pickup failed'); return r.json(); })
             .then((data) => {
                  console.log(data.message); // Log success
@@ -94,7 +94,7 @@ function ManageHolds() {
         if (!window.confirm('Are you sure you want to cancel this hold? The item will become available.')) {
              return;
         }
-        fetch(`http://localhost:5000/api/holds/${holdId}/cancel`, { method: 'POST' })
+        fetch(`${API_BASE_URL}/api/holds/${holdId}/cancel`, { method: 'POST' })
             .then(r => { if (!r.ok) throw new Error('Cancel failed'); return r.json(); })
             .then((data) => {
                 console.log(data.message); // Log success
