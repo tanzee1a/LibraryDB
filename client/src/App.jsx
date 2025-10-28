@@ -81,6 +81,7 @@ function App() {
         <Route path="/manage-holds" element={<ManageHolds />} />
         <Route path="/manage-fines" element={<ManageFines />} />
         <Route path="/staff_page" element={<Staff_page />} />
+        <Route path="/reports" element={<Reports />} />
       </Routes>
     </BrowserRouter>
   );
