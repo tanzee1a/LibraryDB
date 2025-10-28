@@ -14,7 +14,7 @@ import StaffDashboard from './pages/staff_dashboard/StaffDashboard.jsx';
 import Reports from './pages/reports/Reports.jsx';
 import Register from './pages/register_page/register.jsx';
 import Navbar from './pages/navbar/navbar.jsx';
-import Staff_page from './pages/staff_page/staff_page.jsx';
+import Staff_page from './pages/staff_dashboard/StaffDashboard.jsx';
 import { useState, useEffect } from 'react';
 import './App.css';
 
