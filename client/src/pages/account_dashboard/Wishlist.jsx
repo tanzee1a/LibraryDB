@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { IoHeartOutline, IoHourglassOutline } from 'react-icons/io5';
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'; 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
 export default function Wishlist() {
   const [holds, setHolds] = useState([]);
   const [wishlistItems, setWishlistItems] = useState([]);

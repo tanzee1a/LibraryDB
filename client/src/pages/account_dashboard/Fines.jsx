@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { IoWalletOutline } from 'react-icons/io5';
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'; 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
 const Fines = () => {
   const [fines, setFines] = useState([]);
   const [loading, setLoading] = useState(true);

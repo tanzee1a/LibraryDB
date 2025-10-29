@@ -7,7 +7,7 @@ import sampleData from '../../assets/sample_data.json'
 import React, { useState, useEffect } from 'react';
 import { FaPlus } from 'react-icons/fa'
 import { Link } from 'react-router-dom';
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'; 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
 function ManageBorrows() {
 
     const [borrows, setBorrows] = useState([]);

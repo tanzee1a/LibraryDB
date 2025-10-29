@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { FaPlus } from "react-icons/fa"
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'; 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
 
 const filterOptions = [
     { 
@@ -242,12 +242,17 @@ function SearchResults({ isStaff }) {
     };
 
     const renderItemActionButtons = (item) => {
+        {/* --- TODO: Connect these buttons --- */}
         if(isStaff) return;
         if(item.available > 0) {
-            return <button className="action-button primary-button">Borrow</button>;
+            return <button className="action-button primary-button">Request Pickup</button>;
         } else {
-            return <button className="action-button secondary-button">Place Hold</button>;
+            return <button className="action-button secondary-button">Place Waitlist Hold</button>;
         }
+    }
+
+    const renderStatusText = () =>{
+
     }
 
   return (
@@ -255,7 +260,8 @@ function SearchResults({ isStaff }) {
       <div className="page-container">
         <div className='search-result-page-container'>
             <div className="search-result-header">
-                <h1>{query ? `Search Results for "${query}"` : 'Browse Items'}</h1>
+                <h1>{ isStaff ? 'Manage Items' : 'Find your perfect discovery.'}</h1>
+                <p>{query ? `Search Results for "${query}"` : 'Browse Items'}</p>
                 <div className="search-result-search-bar-container">
                     { isStaff && (
                         <button
@@ -340,12 +346,7 @@ function SearchResults({ isStaff }) {
                                     </div>
                                 </div>
                                 <div className="result-actions">
-                                     {/* --- TODO: Connect these buttons --- */}
-                                    {item.available > 0 ? (
-                                        <button className="btn primary">Request Pickup</button>
-                                    ) : (
-                                        <button className="btn secondary">Place Waitlist Hold</button>
-                                    )}
+                                    {renderItemActionButtons(item)}
                                 </div>
                             </div>
                             <hr className="divider" />

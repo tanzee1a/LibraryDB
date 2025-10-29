@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'; // --- ADDED React hooks ---
 import { Link, useSearchParams } from 'react-router-dom';
 // --- REMOVED sample data/thumbnails ---
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'; 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
 // --- ADDED: Define filter options for Holds ---
 const holdFilterOptions = [
     {

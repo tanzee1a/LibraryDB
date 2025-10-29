@@ -8,7 +8,7 @@ import { MdDevicesOther } from "react-icons/md";
 import { TbBuildingFactory2 } from "react-icons/tb";
 import { BsTicketPerforated } from "react-icons/bs";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'; 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
 
 function ItemDetails({ isStaff }) {
   const { itemId } = useParams();

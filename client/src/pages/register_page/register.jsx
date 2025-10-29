@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Navbar from "../navbar/navbar";
 import "./register.css";
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'; 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
 export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

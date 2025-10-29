@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { IoTimeOutline } from 'react-icons/io5'; // <-- ADD THIS IMPORT
 // Remove IoTimeOutline if no longer needed
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'; 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
 
 export default function BorrowHistory() {
   const [history, setHistory] = useState([]);

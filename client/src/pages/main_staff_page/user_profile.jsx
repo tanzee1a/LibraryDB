@@ -6,7 +6,7 @@ import { IoCheckmark, IoTrash, IoTimeOutline, IoHourglassOutline, IoWalletOutlin
 import { MdEdit } from "react-icons/md";
 
 // --- ADDED API_BASE_URL ---
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'; 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
 
 function UserProfile() {
     // --- State for fetched user, loading, error, editing ---

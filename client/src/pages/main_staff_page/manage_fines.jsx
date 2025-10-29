@@ -5,7 +5,7 @@ import { FaPlus } from 'react-icons/fa';
 import { Link } from 'react-router-dom'; // --- ADDED Link ---
 
 // --- ADDED API_BASE_URL ---
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'; 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
 
 function ManageFines() {
     // --- ADDED State for fines, loading, error ---

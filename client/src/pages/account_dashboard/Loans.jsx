@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 // Remove IoBookOutline if no longer needed
 // --- ADD THIS LINE AT THE TOP of Loans.jsx ---
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'; 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
 // --- END ADD ---
 export default function Loans() {
   const [items, setItems] = useState([]);
