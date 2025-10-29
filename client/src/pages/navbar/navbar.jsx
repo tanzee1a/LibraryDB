@@ -1,7 +1,8 @@
 import './navbar.css'
 import { IoSearch, IoPersonCircleOutline } from "react-icons/io5"
 import sampleData from '../../assets/sample_data.json'
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom'
+import { useState } from 'react'
 
 
 const Navbar = ({
@@ -13,6 +14,43 @@ const Navbar = ({
   }) => {
     const navigate = useNavigate();
     const filters = sampleData.item_filters;
+
+
+      const [searchTerm, setSearchTerm] = useState('');
+
+    const handleSearch = (event) => {
+        if (event.key === 'Enter' && searchTerm.trim()) {
+        event.preventDefault();
+        navigate(`/search?q=${encodeURIComponent(searchTerm.trim())}`);
+        }
+    };
+
+    const renderSearchDropdown = () => {
+        return (
+            <li className="dropdown">
+                <button className="nav-icon"><IoSearch /></button>
+                <div className="dropdown-menu">
+                        <div className="dropdown-menu-contents">
+                            <div className="category-column">
+                                    <IoSearch />
+                                <input
+                                    type="text"
+                                    className="search-input"
+                                    placeholder="Search the entire library..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    onKeyDown={handleSearch}
+                                />
+                                <p>Quick Links</p>
+                                <Link to="/search?category=BOOK">Books</Link>
+                                <Link to="/search?category=MOVIE">Movies</Link>
+                                <Link to="/search?category=DEVICE">Devices</Link>
+                            </div>
+                        </div>
+                    </div>
+            </li>
+        );
+    }
 
     // --- 1. GUEST NAVBAR (NOT LOGGED IN) ---
     const guestNavbar = () => {
@@ -39,21 +77,7 @@ const Navbar = ({
                     </li>
                     ))}
                     {/* Search Dropdown */}
-                    <li className="dropdown">
-                        <button className="nav-icon"><IoSearch /></button>
-                        <div className="dropdown-menu">
-                            <div className="dropdown-menu-contents">
-                                <div className="category-column">
-                                    <IoSearch />
-                                    <input type="text" className="search-input" placeholder="Search the entire library..." />
-                                    <p>Quick Links</p>
-                                    <Link to="/search?category=BOOK">Books</Link>
-                                    <Link to="/search?category=MOVIE">Movies</Link>
-                                    <Link to="/search?category=DEVICE">Devices</Link>
-                                </div>
-                            </div>
-                        </div>
-                    </li>
+                    {renderSearchDropdown()}
                     {/* Login/Register Links */}
                     <li className="dropdown">
                         <button className="nav-icon"><IoPersonCircleOutline /></button>
@@ -106,23 +130,7 @@ const Navbar = ({
                     </div>
                 </li>
                 ))}
-                <li className="dropdown">
-                <button className="nav-icon">
-                    <IoSearch />
-                </button>
-                <div className="dropdown-menu">
-                        <div className="dropdown-menu-contents">
-                            <div className="category-column">
-                                    <IoSearch />
-                                <input type="text" className="search-input" placeholder="Search the entire library..." />
-                                <p>Quick Links</p>
-                                <Link to="/search?category=BOOK">Books</Link>
-                                <Link to="/search?category=MOVIE">Movies</Link>
-                                <Link to="/search?category=DEVICE">Devices</Link>
-                            </div>
-                        </div>
-                    </div>
-                </li>
+                {renderSearchDropdown()}
                 <li className="dropdown">
                 <button className="nav-icon">
                     <IoPersonCircleOutline />
@@ -187,23 +195,7 @@ const Navbar = ({
             <li><a href="/manage-borrows">Borrows</a></li>
             <li><a href="/manage-holds">Holds</a></li>
             <li><a href="/manage-fines">Fines</a></li>
-            <li className="dropdown">
-            <button className="nav-icon">
-                <IoSearch />
-            </button>
-            <div className="dropdown-menu">
-                    <div className="dropdown-menu-contents">
-                        <div className="category-column">
-                                <IoSearch />
-                            <input type="text" className="search-input" placeholder="Search the entire library..." />
-                            <p>Quick Links</p>
-                            <Link to="/search?category=BOOK">Books</Link>
-                            <Link to="/search?category=MOVIE">Movies</Link>
-                            <Link to="/search?category=DEVICE">Devices</Link>
-                        </div>
-                    </div>
-                </div>
-            </li>
+            {renderSearchDropdown()}
             <li className="dropdown">
             <button className="nav-icon">
                 <IoPersonCircleOutline />

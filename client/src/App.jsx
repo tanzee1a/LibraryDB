@@ -1,6 +1,7 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import HomePage from './pages/home_page/homepage.jsx';
-import Login from './pages/login_page/login.jsx';
+import Login from './pages/authentication_page/login.jsx';
+import Register from './pages/authentication_page/register.jsx';
 import Notifications from './pages/notifications/notification.jsx';
 import ItemDetails from './pages/catalog_page/item_details.jsx';
 import SearchResults from './pages/catalog_page/search_results.jsx';
@@ -12,7 +13,6 @@ import ManageFines from './pages/main_staff_page/manage_fines.jsx';
 import AccountDashboard from './pages/account_dashboard/AccountDashboard.jsx';
 import StaffDashboard from './pages/staff_dashboard/StaffDashboard.jsx';
 import Reports from './pages/reports/Reports.jsx';
-import Register from './pages/register_page/register.jsx';
 import Navbar from './pages/navbar/navbar.jsx';
 import Staff_page from './pages/staff_dashboard/StaffDashboard.jsx';
 import { useState, useEffect } from 'react';
@@ -59,10 +59,21 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route
           path="/login"
-          element={<Login setIsStaff={setIsStaff} setIsLoggedIn={setIsLoggedIn} />}
+          element={
+            isLoggedIn
+              ? <Navigate to="/" replace /> // Redirect to home if already signed in
+              : <Login setIsStaff={setIsStaff} setIsLoggedIn={setIsLoggedIn} />
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            isLoggedIn
+              ? <Navigate to="/" replace /> // Redirect to home if already signed in
+              : <Register />
+          }
         />
         <Route path="/notifications" element={<Notifications />} />
-        <Route path="/register" element={<Register />} />
         <Route path="/search" element={<SearchResults isStaff={isStaff} />} />
         <Route path="/item/:itemId" element={<ItemDetails isStaff={isStaff} />} />
         <Route path="/account" element={ <AccountDashboard

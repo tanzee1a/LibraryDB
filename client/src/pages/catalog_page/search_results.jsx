@@ -61,7 +61,7 @@ function SearchResults({ isStaff }) {
         fetch(`${API_BASE_URL}/api/search?${queryString}`) 
             .then(r => { if (!r.ok) throw new Error('Network response failed'); return r.json(); })
             .then(data => { setResults(data || []); setLoading(false); })
-            .catch((err) => { setError(`Could not load results.`); setLoading(false); });
+            .catch(() => { setError(`Could not load results.`); setLoading(false); });
 
     }, [query, selectedFilters]);
 
@@ -230,13 +230,13 @@ function SearchResults({ isStaff }) {
 
     const renderItemDetails = (item) => {
         if (item.category === "BOOK") {
-            return <p><small><strong>Authors:</strong> {item.creators || 'N/A'}</small></p>;
+            return <p><strong>Authors:</strong> {item.creators || 'N/A'}</p>;
         }
         if (item.category === "MOVIE") {
-            return <p><small><strong>Directors:</strong> {item.creators || 'N/A'}</small></p>;
+            return <p><strong>Directors:</strong> {item.creators || 'N/A'}</p>;
         }
         if (item.category === "DEVICE") {
-            return <p><small><strong>Manufacturer:</strong> {item.creators || 'N/A'}</small></p>;
+            return <p><strong>Manufacturer:</strong> {item.creators || 'N/A'}</p>;
         }
         return null;
     };
@@ -251,17 +251,13 @@ function SearchResults({ isStaff }) {
         }
     }
 
-    const renderStatusText = () =>{
-
-    }
-
   return (
     <div>
       <div className="page-container">
         <div className='search-result-page-container'>
             <div className="search-result-header">
                 <h1>{ isStaff ? 'Manage Items' : 'Find your perfect discovery.'}</h1>
-                <p>{query ? `Search Results for "${query}"` : 'Browse Items'}</p>
+                <p>{query ? `Search Results for "${query}"` : ''}</p>
                 <div className="search-result-search-bar-container">
                     { isStaff && (
                         <button
@@ -334,13 +330,14 @@ function SearchResults({ isStaff }) {
                                     </Link>
                                     </h3>
                                     <div className="result-description">
-                                        {/* --- MODIFIED --- Use API data */}
-                                        {renderItemDetails(item)}
+                                        <div className='result-details'>
+                                            {renderItemDetails(item)}
+                                        </div>
                                         <div className="availability-status">
-                                            <p><small><strong>Available:</strong> <span>{item.available}</span></small></p>
-                                            {item.available <= 0 && item.on_hold > 0 && <p><small><strong>On Hold:</strong> <span>{item.on_hold}</span></small></p>}
+                                            <p><strong>Available:</strong> <span>{item.available}</span></p>
+                                            {item.available <= 0 && item.on_hold > 0 && <p><strong>On Hold:</strong> <span>{item.on_hold}</span></p>}
                                             {item.available <= 0 && (
-                                                <p><small><strong>Earliest Available:</strong> <span>{item.earliest_available_date ? new Date(item.earliest_available_date).toLocaleDateString() : 'N/A'}</span></small></p>
+                                                <p><strong>Earliest Available:</strong> <span>{item.earliest_available_date ? new Date(item.earliest_available_date).toLocaleDateString() : 'N/A'}</span></p>
                                             )}
                                         </div>
                                     </div>

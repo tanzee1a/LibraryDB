@@ -1,0 +1,97 @@
+.login-page-container{
+  background-image: url('../../assets/login_background.jpg');
+  background-size: cover;
+  background-repeat: no-repeat; 
+  background-position: left;
+  height: 100vh;
+}
+
+.login-side-text {
+  margin: auto;
+}
+
+.login-side-text h1 {
+  font-size: 3.5rem;
+  margin-bottom: 0;
+}
+.login-side-text p {
+  margin: auto;
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+.login-page-content {
+  display: flex;
+  align-items: center;
+  height: 90vh;
+}
+
+.login-form-title {
+  font-size: 2rem;
+  margin: 0;
+}
+
+.login-form {
+  width: 300px;
+}
+
+.login-form-container {
+  margin: auto;
+  width: 350px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+}
+
+.form-group {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.form-group input {
+  width: 100%; 
+  padding: 1rem;
+  padding-top: 2rem;
+  margin-top: 1.5rem;
+  border: 1px solid var(--darker-tertiary-color);
+  border-radius: 22px;
+  font-size: 1rem;
+  outline: none;
+  display: block;
+  margin-left: auto;
+  margin-right: auto; /* ensures it stays centered */
+}
+
+.form-group label {
+  position: absolute;
+  transform: translateY(100%);
+  color: var(--darker-tertiary-color);
+  font-size: 1rem;
+  pointer-events: none;
+  transition: all 0.2s ease;
+  padding: 0 0.25rem;
+
+  top: 0.75rem;
+  left: 0.75rem;
+  font-size: 0.85rem;
+  color: #333;
+}
+
+.form-group a {
+  color: var(--secondary-color);
+  text-decoration: none;
+}
+
+.form-group a:hover {
+  text-decoration: underline;
+}
+
+.form-group p {
+  font-size: 0.9rem;
+  text-align: center;
+}

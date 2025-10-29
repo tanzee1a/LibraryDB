@@ -28,6 +28,7 @@ function ItemDetails({ isStaff }) {
         })
         .then(data => {
           setItem(data);
+          console.log('Fetched item data:', data);
           setLoading(false);
         })
         .catch((err) => {
@@ -41,37 +42,82 @@ function ItemDetails({ isStaff }) {
   if (error) return <div className="page-container"><p style={{ color: 'red' }}>Error: {error}</p></div>;
   if (!item) return <div className="page-container"><p>Item data could not be loaded.</p></div>;
 
-const renderAdditionalInfo = () => {
-    switch (item.category) {
-      case "BOOK":
-        return (
-          <>
-            <li><IoBookOutline /> Pages: {item.page_number || 'N/A'}</li>
-            <li><IoMdGlobe /> Language: {item.language_name || 'N/A'}</li>
-            <li><BsTicketPerforated /> Publisher: {item.publisher || 'N/A'}</li>
-            <li><IoCalendarClearOutline /> Published: {item.published_date ? new Date(item.published_date).toLocaleDateString() : 'N/A'}</li>
-          </>
-        );
-      case "MOVIE":
-        return (
-           <>
-            <li><IoTimerOutline /> Runtime: {item.runtime ? `${item.runtime} mins` : 'N/A'}</li>
-            <li><IoMdGlobe /> Language: {item.language_name || 'N/A'}</li>
-            <li><FaRegFileAlt /> Format: {item.format_name || 'N/A'}</li>
-            <li><IoInformationCircleOutline/> Rating: {item.rating_name || 'N/A'}</li>
-            <li><IoCalendarClearOutline /> Released: {item.release_year || 'N/A'}</li>
-          </>
-        );
-      case "DEVICE":
-        return (
-           <>
-            <li><TbBuildingFactory2 /> Manufacturer: {item.manufacturer || 'N/A'}</li>
-            <li><MdDevicesOther /> Type: {item.device_type_name || 'N/A'}</li>
-          </>
-        );
-      default: return null;
-    }
-  };
+  const renderAdditionalInfo = () => {
+        switch (item.category) {
+        case "BOOK":
+            return (
+            <>
+                <li>
+                <span className="info-name">Pages</span>
+                <span className="info-icon"><FaRegFileAlt /></span>
+                <span className="info-detail">{item.page_number || 'N/A'}</span>
+                </li>
+                <li>
+                <span className="info-name">Language</span>
+                <span className="info-icon"><IoMdGlobe /></span>
+                <span className="info-detail">{item.language_name || 'N/A'}</span>
+                </li>
+                <li>
+                <span className="info-name">Publisher</span>
+                <span className="info-icon"><IoBookOutline /></span>
+                <span className="info-detail">{item.publisher || 'N/A'}</span>
+                </li>
+                <li>
+                <span className="info-name">Publication Date</span>
+                <span className="info-icon"><IoCalendarClearOutline /></span>
+                <span className="info-detail">{item.published_date ? new Date(item.published_date).toLocaleDateString() : 'N/A'}</span>
+                </li>
+            </>
+            );
+        case "MOVIE":
+            return (
+            <>
+                <li>
+                    <span className="info-name">Runtime</span>
+                    <span className="info-icon"><IoTimerOutline /></span>
+                    <span className="info-detail">{item.runtime ? `${item.runtime} mins` : 'N/A'}</span>
+                </li>
+                <li>
+                    <span className="info-name">Language</span>
+                    <span className="info-icon"><IoMdGlobe /></span>
+                    <span className="info-detail">{item.language_name || 'N/A'}</span>
+                </li>
+                <li>
+                    <span className="info-name">Format</span>
+                    <span className="info-icon"><IoInformationCircleOutline /></span>
+                    <span className="info-detail">{item.format_name || 'N/A'}</span>
+                </li>
+                <li>
+                    <span className="info-name">Rated</span>
+                    <span className="info-icon"><BsTicketPerforated /></span>
+                    <span className="info-detail">{item.rating_name || 'N/A'}</span>
+                </li>
+                <li>
+                    <span className="info-name">Release Year</span>
+                    <span className="info-icon"><IoCalendarClearOutline /></span>
+                    <span className="info-detail">{item.release_year || 'N/A'}</span>
+                </li>
+            </>
+            );
+        case "DEVICE":
+            return (
+            <>
+                <li>
+                    <span className="info-name">Manufacturer</span>
+                    <span className="info-icon"><TbBuildingFactory2 /></span>
+                    <span className="info-detail">{item.manufacturer || 'N/A'}</span>
+                </li>
+                <li>
+                    <span className="info-name">Device Type</span>
+                    <span className="info-icon"><MdDevicesOther /></span>
+                    <span className="info-detail">{item.device_type_name || 'N/A'}</span>
+                </li>
+            </>
+            );
+        default:
+            return null;
+        }
+    };
 
   const creatorInfo = (() => {
      const names = item.creators && item.creators.length > 0 ? item.creators.join(', ') : 'N/A';
@@ -83,12 +129,14 @@ const renderAdditionalInfo = () => {
        return { label: "directed by", names: names };
      }
       if (item.category === "DEVICE") {
-       return { label: "manufacturer ", names: names }; 
+       return { label: "manufacturered by ", names: names }; 
      }
      return null;
   })();
 
-  const tagsDisplay = item.tags && item.tags.length > 0 ? item.tags.join(', ') : 'None';
+  const renderTags = () => {
+    return item.tags && item.tags.length > 0 ? item.tags.join(', ') : 'None';
+  }
   
   return (
     <div>
@@ -133,7 +181,7 @@ const renderAdditionalInfo = () => {
             <ul className="additional-info">{renderAdditionalInfo()}</ul>
             <hr className="divider" />
             <div className="tags-section">
-              <p className="tags-title"><strong>Tags:</strong> {item.tags.join(", ")}</p>
+              <p className="tags-title"><strong>Tags:</strong> {renderTags()}</p>
             </div>
           </div>
         </div>

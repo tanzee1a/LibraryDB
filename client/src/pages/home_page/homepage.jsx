@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './homepage.css';
 
@@ -17,14 +17,14 @@ function Homepage() {
     <div>
       <div className="page-container homepage-container">
         <div className="homepage-content">
-          <div className="home-title">
+          <div className="home-title fade-in-text-from-bottom">
             <h1>Search the world's knowledge</h1>
             <p>Access a world of stories, ideas, and innovation — all in one place.</p>
           </div>
           <input
             type="text"
             placeholder="Curiosity starts here..."
-            className="search-bar"
+            className="search-bar fade-in-text-from-top"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             onKeyDown={handleSearch}
