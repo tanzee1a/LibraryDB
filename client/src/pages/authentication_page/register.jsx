@@ -148,8 +148,8 @@ export default function Register() {
           </div>
         </div>
         <div className='login-side-text fade-in-text-from-bottom'>
-          <h1>Knowledge is Power.</h1>
-          <p>Access to the world of possibilities.</p>
+          <h1>Your Journey Starts Here.</h1>
+          <p>Unlock endless knowledge and discover new ideas.</p>
         </div>
       </div>
     </div>
