@@ -33,7 +33,7 @@ function Login({ setIsStaff, setIsLoggedIn }) {
     setIsStaff(isStaffUser);
     setIsLoggedIn(true);
 
-    // 3. Navigate the user
+    // 3. Navigate the users
     if (isStaffUser) {
         // Staff can use soft navigation
         navigate('/staff_page', { replace: true });
