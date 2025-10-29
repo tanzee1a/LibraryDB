@@ -33,6 +33,10 @@ function SearchResults({ isStaff }) {
     const [languagesLoading, setLanguagesLoading] = useState(true);
     const [languagesError, setLanguagesError] = useState('');
 
+    const [movieFormats, setMovieFormats] = useState([]);
+    const [formatsLoading, setFormatsLoading] = useState(true);
+    const [formatsError, setFormatsError] = useState('');
+
     const initialFilters = () => {
         const filters = {};
         filterOptions.forEach(group => {
@@ -67,6 +71,7 @@ function SearchResults({ isStaff }) {
             .then(data => { setResults(data || []); setLoading(false); })
             .catch((err) => { setError(`Could not load results.`); setLoading(false); });
 
+        // --- ADDED: Fetch Languages ---
         const fetchLanguages = async () => {
             setLanguagesLoading(true);
             setLanguagesError('');
@@ -86,6 +91,27 @@ function SearchResults({ isStaff }) {
         };
 
         fetchLanguages();
+
+        // --- ADDED: Fetch Movie Formats ---
+        const fetchMovieFormats = async () => {
+            setFormatsLoading(true);
+            setFormatsError('');
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/movie-formats`); // Call format endpoint
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                setMovieFormats(data); // Store fetched formats
+            } catch (e) {
+                console.error("Failed to fetch movie formats:", e);
+                setFormatsError("Failed to load formats.");
+            } finally {
+                setFormatsLoading(false);
+            }
+        };
+
+        fetchMovieFormats(); // Call fetch formats on mount
 
     }, [query, searchParams]);
 
@@ -453,31 +479,42 @@ function SearchResults({ isStaff }) {
                         <label>Release Year: <input type="number" name="release_year" min="1800" max={new Date().getFullYear()+1} value={newItem.release_year} onChange={handleItemInputChange} className="edit-input" required/></label>
                         <label>Runtime (mins): <input type="number" name="runtime" min="1" value={newItem.runtime} onChange={handleItemInputChange} className="edit-input" required/></label>
                         <label>Language: 
-                                <select 
-                                    name="language_id" 
-                                    value={newItem.language_id} 
-                                    onChange={handleItemInputChange} 
-                                    className="edit-input"
-                                    disabled={languagesLoading || languagesError}
-                                >
-                                     <option value="" disabled>
-                                        {languagesLoading ? 'Loading...' : languagesError ? 'Error' : '-- Select --'}
+                            <select 
+                                name="language_id" 
+                                value={newItem.language_id} 
+                                onChange={handleItemInputChange} 
+                                className="edit-input"
+                                disabled={languagesLoading || languagesError}
+                            >
+                                    <option value="" disabled>
+                                    {languagesLoading ? 'Loading...' : languagesError ? 'Error' : '-- Select --'}
+                                </option>
+                                {!languagesLoading && !languagesError && languages.map(lang => (
+                                    <option key={lang.language_id} value={lang.language_id}>
+                                        {lang.name}
                                     </option>
-                                    {!languagesLoading && !languagesError && languages.map(lang => (
-                                        <option key={lang.language_id} value={lang.language_id}>
-                                            {lang.name}
-                                        </option>
-                                    ))}
-                                </select>
-                                {languagesError && <span style={{ color: 'red', fontSize: '0.8em' }}> {languagesError}</span>}
-                            </label>
-                        <label>Format ID: 
-                             <select name="format_id" value={newItem.format_id} onChange={handleItemInputChange} className="edit-input">
-                                <option value="1">DVD</option> 
-                                <option value="2">Blu-ray</option>
-                                <option value="3">4K Ultra HD</option>
-                                {/* TODO: Fetch formats dynamically */}
+                                ))}
                             </select>
+                            {languagesError && <span style={{ color: 'red', fontSize: '0.8em' }}> {languagesError}</span>}
+                        </label>
+                        <label>Format:
+                            <select
+                                name="format_id"
+                                value={newItem.format_id}
+                                onChange={handleItemInputChange}
+                                className="edit-input"
+                                disabled={formatsLoading || formatsError}
+                            >
+                                <option value="" disabled>
+                                    {formatsLoading ? 'Loading...' : formatsError ? 'Error' : '-- Select --'}
+                                </option>
+                                {!formatsLoading && !formatsError && movieFormats.map(format => (
+                                    <option key={format.format_id} value={format.format_id}>
+                                        {format.format_name}
+                                    </option>
+                                ))}
+                            </select>
+                                {formatsError && <span style={{ color: 'red', fontSize: '0.8em' }}> {formatsError}</span>}
                         </label>
                         <label>Rating ID: 
                              <select name="rating_id" value={newItem.rating_id} onChange={handleItemInputChange} className="edit-input">

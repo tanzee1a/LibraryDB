@@ -49,6 +49,19 @@ async function getLanguages(req, res){
     }
 }
 
+async function getMovieFormats(req, res){
+    try {
+        // Call the new function from your Item model
+        const formats = await Item.findAllMovieFormats(); // <--- Use Item.findAllLanguages()
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify(formats));
+    } catch (error) {
+        console.error("Error getting languages:", error);
+        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ message: 'Server error fetching languages', error: error.message }));
+    }
+}
+
 // --- CREATE Functions ---
 
 // @desc Create a book
@@ -312,6 +325,7 @@ module.exports = {
     getItems,
     getItem,
     getLanguages,
+    getMovieFormats,
     createBook,
     deleteItem,
     updateBook,

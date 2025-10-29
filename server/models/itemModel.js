@@ -176,6 +176,12 @@ async function findAllLanguages() {
     return rows;
 }
 
+async function findAllMovieFormats() {
+    const sql = 'SELECT format_id, format_name FROM MOVIE_FORMAT ORDER BY format_id'; // Order by most popular
+    const [rows] = await db.query(sql);
+    return rows;
+}
+
 // --- CREATE BOOK (Updated for new schema) ---
 async function createBook(bookData) {
     const conn = await db.getConnection();
@@ -523,6 +529,7 @@ module.exports = {
     findAll,
     findById,
     findAllLanguages,
+    findAllMovieFormats,
     remove,
     createBook,
     updateBook,
