@@ -279,6 +279,34 @@ function SearchResults({ isStaff }) {
     }
 
     const renderItemDetails = (item) => {
+        switch(item.category) {
+            case "BOOK":
+                return (
+                    <div className='result-details'>
+                        <p><strong>Category:</strong> {item.category || 'N/A'}</p>
+                        <p><strong>Authors:</strong> {item.creators || 'N/A'}</p>
+                        <p><strong>Publisher:</strong> {item.publisher || 'N/A'}</p>
+                        <p><strong>Language:</strong> {item.language_name || 'N/A'}</p>
+                    </div>
+                );
+            case "MOVIE":
+                return (
+                    <div className='result-details'>
+                        <p><strong>Category:</strong> {item.category || 'N/A'}</p>
+                        <p><strong>Directors:</strong> {item.creators || 'N/A'}</p>
+                        <p><strong>Format:</strong> {item.format_name || 'N/A'}</p>
+                        <p><strong>Release Year:</strong> {item.release_year || 'N/A'}</p>
+                    </div>
+                );
+            case "DEVICE":
+                return (
+                    <div className='result-details'>
+                        <p><strong>Category:</strong> {item.category || 'N/A'}</p>
+                        <p><strong>Manufacturer:</strong> {item.manufacturer || 'N/A'}</p>
+                        <p><strong>Device Type:</strong> {item.device_type_name || 'N/A'}</p>
+                    </div>
+                );
+        }
         if (item.category === "BOOK") {
             return <p><strong>Authors:</strong> {item.creators || 'N/A'}</p>;
         }
