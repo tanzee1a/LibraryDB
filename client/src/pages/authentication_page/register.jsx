@@ -147,9 +147,9 @@ export default function Register() {
 
           </div>
         </div>
-        <div className='login-side-text fade-in-text-from-bottom'>
-          <h1>Your Journey Starts Here.</h1>
-          <p>Unlock endless knowledge and discover new ideas.</p>
+        <div className='login-side-text'>
+          <h1 className='fade-in-text-from-bottom'>Your Journey Starts Here.</h1>
+          <p className='fade-in-text-from-top'>Unlock endless knowledge and discover new ideas.</p>
         </div>
       </div>
     </div>

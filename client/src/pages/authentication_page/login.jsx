@@ -87,9 +87,9 @@ function Login({ setIsStaff, setIsLoggedIn }) {
 
           </div>
         </div>
-        <div className='login-side-text fade-in-text-from-bottom'>
-          <h1>Knowledge is Power.</h1>
-          <p>Access the world of possibilities.</p>
+        <div className='login-side-text'>
+          <h1 className='fade-in-text-from-bottom'>Knowledge is Power.</h1>
+          <p className='fade-in-text-from-top'>Access the world of possibilities.</p>
         </div>
         
       </div>
