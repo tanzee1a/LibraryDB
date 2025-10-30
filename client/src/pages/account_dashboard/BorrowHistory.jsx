@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { IoTimeOutline } from 'react-icons/io5'; // <-- ADD THIS IMPORT
+import './AccountDashboard.css';
 // Remove IoTimeOutline if no longer needed
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
 
@@ -45,20 +46,20 @@ export default function BorrowHistory() {
 
   return (
     <ul className="list">
-      {history.map(b => (
-        <li key={b.borrow_id} className="list-item">
+      {history.map(borrow => (
+        <li key={borrow.borrow_id} className="list-item">
           {/* Replace Icon with Image */}
           <img 
-              src={b.thumbnail_url || '/placeholder-image.png'} 
-              alt={b.title} 
+              src={borrow.thumbnail_url || '/placeholder-image.png'} 
+              alt={borrow.title} 
               className="thumb"
               onError={(e) => { e.target.onerror = null; e.target.src='/placeholder-image.png'; }}
             />
           <div>
-            <div className="item-title">{b.title}</div>
+            <div className="item-title"><a className='result-link' href={`/item/${borrow.item_id}`}>{borrow.title}</a></div>
             <div className="item-sub">
-              Returned: {b.return_date ? new Date(b.return_date).toLocaleDateString() : '—'} 
-              {b.status_name === 'Lost' && ' (Marked as Lost)'} 
+              Returned: {borrow.return_date ? new Date(borrow.return_date).toLocaleDateString() : '—'} 
+              {borrow.status_name === 'Lost' && ' (Marked as Lost)'} 
             </div>
           </div>
            {/* --- REMOVED "Borrow Again" BUTTON --- */}
