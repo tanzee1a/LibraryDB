@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { IoTimeOutline } from 'react-icons/io5'; // <-- ADD THIS IMPORT
+import { IoTimeOutline } from 'react-icons/io5';
 import './AccountDashboard.css';
-// Remove IoTimeOutline if no longer needed
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
 
 export default function BorrowHistory() {
@@ -10,34 +9,33 @@ export default function BorrowHistory() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    // 1. Retrieve the token from storage
+    // Retrieve the token from storage
     const token = localStorage.getItem('authToken'); 
 
     if (!token) {
         console.error("Authentication Error: No token found. User needs to log in.");
-        setError('Please log in to view your borrow history.');
+        setError('Please log in to view your loan history.');
         setLoading(false);
         return; 
     }
 
-    // 2. Construct the headers object with the Authorization header
+    // Construct the headers object with the Authorization header
     const headers = {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}` // 🔑 KEY FIX: Attach the token
+      'Authorization': `Bearer ${token}`
     };
 
-    fetch(`${API_BASE_URL}/api/my-history`, { headers }) // Or Render URL
+    fetch(`${API_BASE_URL}/api/my-history`, { headers })
       .then(r => { if (!r.ok) throw new Error('Network response was not ok'); return r.json(); })
       .then(data => { setHistory(data || []); setLoading(false); })
-      .catch((err) => { console.error("Fetch History Error:", err); setError('Could not load borrow history.'); setLoading(false); });
+      .catch((err) => { console.error("Fetch History Error:", err); setError('Could not load loan history.'); setLoading(false); });
   }, []);
 
-  if (loading) return <div>Loading borrow history…</div>;
+  if (loading) return <div>Loading loan history…</div>;
   if (error) return <div>{error}</div>;
   if (!history.length) {
     return (
       <div className="list-item" style={{ padding: '8px 0' }}>
-         {/* You can keep an icon here if you like */}
         <div className="thumb-icon" aria-hidden="true"><IoTimeOutline /></div> 
         <div>You haven't borrowed a book yet. Start reading today!</div>
       </div>
@@ -48,7 +46,6 @@ export default function BorrowHistory() {
     <ul className="list">
       {history.map(borrow => (
         <li key={borrow.borrow_id} className="list-item">
-          {/* Replace Icon with Image */}
           <img 
               src={borrow.thumbnail_url || '/placeholder-image.png'} 
               alt={borrow.title} 
@@ -62,9 +59,7 @@ export default function BorrowHistory() {
               {borrow.status_name === 'Lost' && ' (Marked as Lost)'} 
             </div>
           </div>
-           {/* --- REMOVED "Borrow Again" BUTTON --- */}
           <div>
-             {/* No button needed here, or perhaps link to item details page? */}
           </div>
         </li>
       ))}

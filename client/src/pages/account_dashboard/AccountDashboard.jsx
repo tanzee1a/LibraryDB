@@ -6,7 +6,8 @@ import Fines from './Fines';
 import Loans from './Loans';
 import BorrowHistory from './BorrowHistory';
 import Wishlist from './Wishlist';
-import { IoHomeOutline, IoBookOutline, IoWalletOutline, IoTimeOutline, IoHeartOutline, IoPersonCircleOutline } from 'react-icons/io5';
+import Holds from './Holds';
+import { IoHomeOutline, IoBookOutline, IoWalletOutline, IoTimeOutline, IoHeartOutline, IoPersonCircleOutline, IoHourglassOutline } from 'react-icons/io5';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
 
@@ -14,8 +15,9 @@ const SECTIONS = [
   { key: 'overview', label: 'Overview', icon: <IoHomeOutline className="nav-icon" /> },
   { key: 'loans', label: 'Loans', icon: <IoBookOutline className="nav-icon" /> },
   { key: 'fines', label: 'Fines', icon: <IoWalletOutline className="nav-icon" /> },
-  { key: 'history', label: 'Borrow History', icon: <IoTimeOutline className="nav-icon" /> },
-  { key: 'wishlist', label: 'Holds', icon: <IoHeartOutline className="nav-icon" /> },
+  { key: 'history', label: 'Loan History', icon: <IoTimeOutline className="nav-icon" /> },
+  { key: 'holds', label: 'Holds', icon: <IoHourglassOutline className="nav-icon" /> },
+  { key: 'wishlist', label: 'Saved for Later', icon: <IoHeartOutline className="nav-icon" /> },
   { key: 'profile', label: 'Profile', icon: <IoPersonCircleOutline className="nav-icon" /> },
 ];
 
@@ -52,7 +54,6 @@ export default function AccountDashboard({ isLoggedIn, setIsLoggedIn, isStaff, s
             </ul>
           </aside>
 
-          {/* Content */}
           <main className="content">
             {active === 'overview' && (
               <section>
@@ -74,8 +75,12 @@ export default function AccountDashboard({ isLoggedIn, setIsLoggedIn, isStaff, s
                   <Fines />
                 </div>
                 <div className="card">
-                  <div className="section-header"><IoHeartOutline className="icon" /><h3>Holds</h3></div>
-                  <Wishlist />
+                  <div className="section-header"><IoHourglassOutline className="icon" /><h3>Holds</h3></div>
+                  <Holds />
+                  </div>
+                <div className="card">
+                <div className="section-header"><IoHeartOutline className="icon" /><h3>Saved For Later</h3></div>
+                <Wishlist />
                 </div>
               </section>
             )}
@@ -96,14 +101,21 @@ export default function AccountDashboard({ isLoggedIn, setIsLoggedIn, isStaff, s
 
             {active === 'history' && (
               <section className="card">
-                <div className="section-header"><IoTimeOutline className="icon" /><h2 className="section-title">Borrow History</h2></div>
+                <div className="section-header"><IoTimeOutline className="icon" /><h2 className="section-title">Loan History</h2></div>
                 <BorrowHistory />
+              </section>
+            )}
+
+            {active === 'holds' && (
+              <section className="card">
+                <div className="section-header"><IoHourGlassOutline className="icon" /><h2 className="section-title">Holds</h2></div>
+                <Wishlist />
               </section>
             )}
 
             {active === 'wishlist' && (
               <section className="card">
-                <div className="section-header"><IoHeartOutline className="icon" /><h2 className="section-title">Holds</h2></div>
+                <div className="section-header"><IoHeartOutline className="icon" /><h2 className="section-title">Saved For Later</h2></div>
                 <Wishlist />
               </section>
             )}
