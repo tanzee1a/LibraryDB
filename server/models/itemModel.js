@@ -56,7 +56,7 @@ async function findOrCreateTagId(conn, tagName) {
 
 // --- FIND ALL ITEMS (Basic for now) ---
 async function findAll() {
-    const sql = 'SELECT * FROM ITEM'; // Keep it simple for now
+    const sql = 'SELECT * FROM ITEM ORDER BY category'; // Keep it simple for now
     const [rows] = await db.query(sql);
     return rows;
 }
