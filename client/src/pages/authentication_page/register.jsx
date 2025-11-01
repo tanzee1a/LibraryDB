@@ -2,6 +2,9 @@ import React, { useState } from "react";
 import { Link } from 'react-router-dom'
 import "./register.css";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+import Logo from "../../assets/logo-dark.webp"
+
+
 export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -73,7 +76,7 @@ export default function Register() {
     <div className='page-container login-page-container'>
       <div className = "login-page-content">
         <div className='login-form-container fade-in'>
-          <h2 className='login-form-title'>LBRY</h2>
+          <h2 className='login-form-title'><img className="logo-image logo-image-medium" src={Logo} alt="" /></h2>
           {successMsg && <div className="notice ok">{successMsg}</div>}
           <div className = "login-form">
             <form onSubmit={handleSubmit} noValidate>

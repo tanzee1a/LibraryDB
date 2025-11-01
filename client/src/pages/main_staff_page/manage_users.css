@@ -21,7 +21,6 @@
   flex-direction: column;
   gap: 1rem;
   transition: box-shadow 1s ease, transform 1s ease;
-  max-height: 85vh; /* Limit height to 85% of the viewport height */
   overflow-y: auto;
 }
 

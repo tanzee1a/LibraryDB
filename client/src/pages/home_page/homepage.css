@@ -8,7 +8,11 @@
 
 .homepage-content {
   text-align: center;
-  margin-top: 35vh;
+  margin-top: 25vh;
+}
+
+.logo-container {
+  margin-bottom: 1rem;
 }
 
 .home-title h1{

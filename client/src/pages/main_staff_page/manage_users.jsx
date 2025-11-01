@@ -32,6 +32,21 @@ function ManageUsers() {
     // --- Currency Formatter (keep as is) ---
     const currencyFormatter = new Intl.NumberFormat('en-US', { /* ... */ });
 
+    const userFilterOptions = () => {
+        // Get the user's role from localStorage
+        const userRole = localStorage.getItem('userRole');
+        let roleOptions = ['Patron', 'Staff', 'Admin'];
+        // If the role is 'Staff', filter out 'Admin'
+        if (userRole === 'Staff') {
+            roleOptions = roleOptions.filter(opt => opt !== 'Admin');
+        }
+        return [{
+            category: 'Role',
+            param: 'role', // URL parameter
+            options: roleOptions
+        }];
+    };
+
     // --- Fetch Users Logic ---
     const fetchUsers = () => {
         setLoading(true);
@@ -111,9 +126,28 @@ function ManageUsers() {
                     </div>
                 </div>
                 <div className="search-results-contents">
-                    {/* --- REMOVED Filter Section (Can add later if needed) --- */}
-                    {/* <div className="filter-section"> ... </div> */}
-
+                    <div className="filter-section">
+                        {userFilterOptions().map((filterGroup) => (
+                            <div key={filterGroup.param} className="filter-category">
+                                <h3>{filterGroup.category}</h3>
+                                <hr className='divider divider--tight' />
+                                <ul>
+                                    {filterGroup.options.map((option) => {
+                                        return ( // Start returning the list item
+                                            <li key={option}>
+                                                <label>
+                                                    <input 
+                                                        type="checkbox" 
+                                                        value={option}
+                                                    /> {option}
+                                                </label>
+                                            </li>
+                                        ); // End returning list item
+                                    })} {/* End options.map */}
+                                </ul>
+                            </div>
+                        ))} {/* End filterOptions.map */}
+                    </div>
                     {/* --- MODIFIED User List --- */}
                     <div className="search-results-list" style={{width: '100%'}}> {/* Make list full width if no filter */}
                         {loading && <p>Loading users...</p>}
@@ -169,14 +203,14 @@ function ManageUsers() {
                 {submitError && <p style={{color: 'red'}}>{submitError}</p>}
                 <form onSubmit={handleAddUserSubmit}>
                      {/* Added User ID input */}
-                    <label> User ID (Optional - auto-generates if blank): <input type="text" name="user_id" value={newUser.user_id} onChange={handleInputChange} maxLength="13" /> </label>
-                    <label> First Name: <input type="text" name="firstName" value={newUser.firstName} onChange={handleInputChange} required /> </label>
-                    <label> Last Name: <input type="text" name="lastName" value={newUser.lastName} onChange={handleInputChange} required /> </label>
-                    <label> Email: <input type="email" name="email" value={newUser.email} onChange={handleInputChange} required /> </label>
+                    <label> User ID (Optional - auto-generates if blank): <input type="text" className="edit-input" name="user_id" value={newUser.user_id} onChange={handleInputChange} maxLength="13" /> </label>
+                    <label> First Name: <input type="text" className="edit-input" name="firstName" value={newUser.firstName} onChange={handleInputChange} required /> </label>
+                    <label> Last Name: <input type="text" className="edit-input" name="lastName" value={newUser.lastName} onChange={handleInputChange} required /> </label>
+                    <label> Email: <input type="email" className="edit-input" name="email" value={newUser.email} onChange={handleInputChange} required /> </label>
                     {/* Added Password input */}
-                    <label> Temporary Password: <input type="password" name="temporaryPassword" value={newUser.temporaryPassword} onChange={handleInputChange} required /> </label>
+                    <label> Temporary Password: <input type="password" className="edit-input" name="temporaryPassword" value={newUser.temporaryPassword} onChange={handleInputChange} required /> </label>
                     <label> Role:
-                        <select name="role" value={newUser.role} onChange={handleInputChange} required>
+                        <select name="role" className="edit-input" value={newUser.role} onChange={handleInputChange} required>
                             <option value="Patron">Patron</option>
                             <option value="Staff">Staff</option>
                         </select>

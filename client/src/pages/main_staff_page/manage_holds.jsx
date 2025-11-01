@@ -4,20 +4,12 @@ import React, { useState, useEffect } from 'react'; // --- ADDED React hooks ---
 import { Link, useSearchParams } from 'react-router-dom';
 // --- REMOVED sample data/thumbnails ---
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
-// --- ADDED: Define filter options for Holds ---
-const holdFilterOptions = [
-    {
-        category: 'Status',
-        param: 'status', // URL parameter
-        options: ['Pending Pickup', 'Picked Up', 'Canceled', 'Expired']
-    },
-    // TODO: Add filters for User Search, Item Search, Date Range?
-];
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 function ManageHolds() {
     // --- ADDED State for holds, loading, error ---
     const [holds, setHolds] = useState([]);
+    const [holdStatus, setHoldStatus] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [searchParams, setSearchParams] = useSearchParams(); // --- ADDED ---
@@ -25,8 +17,24 @@ function ManageHolds() {
 
     // --- END ADDED ---
 
-    // --- REMOVED Add Hold Sheet state/handlers ---
-    // --- End REMOVED ---
+    const filterOptions = () => {
+        return [{
+            category: 'Status',
+            param: 'status',
+            options: holdStatus.map(status => status.status_name)
+        }]
+    };
+
+    const fetchHoldStatus = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/status/hold`);
+            if (!response.ok) throw new Error('Failed to fetch hold status');
+            const data = await response.json();
+            setHoldStatus(data);
+        } catch (err) {
+            console.error('Error fetching hold status:', err);
+        }
+    };
 
     // --- Fetch Holds (Update to include filters later) ---
     const fetchHolds = () => {
@@ -48,7 +56,7 @@ function ManageHolds() {
 
         // Derive current filters directly from searchParams for the fetch
         const currentFilters = {};
-        holdFilterOptions.forEach(group => {
+        filterOptions().forEach(group => {
             const paramValue = searchParams.get(group.param);
             currentFilters[group.param] = paramValue ? paramValue.split(',') : [];
         });
@@ -74,7 +82,7 @@ function ManageHolds() {
             });
 
         // No need to call setSelectedFilters here anymore
-
+        fetchHoldStatus();
     }, [searchParams]); // Depend ONLY on searchParams
 
     // --- END MODIFIED ---
@@ -148,8 +156,7 @@ function ManageHolds() {
                 <div className="search-results-contents"> 
                      {/* --- RESTORED Filter section --- */}
                      <div className="filter-section">
-                        {holdFilterOptions.map((filterGroup) => (
-                            
+                        {filterOptions().map((filterGroup) => (
                             <div key={filterGroup.param} className="filter-category">
                                 <h3>{filterGroup.category}</h3>
                                 <hr className='divider divider--tight' />

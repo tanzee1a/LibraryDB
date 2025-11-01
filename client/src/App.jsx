@@ -14,6 +14,7 @@ import AccountDashboard from './pages/account_dashboard/AccountDashboard.jsx';
 import StaffDashboard from './pages/staff_dashboard/StaffDashboard.jsx';
 import Reports from './pages/reports/Reports.jsx';
 import Navbar from './pages/navbar/navbar.jsx';
+import Footer from './pages/footer/footer.jsx';
 import Staff_page from './pages/staff_dashboard/StaffDashboard.jsx';
 import { useState, useEffect } from 'react';
 import './App.css';
@@ -94,6 +95,7 @@ function App() {
         <Route path="/staff_page" element={<Staff_page />} />
         <Route path="/reports" element={<Reports />} />
       </Routes>
+      <Footer />
     </BrowserRouter>
   );
 }

@@ -1,7 +1,8 @@
 import './login.css'
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom';
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+import { useNavigate } from 'react-router-dom'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+import Logo from "../../assets/logo-dark.webp"
 
 function Login({ setIsStaff, setIsLoggedIn }) {
 
@@ -24,7 +25,8 @@ function Login({ setIsStaff, setIsLoggedIn }) {
       if (response.ok) {
        // 1. Persist the data
     localStorage.setItem('authToken', data.token);
-    localStorage.setItem('userRole', data.user.role); 
+    localStorage.setItem('userRole', data.user.role);
+    localStorage.setItem('userFirstName', data.user.firstName);
 
     // 2. Update React state immediately (optional, but good practice)
     const isStaffUser = data.user.role === 'Staff';
@@ -52,7 +54,7 @@ function Login({ setIsStaff, setIsLoggedIn }) {
     <div className='page-container login-page-container'>
       <div className = "login-page-content">
         <div className='login-form-container fade-in'>
-          <h2 className='login-form-title'>LBRY</h2>
+          <h2 className='login-form-title'><img className="logo-image-medium" src={Logo} alt="" /></h2>
           <div className = "login-form">
             <form onSubmit={handleSubmit}>
               <div className="form-group">

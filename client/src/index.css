@@ -99,7 +99,7 @@ textarea:focus {
 
 .fade-in-text-from-bottom {
   opacity: 0;
-  animation: fadeInFromBottom 1s ease-in-out forwards;
+  animation: fadeInFromBottom 1.5s ease-out forwards;
 }
 
 @keyframes fadeInFromTop {
@@ -115,7 +115,7 @@ textarea:focus {
 
 .fade-in-text-from-top {
   opacity: 0;
-  animation: fadeInFromTop 1s ease-in-out forwards;
+  animation: fadeInFromTop 1.5s ease-out forwards;
 }
 @keyframes fadeIn {
   0% {
@@ -128,7 +128,7 @@ textarea:focus {
 
 .fade-in {
   opacity: 0;
-  animation: fadeIn 1s ease-in-out forwards;
+  animation: fadeIn 1.5s ease-out forwards;
 }
 
 

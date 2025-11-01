@@ -465,6 +465,25 @@ async function waiveFine(fineId, reason, staffUserId) { // staffUserId for auth
     return { fine_id: fineId, message: 'Fine waived.' };
 }
 
+async function findAllStatus(type) {
+    var sql;
+    switch(type) {
+        case 'borrow':
+            sql = `SELECT status_name FROM BORROW_STATUS ORDER BY status_id;`;
+            break;
+        case 'hold':
+            sql = `SELECT status_name FROM HOLD_STATUS ORDER BY status_id;`;
+            break;
+        case 'fine':
+            sql = `SELECT status_name FROM FINE_STATUS ORDER BY status_id;`;
+            break;
+        default:
+            return null;
+    }
+    const [rows] = await db.query(sql);
+    return rows;
+}
+
 async function findAllBorrows(filters = {}) { // Add filters later if needed
     // TODO: Add filtering logic based on status, user search, item search, etc.
     const sql = `
@@ -730,5 +749,6 @@ module.exports = {
     cancelHold,
     staffCheckoutItem,
     findAllFines,
-    staffCreateFine
+    staffCreateFine,
+    findAllStatus
 };

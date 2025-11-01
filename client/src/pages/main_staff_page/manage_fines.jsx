@@ -10,6 +10,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000
 function ManageFines() {
     // --- ADDED State for fines, loading, error ---
     const [fines, setFines] = useState([]);
+    const [fineStatus, setFineStatus] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     // --- END ADDED ---
@@ -31,6 +32,25 @@ function ManageFines() {
     // --- Currency Formatter (keep as is) ---
     const currencyFormatter = new Intl.NumberFormat('en-US', { /* ... */ });
 
+    const filterOptions = () => {
+        return [{
+            category: 'Status',
+            param: 'status',
+            options: fineStatus.map(status => status.status_name)
+        }]
+    };
+
+    const fetchFineStatus = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/status/fine`);
+            if (!response.ok) throw new Error('Failed to fetch fine status');
+            const data = await response.json();
+            setFineStatus(data);
+        } catch (err) {
+            console.error('Error fetching fine status:', err);
+        }
+    };
+
     // --- Fetch Fines Logic ---
     const fetchFines = () => {
         setLoading(true);
@@ -43,6 +63,7 @@ function ManageFines() {
 
     useEffect(() => {
         fetchFines(); // Fetch on mount
+        fetchFineStatus()
     }, []);
     // --- End Fetch ---
 
@@ -156,8 +177,28 @@ function ManageFines() {
                     </div>
                 </div>
                 <div className="search-results-contents">
-                    {/* --- REMOVED Static Filter Section --- */}
-                    {/* <div className="filter-section"> ... </div> */}
+                    <div className="filter-section">
+                        {filterOptions().map((filterGroup) => (
+                            <div key={filterGroup.param} className="filter-category">
+                                <h3>{filterGroup.category}</h3>
+                                <hr className='divider divider--tight' />
+                                <ul>
+                                    {filterGroup.options.map((option) => {
+                                        return ( // Start returning the list item
+                                            <li key={option}>
+                                                <label>
+                                                    <input 
+                                                        type="checkbox" 
+                                                        value={option}
+                                                    /> {option}
+                                                </label>
+                                            </li>
+                                        ); // End returning list item
+                                    })} {/* End options.map */}
+                                </ul>
+                            </div>
+                        ))} {/* End filterOptions.map */}
+                    </div>
 
                     {/* --- MODIFIED Fine List --- */}
                      {/* Make list full width if no filter */}
@@ -220,19 +261,19 @@ function ManageFines() {
                 {submitError && <p style={{color: 'red'}}>{submitError}</p>}
                 <form onSubmit={handleAddFineSubmit}>
                     {/* Changed user_email to user_id */}
-                    <label> User ID: <input type="text" name="user_id" value={newFine.user_id} onChange={handleInputChange} required /> </label>
-                    <label> Borrow ID: <input type="text" name="borrow_id" value={newFine.borrow_id} onChange={handleInputChange} required /> </label>
+                    <label> User ID: <input type="text" className="edit-input" name="user_id" value={newFine.user_id} onChange={handleInputChange} required /> </label>
+                    <label> Borrow ID: <input type="text" className="edit-input" name="borrow_id" value={newFine.borrow_id} onChange={handleInputChange} required /> </label>
                     <label> Fee Type:
-                        <select name="fee_type" value={newFine.fee_type} onChange={handleInputChange} required>
+                        <select name="fee_type" className="edit-input" value={newFine.fee_type} onChange={handleInputChange} required>
                             <option value="DAMAGED">Damaged Item</option>
                             <option value="LOST">Lost Item</option>
                             <option value="LATE">Late Return (Manual)</option> 
                         </select>
                     </label>
-                    <label> Amount: <input type="number" name="amount" value={newFine.amount} onChange={handleInputChange} required step="0.01" min="0.01"/> </label>
+                    <label> Amount: <input type="number" className="edit-input" name="amount" value={newFine.amount} onChange={handleInputChange} required step="0.01" min="0.01"/> </label>
                     {/* Added Notes field */}
-                    <label> Notes (Optional): <textarea name="notes" value={newFine.notes} onChange={handleInputChange} /> </label>
-                    
+                    <label> Notes (Optional): <textarea className="edit-input" name="notes" value={newFine.notes} onChange={handleInputChange} /> </label>
+
                     <div className="sheet-actions">
                     <button type="submit" className="action-button primary-button" disabled={isSubmitting}>
                          {isSubmitting ? 'Adding...' : 'Add Fine'}

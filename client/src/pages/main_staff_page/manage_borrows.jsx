@@ -1,23 +1,15 @@
 import './manage_borrows.css'
-import bookThumbnail from '../../assets/book_thumbnail.jpeg'
-import mediaThumbnail from '../../assets/media_thumbnail.jpg'
-import deviceThumbnail from '../../assets/device_thumbnail.jpeg'
-import sampleData from '../../assets/sample_data.json'
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { FaPlus } from 'react-icons/fa'
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom'
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
 function ManageBorrows() {
 
     const [borrows, setBorrows] = useState([]);
+    const [borrowStatus, setBorrowStatus] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-
-    // const borrows = sampleData.borrows;
-    // const multipleBorrows = [...borrows, ...borrows, ...borrows];
-
-    // const filter = sampleData.user_filters.find(filter => filter.category === "Borrows");
 
     const [showAddBorrowSheet, setShowAddBorrowSheet] = useState(false);
     const initialBorrowState = {
@@ -29,18 +21,24 @@ function ManageBorrows() {
     const [submitError, setSubmitError] = useState('');     // Add error state
     // --- END MODIFIED ---
 
-    const getThumbnail = (item) => {
-        switch(item.item_category) {
-            case "BOOK":
-                return bookThumbnail;
-            case "MEDIA":
-                return mediaThumbnail;
-            case "DEVICE":
-                return deviceThumbnail;
-            default:
-                return null;
+    const filterOptions = () => {
+        return [{
+            category: 'Status',
+            param: 'status',
+            options: borrowStatus.map(status => status.status_name)
+        }]
+    };
+
+    const fetchBorrowStatus = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/status/borrow`);
+            if (!response.ok) throw new Error('Failed to fetch borrow status');
+            const data = await response.json();
+            setBorrowStatus(data);
+        } catch (err) {
+            console.error('Error fetching borrow status:', err);
         }
-    }
+    };
 
     const renderBorrowActionButtons = (borrow) => {
         const buttons = [];
@@ -143,6 +141,7 @@ function ManageBorrows() {
 
     useEffect(() => {
         fetchBorrows(); // Fetch on initial mount
+        fetchBorrowStatus(); // Fetch borrow status options
     }, []);
 
     return (
@@ -163,28 +162,26 @@ function ManageBorrows() {
                 </div>
                 <div className="search-results-contents">
                     <div className="filter-section">
-                    {/*
-                        <div key={filter.category} className="filter-category">
-                            <h3>{filter.category}</h3>
-                            <hr className="divider divider--tight" />
-                            <ul>
-                                {filter.topics.map((topic) => (
-                                <li key={topic.name}>
-                                    <strong>{topic.name}</strong>
-                                    <ul>
-                                    {topic.options.map((option) => (
-                                        <li key={option}>
-                                        <label>
-                                            <input type="checkbox" /> {option}
-                                        </label>
-                                        </li>
-                                    ))}
-                                    </ul>
-                                </li>
-                                ))}
-                            </ul>
-                        </div>
-                    */}
+                        {filterOptions().map((filterGroup) => (
+                            <div key={filterGroup.param} className="filter-category">
+                                <h3>{filterGroup.category}</h3>
+                                <hr className='divider divider--tight' />
+                                <ul>
+                                    {filterGroup.options.map((option) => {
+                                        return ( // Start returning the list item
+                                            <li key={option}>
+                                                <label>
+                                                    <input 
+                                                        type="checkbox" 
+                                                        value={option}
+                                                    /> {option}
+                                                </label>
+                                            </li>
+                                        ); // End returning list item
+                                    })} {/* End options.map */}
+                                </ul>
+                            </div>
+                        ))} {/* End filterOptions.map */}
                     </div>
                     <div className="search-results-list">
                         {loading && <p>Loading borrows...</p>}

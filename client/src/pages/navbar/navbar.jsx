@@ -3,7 +3,7 @@ import { IoSearch, IoPersonCircleOutline } from "react-icons/io5"
 import sampleData from '../../assets/sample_data.json'
 import { Link, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
-
+import Logo from "../../assets/logo-light.webp"
 
 const Navbar = ({
     isStaff = false, 
@@ -14,9 +14,7 @@ const Navbar = ({
   }) => {
     const navigate = useNavigate();
     const filters = sampleData.item_filters;
-
-
-      const [searchTerm, setSearchTerm] = useState('');
+    const [searchTerm, setSearchTerm] = useState('');
 
     const handleSearch = (event) => {
         if (event.key === 'Enter' && searchTerm.trim()) {
@@ -57,7 +55,7 @@ const Navbar = ({
         return (
             <nav className="nav">
                 <ul className="nav-links">
-                    <li><a href="/" className="logo">LBRY</a></li>
+                    <li><a href="/" className="logo"><img className="logo-image logo-image-small" src={Logo} alt="" />LBRY</a></li>
                     {/* Minimal Category Dropdowns */}
                     {filters.map(filter => (
                     <li key={filter.category} className="dropdown">
@@ -110,9 +108,7 @@ const Navbar = ({
         return (
             <nav className="nav">
                 <ul className="nav-links">
-                <li><a href="/" className="logo">LBRY
-                {/* <img className="navbar-logo" src={Logo} alt="" /> */}
-                </a></li>
+                <li><a href="/" className="logo"><img className="logo-image logo-image-small" src={Logo} alt="" />LBRY</a></li>
                 {filters.map(filter => (
                 <li key={filter.category} className="dropdown">
                     <a href="#">{filter.category}</a>
@@ -187,9 +183,7 @@ const Navbar = ({
     return (
         <nav className="nav">
             <ul className="nav-links">
-            <li><a href="/" className="logo">LBRY
-            {/* <img className="navbar-logo" src={Logo} alt="" /> */}
-            </a></li>
+            <li><a href="/" className="logo"><img className="logo-image logo-image-small" src={Logo} alt="" />LBRY</a></li>
             <li><a href="/manage-users">Users</a></li>
             <li><a href="/search">Items</a></li>
             <li><a href="/manage-borrows">Borrows</a></li>
@@ -212,6 +206,7 @@ const Navbar = ({
                                         e.preventDefault(); // 🛑 Critical Fix: Prevents browser race condition
                                         localStorage.removeItem('authToken');
                                         localStorage.removeItem('userRole');
+                                        localStorage.removeItem('userFirstName');
                                         setIsStaff(false);
                                         setIsLoggedIn(false); 
                                         navigate('/login');; 

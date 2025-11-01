@@ -217,6 +217,26 @@ async function getAllBorrows(req, res) {
     }
 }
 
+// @desc Get ALL status of a given type.
+// @route GET /api/status/type
+async function getAllStatus(req, res) {
+    try {
+        const parsedUrl = url.parse(req.url, true);
+        const type = parsedUrl.pathname.split('/').pop();
+        const status = await Loan.findAllStatus(type);
+        if (status === null) {
+            res.writeHead(404, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+            return res.end(JSON.stringify({ message: 'Invalid status type' }));
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        return res.end(JSON.stringify(status));
+    } catch (error) {
+        console.error("Error in getAllStatus:", error);
+        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ message: 'Could not fetch status records', error: error.message }));
+    }
+}
+
 // @desc Get ALL holds (active and historical) for Staff
 // @route GET /api/holds
 async function getAllHolds(req, res) {
@@ -346,5 +366,6 @@ module.exports = {
     cancelHold,
     staffCheckoutItem,
     getAllFines,
-    staffCreateFine
+    staffCreateFine,
+    getAllStatus
 };
