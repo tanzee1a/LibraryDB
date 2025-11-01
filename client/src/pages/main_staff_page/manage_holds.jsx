@@ -89,7 +89,16 @@ function ManageHolds() {
 
     // --- ADDED Action Handlers ---
     const handlePickup = (holdId) => {
-        fetch(`${API_BASE_URL}/api/holds/${holdId}/pickup`, { method: 'POST' })
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            alert("Error: You must be logged in to perform this action.");
+            return;
+        }
+
+        fetch(`${API_BASE_URL}/api/holds/${holdId}/pickup`, { method: 'POST' , headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }})
             .then(r => { if (!r.ok) throw new Error('Pickup failed'); return r.json(); })
             .then((data) => {
                  console.log(data.message); // Log success
@@ -102,7 +111,15 @@ function ManageHolds() {
         if (!window.confirm('Are you sure you want to cancel this hold? The item will become available.')) {
              return;
         }
-        fetch(`${API_BASE_URL}/api/holds/${holdId}/cancel`, { method: 'POST' })
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            alert("Error: You must be logged in to perform this action.");
+            return;
+        }
+        fetch(`${API_BASE_URL}/api/holds/${holdId}/cancel`, { method: 'POST', headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }})
             .then(r => { if (!r.ok) throw new Error('Cancel failed'); return r.json(); })
             .then((data) => {
                 console.log(data.message); // Log success
