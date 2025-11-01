@@ -92,25 +92,25 @@ const server = http.createServer((req, res) => {
         else if (req.url.match(/^\/api\/request\/([a-zA-Z0-9-]+)$/) && req.method === 'POST') {
             const itemId = req.url.split('/')[3];
             // FIX: Ensure req and res are passed to the controller
-            protect(req, res, (req, res) => requestPickup(req, res, itemId)); 
+            protect(req, res, () => requestPickup(req, res, itemId)); 
             return;
         } else if (req.url.match(/^\/api\/holds\/([0-9]+)\/pickup$/) && req.method === 'POST') {
             const holdId = req.url.split('/')[3];
             // FIX: Wrap staff routes in protect too (assuming staff is logged in)
-            protect(req, res, (req, res) => pickupHold(req, res, holdId)); 
+            protect(req, res, () => pickupHold(req, res, holdId)); 
             return;
         } else if (req.url.match(/^\/api\/return\/([A-Za-z0-9-]+)$/) && req.method === 'POST') {
             const borrowId = req.url.split('/')[3];
-            protect(req, res, (req, res) => returnItem(req, res, borrowId)); 
+            protect(req, res, () => returnItem(req, res, borrowId)); 
             return;
         } else if (req.url.match(/^\/api\/borrows\/([A-Za-z0-9-]+)\/lost$/) && req.method === 'POST') {
             const borrowId = req.url.split('/')[3];
-            protect(req, res, (req, res) => markLost(req, res, borrowId)); 
+            protect(req, res, () => markLost(req, res, borrowId)); 
             return;
         } else if (req.url.match(/^\/api\/waitlist\/([a-zA-Z0-9-]+)$/) && req.method === 'POST') {
             const itemId = req.url.split('/')[3];
             // FIX: Ensure req and res are passed to the controller
-            protect(req, res, (req, res) => placeWaitlistHold(req, res, itemId)); 
+            protect(req, res, () => placeWaitlistHold(req, res, itemId)); 
             return;
         }
 

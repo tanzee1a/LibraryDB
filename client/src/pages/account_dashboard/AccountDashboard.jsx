@@ -108,7 +108,7 @@ export default function AccountDashboard({ isLoggedIn, setIsLoggedIn, isStaff, s
 
             {active === 'holds' && (
               <section className="card">
-                <div className="section-header"><IoHourGlassOutline className="icon" /><h2 className="section-title">Holds</h2></div>
+                <div className="section-header"><IoHourglassOutline className="icon" /><h2 className="section-title">Holds</h2></div>
                 <Wishlist />
               </section>
             )}

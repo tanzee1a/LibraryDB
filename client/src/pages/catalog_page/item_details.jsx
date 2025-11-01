@@ -16,6 +16,15 @@ function ItemDetails({ isStaff }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // --- ADD NEW STATE ---
+  // State for handling the loan request action (pickup or waitlist)
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  // Used to display success/error messages
+  const [actionMessage, setActionMessage] = useState({ type: '', text: '' }); 
+  // Used to hide buttons after a successful request
+  const [requestMade, setRequestMade] = useState(false);
+  // --- END NEW STATE ---
+
   useEffect(() => {
     if (itemId) {
       setLoading(true);
@@ -37,6 +46,68 @@ function ItemDetails({ isStaff }) {
         });
     }
   }, [itemId]);
+
+
+  // --- ADD NEW HANDLER FUNCTION ---
+  /**
+   * Handles both "Request Pickup" and "Join Waitlist" actions.
+   * @param {'request' | 'waitlist'} actionType 
+   */
+  const handleLoanAction = async (actionType) => {
+    if (isSubmitting) return; // Prevent double-clicks
+
+    // --- Authentication ---
+    // This assumes you store your auth token in localStorage.
+    // !! Replace this with your actual auth token retrieval logic !!
+    const token = localStorage.getItem('authToken'); 
+    if (!token) {
+      setActionMessage({ type: 'error', text: 'You must be logged in to make a request.' });
+      return;
+    }
+    // ------------------------
+
+    setIsSubmitting(true);
+    setActionMessage({ type: '', text: '' }); // Clear previous messages
+
+    // Determine the correct backend endpoint
+    const endpoint = actionType === 'request'
+      ? `/api/request/${itemId}`
+      : `/api/waitlist/${itemId}`;
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method: 'POST',
+        headers: {
+          // Send the token for your 'protect' middleware
+          'Authorization': `Bearer ${token}`, 
+          'Content-Type': 'application/json'
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Use the error message from the backend
+        throw new Error(data.message || 'An error occurred.'); 
+      }
+
+      // Success!
+      setActionMessage({
+        type: 'success',
+        text: actionType === 'request' 
+          ? 'Pickup requested successfully!' 
+          : 'You have been added to the waitlist!'
+      });
+      setRequestMade(true); // Hide the buttons
+
+    } catch (err) {
+      // Display the error
+      setActionMessage({ type: 'error', text: err.message || 'Could not complete your request.' });
+    } finally {
+      setIsSubmitting(false); // Re-enable button (if error occurred)
+    }
+  };
+  // --- END NEW HANDLER FUNCTION ---
 
   if (loading) return <div className="page-container"><p>Loading item details...</p></div>;
   if (error) return <div className="page-container"><p style={{ color: 'red' }}>Error: {error}</p></div>;
@@ -159,12 +230,37 @@ function ItemDetails({ isStaff }) {
                   <p><strong>Earliest Available:</strong> <span>{item.earliest_available_date ? new Date(item.earliest_available_date).toLocaleDateString() : 'N/A'}</span></p>
               )}
             </div>
-            {/* TODO: Connect Request Pickup/Waitlist buttons */}
-            {item.available > 0 ? (
-              <button className="action-button primary-button">Request Pickup</button>
-            ) : (
-              <button className="action-button secondary-button">Join Waitlist</button>
+
+            {/* --- UPDATE THIS SECTION --- */}
+
+            {/* Display Success/Error Messages */}
+            {actionMessage.text && (
+              <p className={`action-message ${actionMessage.type}`}>
+                {actionMessage.text}
+              </p>
             )}
+
+            {/* Only show buttons if a request hasn't been successfully made */}
+            {!requestMade && (
+              item.available > 0 ? (
+                <button 
+                  className="action-button primary-button"
+                  onClick={() => handleLoanAction('request')}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Requesting...' : 'Request Pickup'}
+                </button>
+              ) : (
+                <button 
+                  className="action-button secondary-button"
+                  onClick={() => handleLoanAction('waitlist')}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Joining...' : 'Join Waitlist'}
+                </button>
+              )
+            )}
+            {/* --- END UPDATE --- */}
           </div>
 
           <div className="details-section">
