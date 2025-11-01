@@ -159,11 +159,11 @@ function ItemDetails({ isStaff }) {
                   <p><strong>Earliest Available:</strong> <span>{item.earliest_available_date ? new Date(item.earliest_available_date).toLocaleDateString() : 'N/A'}</span></p>
               )}
             </div>
-            {/* TODO: Connect Borrow/Hold buttons */}
+            {/* TODO: Connect Request Pickup/Waitlist buttons */}
             {item.available > 0 ? (
-              <button className="action-button primary-button">Borrow</button>
+              <button className="action-button primary-button">Request Pickup</button>
             ) : (
-              <button className="action-button secondary-button">Place Hold</button>
+              <button className="action-button secondary-button">Join Waitlist</button>
             )}
           </div>
 
