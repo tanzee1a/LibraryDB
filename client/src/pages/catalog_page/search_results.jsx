@@ -8,6 +8,12 @@ import { BiSort } from "react-icons/bi"
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
 
+/**
+ * Handles "Request Pickup" and "Join Waitlist" actions for a specific item.
+ * @param {string} itemId - The ID of the item to action.
+ * @param {'request' | 'waitlist'} actionType 
+ */
+
 const filterOptions = [
     { 
         category: 'Item Type', 
@@ -37,6 +43,15 @@ function SearchResults({ isStaff }) {
     const [movieFormats, setMovieFormats] = useState([]);
     const [formatsLoading, setFormatsLoading] = useState(true);
     const [formatsError, setFormatsError] = useState('');
+
+    // --- ADD NEW STATE ---
+    // This tracks the ID of the *specific* item being submitted
+    const [submittingItemId, setSubmittingItemId] = useState(null); 
+    // This will hold any error/success message, and which item it belongs to
+    const [actionMessage, setActionMessage] = useState({ type: '', text: '', itemId: null });
+    // This keeps track of items successfully requested, so we can hide the buttons
+    const [successfulRequestIds, setSuccessfulRequestIds] = useState(new Set());
+    // --- END NEW STATE ---
 
     const initialFilters = () => {
         const filters = {};
@@ -166,6 +181,59 @@ function SearchResults({ isStaff }) {
             return { ...prevFilters, [param]: newValues };
         });
     };
+
+    const handleLoanAction = async (itemId, actionType) => {
+        // Prevent multiple requests at the same time
+        if (submittingItemId) return; 
+
+        // --- Authentication ---
+        const token = localStorage.getItem('authToken'); 
+        if (!token) {
+        // Set the message for this specific item
+        setActionMessage({ type: 'error', text: 'You must be logged in.', itemId: itemId });
+        return;
+        }
+        // ------------------------
+
+        setSubmittingItemId(itemId); // Set *this* item as 'submitting'
+        setActionMessage({ type: '', text: '', itemId: null }); // Clear old messages
+
+        const endpoint = actionType === 'request'
+        ? `/api/request/${itemId}`
+        : `/api/waitlist/${itemId}`;
+        
+        try {
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+            method: 'POST',
+            headers: {
+            'Authorization': `Bearer ${token}`, 
+            'Content-Type': 'application/json'
+            },
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.message || 'An error occurred.'); 
+        }
+
+        // Success!
+        setActionMessage({
+            type: 'success',
+            text: actionType === 'request' ? 'Pickup requested!' : 'Added to waitlist!',
+            itemId: itemId // Tie the success message to this item
+        });
+        
+        // Add this item's ID to the set of successful requests
+        setSuccessfulRequestIds(prevIds => new Set(prevIds).add(itemId));
+
+        } catch (err) {
+        // Tie the error message to this item
+        setActionMessage({ type: 'error', text: err.message, itemId: itemId });
+        } finally {
+        setSubmittingItemId(null); // Clear 'submitting' status
+        }
+    };
+// --- END NEW HANDLER FUNCTION ---
 
     const [showAddItemSheet, setShowAddItemSheet] = useState(false);
     const initialNewItemState = {
@@ -331,14 +399,53 @@ function SearchResults({ isStaff }) {
         return null;
     };
 
+        // --- UPDATE YOUR RENDER FUNCTION ---
     const renderItemActionButtons = (item) => {
-        {/* --- TODO: Connect these buttons --- */}
         if(isStaff) return;
-        if(item.available > 0) {
-            return <button className="action-button primary-button">Request Pickup</button>;
-        } else {
-            return <button className="action-button secondary-button">Place Waitlist Hold</button>;
+
+        // 1. If this item's ID is in our 'successful' set, show a message instead of buttons
+        // !! Assumes ID is item.item_id -> change if needed !!
+        if (successfulRequestIds.has(item.item_id)) { 
+            return <span className="action-message success">Request made!</span>;
         }
+
+        // 2. Is this *specific* item the one currently being submitted?
+        // !! Assumes ID is item.item_id -> change if needed !!
+        const isSubmitting = submittingItemId === item.item_id;
+
+        return (
+            <div className="search-item-actions">
+                {item.available > 0 ? (
+                    <button 
+                        className="action-button primary-button"
+                        // !! Assumes ID is item.item_id -> change if needed !!
+                        onClick={() => handleLoanAction(item.item_id, 'request')}
+                        // Disable if this item is submitting, OR if *any* other item is submitting
+                        disabled={isSubmitting || submittingItemId !== null} 
+                    >
+                        {isSubmitting ? 'Requesting...' : 'Request Pickup'}
+                    </button>
+                ) : (
+                    <button 
+                        className="action-button secondary-button"
+                        // !! Assumes ID is item.item_id -> change if needed !!
+                        onClick={() => handleLoanAction(item.item_id, 'waitlist')}
+                        // Disable if this item is submitting, OR if *any* other item is submitting
+                        disabled={isSubmitting || submittingItemId !== null} 
+                    >
+                        {isSubmitting ? 'Joining...' : 'Join Waitlist'}
+                    </button>
+                )}
+
+                {/* 3. Display an error/success message only if it belongs to *this* item */}
+                {/* !! Assumes ID is item.item_id -> change if needed !! */}
+                {actionMessage.itemId === item.item_id && (
+                    <p className={`action-message ${actionMessage.type}`}>
+                        {actionMessage.text}
+                    </p>
+                )}
+            </div>
+        );
     }
 
   return (

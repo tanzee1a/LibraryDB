@@ -131,4 +131,23 @@ textarea:focus {
   animation: fadeIn 1.5s ease-out forwards;
 }
 
+.action-message {
+  margin: 10px 0;
+  padding: 10px;
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 0.9em;
+  text-align: center;
+}
 
+.action-message.success {
+  color: #155724;
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+}
+
+.action-message.error {
+  color: #721c24;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+}
