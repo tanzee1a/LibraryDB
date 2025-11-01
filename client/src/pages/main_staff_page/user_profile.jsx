@@ -207,7 +207,7 @@ function UserProfile() {
                             {/* Use renderBorrowActionButtons(borrow) if defined elsewhere and applicable */}
                         </div>
                     </div>
-                    <hr className="divider" />
+                    <hr className="thin-divider" />
                     </div>
                 ))}
             </>
@@ -243,7 +243,7 @@ function UserProfile() {
                             {/* No actions usually needed for past holds */}
                         </div>
                     </div>
-                    <hr className="divider" />
+                    <hr className="thin-divider" />
                     </div>
                 ))}
             </>
@@ -287,7 +287,7 @@ function UserProfile() {
                             )}
                         </div>
                     </div>
-                    <hr className="divider" />
+                    <hr className="thin-divider" />
                     </div>
                 ))}
             </>
@@ -365,7 +365,7 @@ function UserProfile() {
                         </div>
                     </div>
                     </div>
-                    <hr className="divider" />
+                    <hr className="thin-divider" />
                     <div className="user-history-section">
                         <div className="search-result-header">
                             {/* TODO: Add history search */}

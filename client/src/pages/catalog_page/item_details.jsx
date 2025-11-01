@@ -175,11 +175,11 @@ function ItemDetails({ isStaff }) {
                 <span className="item-author-name">{creatorInfo.names}</span>
               </p>
             )}
-            <hr className="divider" />
+            <hr className="thin-divider" />
             <p className='item-description'>{item.description}</p>
-            <hr className="divider" />
+            <hr className="thin-divider" />
             <ul className="additional-info">{renderAdditionalInfo()}</ul>
-            <hr className="divider" />
+            <hr className="thin-divider" />
             <div className="tags-section">
               <p className="tags-title"><strong>Tags:</strong> {renderTags()}</p>
             </div>

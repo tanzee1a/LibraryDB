@@ -1,9 +1,10 @@
 import './search_results.css'
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 
 import { FaPlus } from "react-icons/fa"
+import { BiSort } from "react-icons/bi"
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
 
@@ -129,6 +130,17 @@ function SearchResults({ isStaff }) {
                 setSearchParams(currentParams);
             }
         }
+    };
+
+    const handleSortChange = (sortType) => {
+        console.log("Sort by:", sortType);
+        // Example: apply sorting logic to results
+        let sorted = [...results];
+        if (sortType === "title_asc") sorted.sort((a, b) => a.title.localeCompare(b.title));
+        if (sortType === "title_desc") sorted.sort((a, b) => b.title.localeCompare(a.title));
+        if (sortType === "newest") sorted.sort((a, b) => (b.release_year || 0) - (a.release_year || 0));
+        if (sortType === "oldest") sorted.sort((a, b) => (a.release_year || 0) - (b.release_year || 0));
+        setResults(sorted);
     };
 
     const handleFilterChange = (param, option) => {
@@ -358,29 +370,43 @@ function SearchResults({ isStaff }) {
                 </div>
             </div>
             <div className="search-results-contents">
-            <div className="filter-section">
-                {filterOptions.map((filterGroup) => (
-                    <div key={filterGroup.param} className="filter-category">
-                        <h3>{filterGroup.category}</h3>
-                        <hr className='divider divider--tight' />
-                        <ul>
-                            {filterGroup.options.map((option) => (
-                                <li key={option}>
-                                    <label>
-                                        <input 
-                                            type="checkbox" 
-                                            value={option}
-                                            // Check if option is in the state for this filter param
-                                            checked={selectedFilters[filterGroup.param]?.includes(option) || false}
-                                            onChange={() => handleFilterChange(filterGroup.param, option)}
-                                        /> {option}
-                                    </label>
-                                </li>
-                            ))}
-                        </ul>
+                <div className="filter-section">
+                    <div className="sort-select-wrapper">
+                        Sort by:
+                        <select
+                            className="sort-select"
+                            onChange={(e) => handleSortChange(e.target.value)}
+                            defaultValue=""
+                        >
+                            <option value="" disabled></option>
+                            <option value="title_asc">Title (A–Z)</option>
+                            <option value="title_desc">Title (Z–A)</option>
+                            <option value="newest">Newest First</option>
+                            <option value="oldest">Oldest First</option>
+                        </select>
                     </div>
-                ))}
-            </div>
+                    {filterOptions.map((filterGroup) => (
+                        <div key={filterGroup.param} className="filter-category">
+                            <h3>{filterGroup.category}</h3>
+                            <hr className='thin-divider divider--tight' />
+                            <ul>
+                                {filterGroup.options.map((option) => (
+                                    <li key={option}>
+                                        <label>
+                                            <input 
+                                                type="checkbox" 
+                                                value={option}
+                                                // Check if option is in the state for this filter param
+                                                checked={selectedFilters[filterGroup.param]?.includes(option) || false}
+                                                onChange={() => handleFilterChange(filterGroup.param, option)}
+                                            /> {option}
+                                        </label>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    ))}
+                </div>
                 <div className="search-results-list">
                     {/* --- ADDED --- Loading, Error, No Results states */}
                      {loading && <p>Loading results...</p>}
@@ -424,7 +450,7 @@ function SearchResults({ isStaff }) {
                                     {renderItemActionButtons(item)}
                                 </div>
                             </div>
-                            <hr className="divider" />
+                            <hr className="thin-divider" />
                             </div>
                         );
                         })}

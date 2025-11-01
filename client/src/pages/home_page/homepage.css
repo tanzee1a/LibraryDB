@@ -36,3 +36,9 @@
   background: white;
   color: black;
 }
+
+.search-bar:hover, .search-bar:focus {
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 8px var(--secondary-color);
+    transition: border-color 0.2s ease-out, box-shadow 0.2s ease-out;
+}

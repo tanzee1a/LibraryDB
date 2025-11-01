@@ -127,10 +127,24 @@ function ManageUsers() {
                 </div>
                 <div className="search-results-contents">
                     <div className="filter-section">
+                        <div className="sort-select-wrapper">
+                            Sort by:
+                            <select
+                                className="sort-select"
+                                onChange={(e) => handleSortChange(e.target.value)}
+                                defaultValue=""
+                            >
+                                <option value="" disabled></option>
+                                <option value="title_asc">Title (A–Z)</option>
+                                <option value="title_desc">Title (Z–A)</option>
+                                <option value="newest">Newest First</option>
+                                <option value="oldest">Oldest First</option>
+                            </select>
+                        </div>
                         {userFilterOptions().map((filterGroup) => (
                             <div key={filterGroup.param} className="filter-category">
                                 <h3>{filterGroup.category}</h3>
-                                <hr className='divider divider--tight' />
+                                <hr className='thin-divider divider--tight' />
                                 <ul>
                                     {filterGroup.options.map((option) => {
                                         return ( // Start returning the list item
@@ -187,7 +201,7 @@ function ManageUsers() {
                                         <button className="btn secondary">Edit</button> 
                                     </div> */}
                                 </div>
-                                <hr className="divider" />
+                                <hr className="thin-divider" />
                             </div>
                         ))}
                     </div>

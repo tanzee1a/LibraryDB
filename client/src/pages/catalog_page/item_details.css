@@ -63,11 +63,11 @@
   font-weight: bold;
 }
 
-.divider {
+.thin-divider {
   width: 100%;
   border: none;
   border-top: 1px solid #ccc;
-  margin: 1.5rem 0;
+  margin: 1rem 0;
 }
 
 .divider--tight {
