@@ -157,7 +157,7 @@ async function returnItem(borrowId, staffUserId) { // staffUserId for auth later
             [returnedStatusId, borrowId]
         );
 
-        // 4. Check for and potentially create FINE
+        // 4. Check for and potentially create FINE (TODO: REMOVEEEEEEEE THISSSS!!!!!!! once trigger is added)
         const today = new Date();
         const due = new Date(dueDate);
         if (today > due) {

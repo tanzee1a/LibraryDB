@@ -1,4 +1,8 @@
 const http = require('http');
+require('dotenv').config();
+console.log("--- SERVER STARTING ---");
+console.log("THE LOADED SECRET IS:", process.env.JWT_SECRET);
+console.log("-----------------------");
 
 // Import controllers
 const { 

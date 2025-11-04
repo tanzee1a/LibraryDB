@@ -81,14 +81,32 @@ function ManageBorrows() {
     }
 
     const handleReturn = (borrowId) => {
-        fetch(`${API_BASE_URL}/api/return/${borrowId}`, { method: 'POST' })
+
+        const token = localStorage.getItem('authToken'); // Or wherever you store your token
+        if (!token) {
+            alert('You are not logged in.');
+            return; 
+        }
+
+        fetch(`${API_BASE_URL}/api/return/${borrowId}`, { 
+            method: 'POST',
+            headers: {'Authorization': `Bearer ${token}`}
+        })
             .then(r => { if (!r.ok) throw new Error('Marking return failed'); return r.json(); })
             .then(() => fetchBorrows()) // Refresh list
             .catch(err => alert(`Error: ${err.message}`));
     };
 
     const handleMarkLost = (borrowId) => {
-        fetch(`${API_BASE_URL}/api/borrows/${borrowId}/lost`, { method: 'POST' })
+        const token = localStorage.getItem('authToken'); // Or wherever you store your token
+        if (!token) {
+            alert('You are not logged in.');
+            return; 
+        }
+        fetch(`${API_BASE_URL}/api/borrows/${borrowId}/lost`, { 
+            method: 'POST', headers: {'Authorization': `Bearer ${token}`
+            }
+        })
             .then(r => { if (!r.ok) throw new Error('Marking lost failed'); return r.json(); })
             .then(() => fetchBorrows()) // Refresh list
             .catch(err => alert(`Error: ${err.message}`));
