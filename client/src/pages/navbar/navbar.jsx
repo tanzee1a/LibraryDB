@@ -56,6 +56,7 @@ const Navbar = ({
             <nav className="nav">
                 <ul className="nav-links">
                     <li><a href="/" className="logo"><img className="logo-image logo-image-small" src={Logo} alt="" />LBRY</a></li>
+                    <li><a href="/search" className="logo">Browse</a></li>
                     {/* Minimal Category Dropdowns */}
                     {filters.map(filter => (
                     <li key={filter.category} className="dropdown">
@@ -109,6 +110,7 @@ const Navbar = ({
             <nav className="nav">
                 <ul className="nav-links">
                 <li><a href="/" className="logo"><img className="logo-image logo-image-small" src={Logo} alt="" />LBRY</a></li>
+                <li><a href="/search" className="logo">Browse</a></li>
                 {filters.map(filter => (
                 <li key={filter.category} className="dropdown">
                     <a href="#">{filter.category}</a>
