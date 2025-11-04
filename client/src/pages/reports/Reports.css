@@ -1,48 +1,84 @@
-/* pages/reports/Reports.css */
-.reports-container {
-    padding: 2rem;
+/* This is the new container for the side-by-side layout */
+.reports-layout {
+    display: flex;
+    flex-wrap: wrap; /* Allow wrapping on small screens if needed */
+    gap: 24px; /* Space between the nav and the content */
 }
 
-.report-selector {
-    margin-bottom: 2rem;
+/* 1. The new navigation sidebar */
+.reports-nav {
+    display: flex;
+    flex-direction: column; /* Stack the buttons vertically */
+    gap: 10px; /* Space between the buttons */
+    
+    /* flex-basis: 280px; -> The "default" width of the sidebar
+      flex-shrink: 0;   -> Prevents the sidebar from shrinking 
+    */
+    flex: 0 0 280px; 
 }
 
-.report-selector label {
-    margin-right: 0.5rem;
-    font-weight: bold;
+.nav-button {
+    display: block;
+    width: 100%;
+    padding: 12px 18px;
+    
+    font-size: 1rem;
+    font-weight: 500;
+    text-align: left;
+    
+    color: #333;
+    background-color: #f8f9fa; /* Light grey background */
+    border: 1px solid #dee2e6; /* Subtle border */
+    border-radius: 6px;
+    
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
 }
 
-.report-selector select {
-    padding: 0.5rem;
-    border-radius: 4px;
-    border: 1px solid #ccc;
+.nav-button:hover {
+    background-color: #e9ecef; /* Darker grey on hover */
+    border-color: #ced4da;
 }
 
-.report-content h2 {
-    margin-bottom: 1rem;
-    border-bottom: 2px solid var(--primary); /* Use theme variable */
-    padding-bottom: 0.5rem;
+/* This is the style for the *selected* report button */
+.nav-button.active {
+    background-color: #007bff; /* Primary blue (adjust to your theme) */
+    color: #ffffff;
+    border-color: #007bff;
+    font-weight: 600;
 }
 
+/* 2. The main content area */
+.report-content {
+    /* flex-grow: 1; -> Allows this element to grow and take remaining space
+      flex-basis: 0;  -> Default width is 0, lets it grow from there
+      min-width: 300px; -> Ensures it doesn't get too squished
+    */
+    flex: 1 1 300px;
+    min-width: 300px; /* Or a value that fits your table */
+}
+
+/* Optional: Your existing table styling */
 .report-table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 1rem;
-    font-size: 0.9rem;
+    margin-top: 16px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-.report-table th, 
+.report-table th,
 .report-table td {
-    border: 1px solid var(--border); /* Use theme variable */
-    padding: 8px 12px;
+    border: 1px solid #ddd;
+    padding: 12px;
     text-align: left;
+    vertical-align: top;
 }
 
 .report-table th {
-    background-color: var(--panel-2); /* Use theme variable */
-    font-weight: bold;
+    background-color: #f4f4f4;
+    font-weight: 600;
 }
 
 .report-table tbody tr:nth-child(even) {
-    background-color: var(--panel-2); /* Slight striping */
+    background-color: #f9f9f9;
 }
