@@ -193,6 +193,25 @@ async function payFine(req, res, fineId) {
     }
 }
 
+// @desc User pays one of their own outstanding fines
+// @route POST /api/my-fines/:fineId/pay
+// REQUIRES: protect middleware (sets req.userId)
+async function userPayFine(req, res, fineId) {
+    try {
+        const userId = req.userId; // 泊 Sourced from auth middleware
+        
+        // Use the new model function, passing both fineId and userId
+        const result = await Loan.userPayFine(Number(fineId), userId);
+        
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify(result));
+    } catch (error) {
+        console.error("Error in userPayFine controller:", error);
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ message: 'Could not pay fine', error: error.message }));
+    }
+}
+
 // @desc Staff waives a fine
 // @route POST /api/fines/:fineId/waive
 async function waiveFine(req, res, fineId) {
@@ -376,6 +395,7 @@ module.exports = {
     getMyWaitlist,
     getMyFines,
     payFine,
+    userPayFine,
     waiveFine,
     getAllBorrows,
     getAllHolds,

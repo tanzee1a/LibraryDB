@@ -16,7 +16,7 @@ const {
 const { 
     requestPickup, pickupHold, returnItem, markLost, markFound, placeWaitlistHold, 
     getMyLoans, getMyHistory, getMyHolds, getMyWaitlist, getMyFines,
-    payFine, waiveFine, getAllBorrows, getAllHolds, cancelHold, staffCheckoutItem, getAllFines, staffCreateFine, getAllStatus
+    payFine, userPayFine, waiveFine, getAllBorrows, getAllHolds, cancelHold, staffCheckoutItem, getAllFines, staffCreateFine, getAllStatus
 } = require('./controllers/loanController');
 
 const { registerUser, loginUser } = require('./controllers/loginRegisterController');
@@ -122,6 +122,11 @@ const server = http.createServer((req, res) => {
             protect(req, res, () => placeWaitlistHold(req, res, itemId)); 
             return;
         }
+        else if (req.url.match(/^\/api\/my-fines\/([a-zA-Z0-9]+)\/pay$/) && req.method === 'POST') {
+            const fineId = req.url.split('/')[3]; 
+            protect(req, res, () => userPayFine(req, res, fineId)); 
+            return;
+        }
 
         // --- User Data Routes (My- Routes) ---
         else if (req.url === '/api/my-loans' && req.method === 'GET') {
@@ -145,6 +150,7 @@ const server = http.createServer((req, res) => {
             protect(req, res, () => getMyFines(req, res)); 
             return;
         }
+    
         // Get My Profile
         else if (req.url === '/api/my-profile' && req.method === 'GET') {
             // FIX: Correctly wrap the controller function

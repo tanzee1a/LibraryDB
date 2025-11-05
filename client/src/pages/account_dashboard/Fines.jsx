@@ -47,10 +47,34 @@ const Fines = () => {
   }, []); 
 
   // --- Handle Pay Button Click ---
-  const handlePayFine = (fineId) => {
-    fetch(`${API_BASE_URL}/api/fines/${fineId}/pay`, { method: 'POST' }) // Call pay endpoint
+const handlePayFine = (fineId) => {
+    // 1. Retrieve the token from storage
+    const token = localStorage.getItem('authToken'); 
+
+    if (!token) {
+        console.error("Authentication Error: No token found.");
+        alert('Error: You must be logged in to pay a fine.');
+        return; 
+    }
+
+    // 2. Construct the headers object
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}` // 🔑 KEY FIX: Attach the token
+    };
+
+    // 3. Call the new user-specific endpoint
+    fetch(`${API_BASE_URL}/api/my-fines/${fineId}/pay`, { // 🔑 KEY FIX: Changed URL
+      method: 'POST',
+      headers: headers // 🔑 KEY FIX: Added headers
+    }) 
       .then(res => {
-        if (!res.ok) throw new Error('Payment failed');
+        if (!res.ok) {
+           // Try to get a specific error message from the backend
+           return res.json().then(errData => {
+               throw new Error(errData.message || 'Payment failed');
+           });
+        }
         return res.json();
       })
       .then(() => {

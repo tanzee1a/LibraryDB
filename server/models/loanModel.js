@@ -511,6 +511,23 @@ async function payFine(fineId, staffUserId) { // staffUserId for auth later
     return { fine_id: fineId, message: 'Fine marked as paid.' };
 }
 
+async function userPayFine(fineId, userId) {
+    const sql = `
+        UPDATE FINE 
+        SET date_paid = NOW() 
+        WHERE fine_id = ? 
+          AND user_id = ? 
+          AND date_paid IS NULL 
+          AND waived_at IS NULL
+    `;
+    const [result] = await db.query(sql, [fineId, userId]);
+    
+    if (result.affectedRows === 0) {
+        throw new Error('Unpaid fine not found for this user.');
+    }
+    return { fine_id: fineId, message: 'Fine marked as paid.' };
+}
+
 // --- Staff waives a fine ---
 async function waiveFine(fineId, reason, staffUserId) { // staffUserId for auth
      const sql = 'UPDATE FINE SET waived_at = NOW(), waived_reason = ? WHERE fine_id = ? AND date_paid IS NULL AND waived_at IS NULL';
@@ -800,6 +817,7 @@ module.exports = {
     findWaitlistByUserId,
     findFinesByUserId,
     payFine,
+    userPayFine,
     waiveFine,
     findAllBorrows,
     findAllHolds,
