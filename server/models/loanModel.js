@@ -244,6 +244,62 @@ async function markLost(borrowId, staffUserId) { // staffUserId for auth
     }
 }
 
+// --- Staff marks a LOST item as FOUND ---
+async function markFound(borrowId, staffUserId) { // staffUserId for auth
+    const conn = await db.getConnection();
+    try {
+        await conn.beginTransaction();
+        const lostStatusId = await getStatusId(conn, 'Lost');
+        const returnedStatusId = await getStatusId(conn, 'Returned');
+
+         // 1. Get Borrow details & lock Item
+        const [borrows] = await conn.query(
+            `SELECT b.item_id, b.user_id 
+             FROM BORROW b
+             JOIN ITEM i ON b.item_id = i.item_id
+             WHERE b.borrow_id = ? AND b.status_id = ? 
+             FOR UPDATE OF i`, // Find the 'Lost' borrow record
+            [borrowId, lostStatusId] 
+        );
+        if (borrows.length === 0) throw new Error('Lost loan not found.');
+
+        const { item_id: itemId } = borrows[0];
+
+        // 2. Update ITEM status (item is back and available)
+        // 'markLost' already decremented 'loaned_out', so we just add to 'available'
+        await conn.query(
+            'UPDATE ITEM SET available = available + 1 WHERE item_id = ?', 
+            [itemId]
+        );
+
+        // 3. Update BORROW status (from 'Lost' to 'Returned')
+        await conn.query(
+            'UPDATE BORROW SET status_id = ?, return_date = CURDATE() WHERE borrow_id = ?', 
+            [returnedStatusId, borrowId]
+        );
+
+        // 4. Waive the associated 'LOST' fine
+        const waiveReason = 'Item marked as found by staff.';
+        await conn.query(
+            `UPDATE FINE 
+             SET waived_at = NOW(), waived_reason = ?
+             WHERE borrow_id = ? AND fee_type = 'LOST' AND date_paid IS NULL AND waived_at IS NULL`,
+            [waiveReason, borrowId]
+        );
+        // This will not error if no fine is found, which is correct.
+
+        await conn.commit();
+        return { borrow_id: borrowId, message: 'Item marked as found, returned to available, and associated LOST fine waived.' };
+
+    } catch (error) {
+        await conn.rollback();
+        console.error("Error in markFound transaction:", error);
+        throw error;
+    } finally {
+        conn.release();
+    }
+}
+
 
 // --- User places a hold on an UNAVAILABLE item (Waitlist) ---
 async function placeWaitlistHold(itemId, userId) {
@@ -736,6 +792,7 @@ module.exports = {
     pickupHold,
     returnItem,
     markLost,
+    markFound,
     placeWaitlistHold,
     findLoansByUserId,
     findLoanHistoryByUserId,

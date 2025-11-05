@@ -14,7 +14,7 @@ const {
 } = require('./controllers/itemController');
 
 const { 
-    requestPickup, pickupHold, returnItem, markLost, placeWaitlistHold, 
+    requestPickup, pickupHold, returnItem, markLost, markFound, placeWaitlistHold, 
     getMyLoans, getMyHistory, getMyHolds, getMyWaitlist, getMyFines,
     payFine, waiveFine, getAllBorrows, getAllHolds, cancelHold, staffCheckoutItem, getAllFines, staffCreateFine, getAllStatus
 } = require('./controllers/loanController');
@@ -111,7 +111,12 @@ const server = http.createServer((req, res) => {
             const borrowId = req.url.split('/')[3];
             protect(req, res, () => markLost(req, res, borrowId)); 
             return;
-        } else if (req.url.match(/^\/api\/waitlist\/([a-zA-Z0-9-]+)$/) && req.method === 'POST') {
+        } else if (req.url.match(/^\/api\/borrows\/([A-Za-z0-9-]+)\/found$/) && req.method === 'POST') {
+            const borrowId = req.url.split('/')[3];
+            protect(req, res, () => markFound(req, res, borrowId)); 
+            return;
+        } 
+        else if (req.url.match(/^\/api\/waitlist\/([a-zA-Z0-9-]+)$/) && req.method === 'POST') {
             const itemId = req.url.split('/')[3];
             // FIX: Ensure req and res are passed to the controller
             protect(req, res, () => placeWaitlistHold(req, res, itemId)); 

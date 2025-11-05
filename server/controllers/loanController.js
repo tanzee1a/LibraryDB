@@ -64,6 +64,21 @@ async function markLost(req, res, borrowId) {
   }
 }
 
+// @desc Staff marks a lost loan as found
+// @route POST /api/borrows/:borrowId/found
+async function markFound(req, res, borrowId) {
+  try {
+    const staff_user_id = 'U176124397339'; // TODO: replace with real staff auth
+    const result = await Loan.markFound(borrowId, staff_user_id);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify(result));
+  } catch (error) {
+    console.error("Error in markFound controller:", error);
+    res.writeHead(400, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ message: 'Could not mark found', error: error.message }));
+  }
+}
+
 // @desc User places a hold on an UNAVAILABLE item (Waitlist)
 // @route POST /api/waitlist/:itemId
 // REQUIRES: protect middleware (sets req.userId)
@@ -353,6 +368,7 @@ module.exports = {
     pickupHold,
     returnItem,
     markLost,
+    markFound,
     placeWaitlistHold,
     getMyLoans,
     getMyHistory,

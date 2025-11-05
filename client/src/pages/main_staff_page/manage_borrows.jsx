@@ -115,7 +115,32 @@ function ManageBorrows() {
     // TODO: Add backend logic & API for ReadyForPickup, CancelRequest, MarkAsFound if needed
     const handleReadyForPickup = (holdId /* Need hold ID here */) => { alert('Ready for Pickup - Not implemented'); };
     const handleCancelRequest = (holdId /* Need hold ID here */) => { alert('Cancel Request - Not implemented'); };
-    const handleMarkFound = (borrowId /* Or maybe Item ID? */) => { alert('Mark As Found - Not implemented'); };
+    const handleMarkFound = (borrowId) => {
+        const token = localStorage.getItem('authToken'); // Or wherever you store your token
+        if (!token) {
+            alert('You are not logged in.');
+            return; 
+        }
+
+        fetch(`${API_BASE_URL}/api/borrows/${borrowId}/found`, { // <<< New endpoint
+            method: 'POST', 
+            headers: {'Authorization': `Bearer ${token}`}
+        })
+            .then(r => { 
+                if (!r.ok) {
+                    // Try to get error message from backend
+                    return r.json().then(err => {
+                        throw new Error(err.message || 'Marking found failed');
+                    });
+                }
+                return r.json(); 
+            })
+            .then((data) => {
+                console.log(data.message); // Log success message
+                fetchBorrows(); // Refresh list
+            })
+            .catch(err => alert(`Error: ${err.message}`));
+    };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
