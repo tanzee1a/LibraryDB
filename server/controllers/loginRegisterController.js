@@ -23,7 +23,7 @@ async function registerUser(req, res) {
   
         if (!email || !password) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
-          return res.end(JSON.stringify({ message: 'Email and password required' }));
+          return res.end(JSON.stringify({ error: true, message: 'Email and password required' }));
         }
         
         await conn.beginTransaction(); // Start transaction
@@ -52,9 +52,8 @@ async function registerUser(req, res) {
           'INSERT INTO USER (user_id, email, role_id, firstName, lastName) VALUES (?, ?, ?, ?, ?)',
           [userId, email, role_id, firstName || '', lastName || '']
         );
-        
-        // --- STEP 3: Insert into USER_CREDENTIAL table (email and hash) ---
-        await conn.query(
+
+        await pool.query(
           'INSERT INTO USER_CREDENTIAL (email, password_hash) VALUES (?, ?)',
           [email, hashedPassword]
         );
@@ -66,18 +65,17 @@ async function registerUser(req, res) {
         res.end(JSON.stringify({ message: 'User registered successfully', userId, role: roleName })); 
       
       } catch (err) {
-        await conn.rollback(); // Rollback on error
-        console.error("Error during registration:", err);
-        // Check for duplicate email
+        console.error(err);
         if (err.code === 'ER_DUP_ENTRY') {
-             res.writeHead(400, { 'Content-Type': 'application/json' });
-             res.end(JSON.stringify({ message: 'Email address already exists.' }));
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: true, message: err.sqlMessage }));
+        } else if (err.code) {
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: true, code: err.code, message: err.sqlMessage || 'Error registering user' }));
         } else {
-             res.writeHead(500, { 'Content-Type': 'application/json' });
-             res.end(JSON.stringify({ message: 'Error registering user' }));
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: true, message: 'Error registering user' }));
         }
-      } finally {
-          conn.release(); // Always release connection
       }
     });
   }
