@@ -1,22 +1,17 @@
-import React, { useState, useEffect } from 'react'; // --- ADDED hooks ---
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-// --- ADDED IoPersonCircleOutline for profile ---
 import { IoBookOutline, IoPeopleOutline, IoSwapHorizontalOutline, IoHourglassOutline, IoWalletOutline, IoDocumentTextOutline, IoPersonCircleOutline } from 'react-icons/io5';
 import './StaffDashboard.css';
 
-// --- REMOVED hardcoded quickStats ---
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
 
 function StaffDashboard() {
-  // --- ADDED State for stats, profile, loading, error ---
   const [stats, setStats] = useState({ loans: 0, overdue: 0, pendingPickups: 0, outstandingFines: 0 });
   const [profile, setProfile] = useState(null);
   const [loadingStats, setLoadingStats] = useState(true);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [error, setError] = useState('');
-  // --- END ADDED ---
 
-  // --- ADDED useEffect to fetch data ---
   useEffect(() => {
     let statsError = '';
     let profileError = '';
@@ -24,23 +19,20 @@ function StaffDashboard() {
     setLoadingProfile(true);
     setError('');
 
-    // 1. Retrieve the token and setup headers
     const token = localStorage.getItem('authToken'); 
     const authHeaders = {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}` 
     };
     
-    // Check for token existence before fetching
     if (!token) {
         setError('Authentication token missing. Please log in.');
         setLoadingStats(false);
         setLoadingProfile(false);
-        return; // Stop execution if no token is found
+        return;
     }
 
     // Fetch Stats
-    // CRITICAL FIX: Pass authHeaders here as well!
     fetch(`${API_BASE_URL}/api/staff/dashboard-stats`, { headers: authHeaders }) 
       .then(res => res.ok ? res.json() : Promise.reject('Stats fetch failed (Auth/Server Error)'))
       .then(data => setStats(data))
@@ -66,35 +58,35 @@ function StaffDashboard() {
            if (statsError || profileError) setError((statsError + profileError).trim());
       });
 
-  }, []); // Run once on mount
-  // --- END ADDED ---
+  }, []);
+
+  // Determine if the logged-in user is a Head Librarian
+  // This depends on the profile state being loaded and checking its role_name property
+  const isHeadLibrarian = profile && profile.role_name === 'Librarian';
 
 
   return (
     <div className="page-container staff-dashboard-container">
-      {/* --- ADDED Profile Section --- */}
-      {/* Conditionally render based on loading/error/data */}
+      {/* Profile Section */}
       {loadingProfile ? (
         <div className="staff-profile-header card loading">Loading profile...</div>
       ) : profile ? (
-        <div className="staff-profile-header card"> {/* Simple card style */}
-          <IoPersonCircleOutline className="action-icon" /> {/* Re-use icon */}
+        <div className="staff-profile-header card">
+          <IoPersonCircleOutline className="action-icon" />
           <div>
             <h3>Welcome, {profile.firstName} {profile.lastName}!</h3>
-            {/* Display role_name from the joined table */}
             <small>Role: {profile.role_name} | ID: {profile.user_id}</small> 
           </div>
         </div>
       ) : (
          <div className="staff-profile-header card error">Could not load staff profile.</div>
       )}
-      {/* --- END ADDED --- */}
 
       <h1>Staff Dashboard</h1>
 
-      {/* Quick Stats Section (Use state) */}
+      {/* Quick Stats Section */}
       <div className="stats-grid">
-        {/* --- MODIFIED to use 'stats' state and loading --- */}
+        {/* ... (Stat Cards for Loans, Overdue, Pickups, Fines) ... */}
         <div className="stat-card">
           <IoSwapHorizontalOutline className="stat-icon loans" />
           <div>
@@ -123,18 +115,16 @@ function StaffDashboard() {
             <div className="stat-label">Outstanding Fines</div>
           </div>
         </div>
-        {/* --- END MODIFIED --- */}
       </div>
-       {/* Display overall error only if both fetches failed */}
        {error && !loadingStats && !loadingProfile && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
 
 
       <hr className="divider" />
 
-      {/* Navigation Cards Section (remains the same) */}
+      {/* Navigation Cards Section */}
       <h2>Management Tools</h2>
       <div className="action-grid">
-        {/* --- Links remain the same --- */}
+        {/* ... (Management Links for Items, Users, Borrows, Holds, Fines) ... */}
         <Link to="/search" className="action-card">
           <IoBookOutline className="action-icon" />
           Manage Items
@@ -160,11 +150,14 @@ function StaffDashboard() {
           Manage Fines
           <small>View and resolve outstanding fines.</small>
         </Link>
-        <Link to="/reports" className="action-card"> 
-          <IoDocumentTextOutline className="action-icon" />
-          Generate Reports
-          <small>View library usage statistics and data.</small>
-        </Link>
+        
+        {isHeadLibrarian && (
+          <Link to="/reports" className="action-card"> 
+            <IoDocumentTextOutline className="action-icon" />
+            Generate Reports
+            <small>View library usage statistics and data.</small>
+          </Link>
+        )}
       </div>
     </div>
   );
