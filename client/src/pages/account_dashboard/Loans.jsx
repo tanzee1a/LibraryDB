@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 // Remove IoBookOutline if no longer needed
 // --- ADD THIS LINE AT THE TOP of Loans.jsx ---
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 

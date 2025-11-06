@@ -1,4 +1,5 @@
 import './manage_users.css';
+// --- REMOVED sampleData ---
 import React, { useState, useEffect } from 'react'; // --- ADDED useEffect ---
 import { FaPlus } from "react-icons/fa";
 import { Link } from 'react-router-dom'; // --- ADDED Link ---
@@ -34,8 +35,7 @@ function ManageUsers() {
     const userFilterOptions = () => {
         // Get the user's role from localStorage
         const userRole = localStorage.getItem('userRole');
-        // Updated role list
-        let roleOptions = ['Student', 'Faculty', 'Patron', 'Staff', 'Admin']; 
+        let roleOptions = ['Patron', 'Staff', 'Admin'];
         // If the role is 'Staff', filter out 'Admin'
         if (userRole === 'Staff') {
             roleOptions = roleOptions.filter(opt => opt !== 'Admin');
@@ -74,6 +74,7 @@ function ManageUsers() {
         }));
     }
 
+    // --- MODIFIED: handleAddUserSubmit ---
     async function handleAddUserSubmit(e) { // Make async
         e.preventDefault();
         setIsSubmitting(true);
@@ -105,6 +106,7 @@ function ManageUsers() {
             setIsSubmitting(false);
         }
     }
+    // --- END MODIFIED ---
 
     return (
         <div>
@@ -221,18 +223,12 @@ function ManageUsers() {
                     <label> Email: <input type="email" className="edit-input" name="email" value={newUser.email} onChange={handleInputChange} required /> </label>
                     {/* Added Password input */}
                     <label> Temporary Password: <input type="password" className="edit-input" name="temporaryPassword" value={newUser.temporaryPassword} onChange={handleInputChange} required /> </label>
-                    
-                    {/* --- MODIFIED: Added Student and Faculty options --- */}
                     <label> Role:
                         <select name="role" className="edit-input" value={newUser.role} onChange={handleInputChange} required>
                             <option value="Patron">Patron</option>
-                            <option value="Student">Student</option>
-                            <option value="Faculty">Faculty</option>
                             <option value="Staff">Staff</option>
                         </select>
                     </label>
-                    {/* --- END MODIFIED --- */}
-
                      {/* TODO: Add Staff Role selection if role is Staff */}
                     <div className="sheet-actions">
                     <button type="submit" className="action-button primary-button" disabled={isSubmitting}>

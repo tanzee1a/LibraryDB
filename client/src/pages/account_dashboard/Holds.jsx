@@ -1,6 +1,7 @@
 // Holds.jsx
 import React, { useState, useEffect } from 'react';
 import { IoHourglassOutline } from 'react-icons/io5';
+import { Link } from 'react-router-dom';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
 
@@ -59,8 +60,6 @@ export default function Holds() {
 
   return (
     <div>
-      {/* This h4 is optional, you may want to control it in the dashboard */}
-      {/* <h4>Requested for Pickup</h4> */}
       {holds.length === 0 ? (
         <div className="list-item" style={{ padding: '8px 0' }}>
           <div className="thumb-icon" aria-hidden="true"><IoHourglassOutline /></div>
@@ -70,14 +69,24 @@ export default function Holds() {
         <ul className="list">
           {holds.map(h => (
             <li key={`hold-${h.hold_id}`} className="list-item">
-              <img 
-                src={h.thumbnail_url || '/placeholder-image.png'} 
-                alt={h.title} 
-                className="thumb"
-                onError={(e) => { e.target.onerror = null; e.target.src='/placeholder-image.png'; }}
-              />
+              
+              {/* --- CHANGE 1: Wrap image in a Link --- */}
+              <Link to={`/item/${h.item_id}`}>
+                <img 
+                  src={h.thumbnail_url || '/placeholder-image.png'} 
+                  alt={h.title} 
+                  className="thumb"
+                  onError={(e) => { e.target.onerror = null; e.target.src='/placeholder-image.png'; }}
+                />
+              </Link>
+              
               <div>
-                <div className="item-title">{h.title}</div>
+                {/* --- CHANGE 2: Change div to Link --- */}
+                <Link to={`/item/${h.item_id}`} className="item-title">
+                  {h.title}
+                </Link>
+                {/* --- End Changes --- */}
+                
                 <div className="item-sub">Requested: {new Date(h.created_at).toLocaleDateString()}</div>
                 <div className="item-sub">Pickup Expires: {new Date(h.expires_at).toLocaleDateString()}</div>
               </div>

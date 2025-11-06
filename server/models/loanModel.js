@@ -1,7 +1,7 @@
 const db = require('../config/db'); 
 const { v4: uuidv4 } = require('uuid'); // For generating borrow_ids
 
-// --- Helper: Get Status ID from Name ---
+// --- Helper: Get Status ID from Name (No Change) ---
 async function getStatusId(conn, statusName) {
   const [rows] = await conn.query(
     'SELECT status_id FROM BORROW_STATUS WHERE status_name = ?', 
@@ -11,26 +11,78 @@ async function getStatusId(conn, statusName) {
   return rows[0].status_id;
 }
 
-// --- Helper: Get Loan Policy based on Item ---
-async function getLoanPolicyForItem(conn, itemId) {
+// --- MODIFIED: Helper to get all rules from LOAN_POLICY ---
+// This function is now the single source of truth for all rules.
+// It needs the user_id to find their role.
+async function getLoanPolicy(conn, userId, itemId) {
   const [rows] = await conn.query(`
-    SELECT lp.loan_days, lp.daily_late_fee, lp.lost_after_days, lp.lost_fee
+    SELECT 
+        lp.loan_days, 
+        lp.daily_late_fee, 
+        lp.lost_after_days, 
+        lp.lost_fee
     FROM ITEM i
-    JOIN LOAN_POLICY lp ON lp.category = i.category
+    JOIN USER u ON u.user_id = ?
+    JOIN LOAN_POLICY lp ON lp.category = i.category AND lp.role_id = u.role_id
     WHERE i.item_id = ?
-  `, [itemId]);
-  if (!rows.length) throw new Error(`No loan policy found for item ${itemId}`);
+  `, [userId, itemId]);
+  
+  if (!rows.length) {
+      throw new Error(`No loan policy found for this user/item combination (User: ${userId}, Item: ${itemId})`);
+  }
   return rows[0];
 }
+// --- END MODIFICATION ---
 
-// --- User requests pickup for an AVAILABLE item ---
+// --- NEW HELPER: Check user's global borrow limit ---
+async function checkBorrowLimit(conn, userId) {
+    // 1. Get the user's limit from their role
+    const [roleRows] = await conn.query(`
+        SELECT ur.total_borrow_limit 
+        FROM USER u
+        JOIN USER_ROLE ur ON u.role_id = ur.role_id
+        WHERE u.user_id = ?
+    `, [userId]);
+
+    if (roleRows.length === 0) throw new Error('User role not found.');
+    const limit = roleRows[0].total_borrow_limit;
+
+    // 2. Get user's current active checkouts
+    const loanedOutStatusId = await getStatusId(conn, 'Loaned Out');
+    const [borrowCountRows] = await conn.query(
+        'SELECT COUNT(*) as count FROM BORROW WHERE user_id = ? AND status_id = ?',
+        [userId, loanedOutStatusId]
+    );
+    const borrowCount = borrowCountRows[0].count;
+
+    // 3. Get user's current active holds
+    const [holdCountRows] = await conn.query(
+        'SELECT COUNT(*) as count FROM HOLD WHERE user_id = ? AND picked_up_at IS NULL AND canceled_at IS NULL AND expires_at >= NOW()',
+        [userId]
+    );
+    const holdCount = holdCountRows[0].count;
+
+    // 4. Check total against limit
+    if ((borrowCount + holdCount) >= limit) {
+        throw new Error(`Borrow limit reached (${limit} items). User currently has ${borrowCount} borrows and ${holdCount} active holds.`);
+    }
+    // If we're here, the user is clear to borrow/hold one more item.
+    return true; 
+}
+// --- END NEW HELPER ---
+
+
+// --- MODIFIED: User requests pickup for an AVAILABLE item ---
 async function requestPickup(itemId, userId) {
     const conn = await db.getConnection();
     try {
         await conn.beginTransaction();
-        const pendingStatusId = await getStatusId(conn, 'Pending');
 
-        // 1. Check Availability
+        // --- STEP 1: Check user's borrow limit (NEW) ---
+        await checkBorrowLimit(conn, userId);
+        // --- END STEP 1 ---
+
+        // 2. Check Availability
         const [items] = await conn.query(
           'SELECT available, category FROM ITEM WHERE item_id = ? FOR UPDATE', // Lock the row
           [itemId]
@@ -38,13 +90,13 @@ async function requestPickup(itemId, userId) {
         if (items.length === 0) throw new Error('Item not found.');
         if (items[0].available <= 0) throw new Error('Item is not available.');
 
-        // 2. Put item on hold
+        // 3. Put item on hold
         await conn.query(
             'UPDATE ITEM SET available = available - 1, on_hold = on_hold + 1 WHERE item_id = ?', 
             [itemId]
         );
 
-        // 3. Create HOLD record (e.g., expires in 3 days)
+        // 4. Create HOLD record (e.g., expires in 3 days)
         const holdExpires = new Date();
         holdExpires.setDate(holdExpires.getDate() + 3); 
         
@@ -66,7 +118,7 @@ async function requestPickup(itemId, userId) {
     }
 }
 
-// --- Staff checks out a PENDING hold ---
+// --- MODIFIED: Staff checks out a PENDING hold ---
 async function pickupHold(holdId, staffUserId) { // staffUserId not used yet, but needed for auth
     const conn = await db.getConnection();
     try {
@@ -85,25 +137,27 @@ async function pickupHold(holdId, staffUserId) { // staffUserId not used yet, bu
         if (holds.length === 0) throw new Error('Hold not found, already picked up, canceled, or expired.');
         
         const { item_id: itemId, user_id: userId, category } = holds[0];
-
-        // 2. Get Loan Policy
-        const policy = await getLoanPolicyForItem(conn, itemId);
+        
+        // --- STEP 2: Get Loan Policy (MODIFIED) ---
+        // We now pass the userId to the new helper
+        const policy = await getLoanPolicy(conn, userId, itemId);
         const dueDate = new Date();
         dueDate.setDate(dueDate.getDate() + policy.loan_days);
+        // --- END STEP 2 ---
 
-        // 3. Update ITEM status
+        // 3. Update ITEM status (No change)
         await conn.query(
             'UPDATE ITEM SET on_hold = on_hold - 1, loaned_out = loaned_out + 1 WHERE item_id = ?', 
             [itemId]
         );
 
-        // 4. Update HOLD status
+        // 4. Update HOLD status (No change)
         await conn.query(
             'UPDATE HOLD SET picked_up_at = NOW() WHERE hold_id = ?', 
             [holdId]
         );
 
-        // 5. Create BORROW record
+        // 5. Create BORROW record (No change)
         const borrowId = `B${Date.now()}${Math.floor(Math.random()*100)}`; // Simple unique ID
         const borrowSql = `
             INSERT INTO BORROW (borrow_id, borrow_date, due_date, status_id, user_id, item_id)
@@ -124,7 +178,7 @@ async function pickupHold(holdId, staffUserId) { // staffUserId not used yet, bu
 }
 
 
-// --- User returns a LOANED OUT item ---
+// --- MODIFIED: User returns a LOANED OUT item ---
 async function returnItem(borrowId, staffUserId) { // staffUserId for auth later
     const conn = await db.getConnection();
     try {
@@ -132,7 +186,7 @@ async function returnItem(borrowId, staffUserId) { // staffUserId for auth later
         const returnedStatusId = await getStatusId(conn, 'Returned');
         const loanedOutStatusId = await getStatusId(conn, 'Loaned Out');
 
-        // 1. Get Borrow details & lock Item
+        // 1. Get Borrow details & lock Item (No change)
         const [borrows] = await conn.query(
             `SELECT b.item_id, b.user_id, b.due_date, i.category 
              FROM BORROW b
@@ -145,36 +199,17 @@ async function returnItem(borrowId, staffUserId) { // staffUserId for auth later
 
         const { item_id: itemId, user_id: userId, due_date: dueDate } = borrows[0];
 
-        // 2. Update ITEM status
+        // 2. Update ITEM status (No change)
         await conn.query(
             'UPDATE ITEM SET loaned_out = loaned_out - 1, available = available + 1 WHERE item_id = ?', 
             [itemId]
         );
 
-        // 3. Update BORROW status
+        // 3. Update BORROW status (No change)
         await conn.query(
             'UPDATE BORROW SET status_id = ?, return_date = CURDATE() WHERE borrow_id = ?', 
             [returnedStatusId, borrowId]
         );
-
-        // 4. Check for and potentially create FINE (TODO: REMOVEEEEEEEE THISSSS!!!!!!! once trigger is added)
-        const today = new Date();
-        const due = new Date(dueDate);
-        if (today > due) {
-            const daysLate = Math.ceil((today - due) / (1000 * 60 * 60 * 24));
-            const policy = await getLoanPolicyForItem(conn, itemId);
-            if (daysLate > 0 && policy.daily_late_fee > 0) {
-                const totalFine = daysLate * policy.daily_late_fee;
-                const fineSql = `
-                    INSERT INTO FINE (borrow_id, user_id, fee_type, amount, notes)
-                    VALUES (?, ?, 'LATE', ?, ?)
-                `;
-                await conn.query(fineSql, [
-                    borrowId, userId, totalFine, 
-                    `Returned ${daysLate} day(s) late.`
-                ]);
-            }
-        }
 
         await conn.commit();
         return { borrow_id: borrowId, message: 'Item returned successfully.' };
@@ -188,41 +223,42 @@ async function returnItem(borrowId, staffUserId) { // staffUserId for auth later
     }
 }
 
-// --- Staff marks a loan as LOST ---
+// --- MODIFIED: Staff marks a loan as LOST ---
 async function markLost(borrowId, staffUserId) { // staffUserId for auth
     const conn = await db.getConnection();
     try {
         await conn.beginTransaction();
         const lostStatusId = await getStatusId(conn, 'Lost');
-        const loanedOutStatusId = await getStatusId(conn, 'Loaned Out'); // Or maybe Pending?
+        const loanedOutStatusId = await getStatusId(conn, 'Loaned Out'); 
 
-         // 1. Get Borrow details & lock Item
+         // 1. Get Borrow details & lock Item (No change)
         const [borrows] = await conn.query(
             `SELECT b.item_id, b.user_id, i.category 
              FROM BORROW b
              JOIN ITEM i ON b.item_id = i.item_id
              WHERE b.borrow_id = ? AND b.status_id = ? 
-             FOR UPDATE OF i`, // Ensure it's currently loaned out
+             FOR UPDATE OF i`, 
             [borrowId, loanedOutStatusId] 
         );
         if (borrows.length === 0) throw new Error('Active loan not found to mark as lost.');
 
         const { item_id: itemId, user_id: userId } = borrows[0];
 
-        // 2. Update ITEM status (item is gone)
+        // 2. Update ITEM status (item is gone) (No change)
         await conn.query(
             'UPDATE ITEM SET loaned_out = loaned_out - 1 WHERE item_id = ?', 
             [itemId]
         );
 
-        // 3. Update BORROW status
+        // 3. Update BORROW status (No change)
         await conn.query(
             'UPDATE BORROW SET status_id = ? WHERE borrow_id = ?', 
             [lostStatusId, borrowId]
         );
 
-        // 4. Create LOST fine
-        const policy = await getLoanPolicyForItem(conn, itemId);
+        // --- STEP 4: Create LOST fine (MODIFIED) ---
+        // Get policy using new helper
+        const policy = await getLoanPolicy(conn, userId, itemId);
         const fineSql = `
             INSERT INTO FINE (borrow_id, user_id, fee_type, amount, notes)
             VALUES (?, ?, 'LOST', ?, ?)
@@ -231,6 +267,7 @@ async function markLost(borrowId, staffUserId) { // staffUserId for auth
             borrowId, userId, policy.lost_fee, 
             'Item marked as lost.'
         ]);
+        // --- END STEP 4 ---
 
         await conn.commit();
         return { borrow_id: borrowId, message: 'Item marked as lost and fine assessed.' };
@@ -244,35 +281,34 @@ async function markLost(borrowId, staffUserId) { // staffUserId for auth
     }
 }
 
-// --- Staff marks a LOST item as FOUND ---
-async function markFound(borrowId, staffUserId) { // staffUserId for auth
+// --- Staff marks a LOST item as FOUND (No Change) ---
+async function markFound(borrowId, staffUserId) { 
     const conn = await db.getConnection();
     try {
         await conn.beginTransaction();
         const lostStatusId = await getStatusId(conn, 'Lost');
         const returnedStatusId = await getStatusId(conn, 'Returned');
 
-         // 1. Get Borrow details & lock Item
+         // 1. Get Borrow details
         const [borrows] = await conn.query(
             `SELECT b.item_id, b.user_id 
              FROM BORROW b
              JOIN ITEM i ON b.item_id = i.item_id
              WHERE b.borrow_id = ? AND b.status_id = ? 
-             FOR UPDATE OF i`, // Find the 'Lost' borrow record
+             FOR UPDATE OF i`, 
             [borrowId, lostStatusId] 
         );
         if (borrows.length === 0) throw new Error('Lost loan not found.');
 
         const { item_id: itemId } = borrows[0];
 
-        // 2. Update ITEM status (item is back and available)
-        // 'markLost' already decremented 'loaned_out', so we just add to 'available'
+        // 2. Update ITEM status
         await conn.query(
             'UPDATE ITEM SET available = available + 1 WHERE item_id = ?', 
             [itemId]
         );
 
-        // 3. Update BORROW status (from 'Lost' to 'Returned')
+        // 3. Update BORROW status
         await conn.query(
             'UPDATE BORROW SET status_id = ?, return_date = CURDATE() WHERE borrow_id = ?', 
             [returnedStatusId, borrowId]
@@ -286,7 +322,6 @@ async function markFound(borrowId, staffUserId) { // staffUserId for auth
              WHERE borrow_id = ? AND fee_type = 'LOST' AND date_paid IS NULL AND waived_at IS NULL`,
             [waiveReason, borrowId]
         );
-        // This will not error if no fine is found, which is correct.
 
         await conn.commit();
         return { borrow_id: borrowId, message: 'Item marked as found, returned to available, and associated LOST fine waived.' };
@@ -301,39 +336,40 @@ async function markFound(borrowId, staffUserId) { // staffUserId for auth
 }
 
 
-// --- User places a hold on an UNAVAILABLE item (Waitlist) ---
+// --- MODIFIED: User places a hold on an UNAVAILABLE item (Waitlist) ---
 async function placeWaitlistHold(itemId, userId) {
     const conn = await db.getConnection();
     try {
         await conn.beginTransaction();
 
-        // 1. Check Availability & Lock Item
+        // --- STEP 1: Check user's borrow limit (NEW) ---
+        await checkBorrowLimit(conn, userId);
+        // --- END STEP 1 ---
+
+        // 2. Check Availability & Lock Item
         const [items] = await conn.query(
           'SELECT available FROM ITEM WHERE item_id = ? FOR UPDATE', 
           [itemId]
         );
         if (items.length === 0) throw new Error('Item not found.');
-        // Allow hold only if item is NOT available
         if (items[0].available > 0) {
             throw new Error('Item is currently available. Please use "Request Pickup" instead.');
         }
 
-        // 2. Check if user already on waitlist
+        // 3. Check if user already on waitlist
         const [waitlist] = await conn.query(
             'SELECT * FROM WAITLIST WHERE item_id = ? AND user_id = ?', 
             [itemId, userId]
         );
         if (waitlist.length > 0) throw new Error('You are already on the waitlist.');
 
-        // 3. Add to WAITLIST
+        // 4. Add to WAITLIST
         const waitlistSql = `
             INSERT INTO WAITLIST (start_date, user_id, item_id) 
             VALUES (CURDATE(), ?, ?)
         `;
         const [result] = await conn.query(waitlistSql, [userId, itemId]);
         
-        // NO change to ITEM counts needed for waitlist
-
         await conn.commit();
         return { waitlist_id: result.insertId, message: 'Successfully added to waitlist' };
 
@@ -346,27 +382,63 @@ async function placeWaitlistHold(itemId, userId) {
     }
 }
 
-/*
-// --- Get Loans for User (Updated for status_id and title COALESCE) ---
-async function findLoansByUserId(userId) {
-    const loanedOutStatusId = await getStatusId(db, 'Loaned Out');
-    const sql = `
-        SELECT 
-            b.borrow_id, 
-            b.item_id,
-            b.due_date, 
-            COALESCE(bk.title, m.title, d.device_name) AS title 
-        FROM BORROW b
-        JOIN ITEM i ON b.item_id = i.item_id
-        LEFT JOIN BOOK bk ON i.item_id = bk.item_id AND i.category = 'BOOK'
-        LEFT JOIN MOVIE m ON i.item_id = m.item_id AND i.category = 'MOVIE'
-        LEFT JOIN DEVICE d ON i.item_id = d.item_id AND i.category = 'DEVICE'
-        WHERE b.user_id = ? AND b.status_id = ?;
-    `;
-    const [rows] = await db.query(sql, [userId, loanedOutStatusId]);
-    return rows;
+
+// --- MODIFIED: Staff directly checks out an available item to a user. ---
+async function staffCheckoutItem(itemId, userId, staffUserId) { // staffUserId for logging/auth later
+    const conn = await db.getConnection();
+    try {
+        await conn.beginTransaction();
+        const loanedOutStatusId = await getStatusId(conn, 'Loaned Out');
+
+        // --- STEP 1: Check user's borrow limit (NEW) ---
+        await checkBorrowLimit(conn, userId);
+        // --- END STEP 1 ---
+
+        // 2. Check Availability & Lock Item
+        const [items] = await conn.query(
+            'SELECT available, category FROM ITEM WHERE item_id = ? FOR UPDATE', 
+            [itemId]
+        );
+        if (items.length === 0) throw new Error('Item not found.');
+        if (items[0].available <= 0) throw new Error('Item is not currently available for checkout.');
+        
+        const { category } = items[0];
+
+        // --- STEP 3: Get Loan Policy (MODIFIED) ---
+        const policy = await getLoanPolicy(conn, userId, itemId);
+        const dueDate = new Date();
+        dueDate.setDate(dueDate.getDate() + policy.loan_days);
+        // --- END STEP 3 ---
+
+        // 4. Update ITEM status
+        await conn.query(
+            'UPDATE ITEM SET available = available - 1, loaned_out = loaned_out + 1 WHERE item_id = ?', 
+            [itemId]
+        );
+
+        // 5. Create BORROW record
+        const borrowId = `B${Date.now()}${Math.floor(Math.random()*100)}`; // Simple unique ID
+        const borrowSql = `
+            INSERT INTO BORROW (borrow_id, borrow_date, due_date, status_id, user_id, item_id)
+            VALUES (?, CURDATE(), ?, ?, ?, ?)
+        `;
+        await conn.query(borrowSql, [borrowId, dueDate, loanedOutStatusId, userId, itemId]);
+
+        await conn.commit();
+        return { borrow_id: borrowId, message: `Item checked out to user ${userId}. Due: ${dueDate.toLocaleDateString()}` };
+
+    } catch (error) {
+        await conn.rollback();
+        console.error("Error in staffCheckoutItem transaction:", error);
+        throw error;
+    } finally {
+        conn.release();
+    }
 }
-*/
+
+
+// --- NO CHANGES NEEDED for any of the functions below ---
+// They only query by user_id or fine_id, or they don't depend on loan policies.
 
 async function findLoansByUserId(userId) {
     const loanedOutStatusId = await getStatusId(db, 'Loaned Out');
@@ -376,7 +448,7 @@ async function findLoansByUserId(userId) {
             b.item_id,
             b.due_date, 
             COALESCE(bk.title, m.title, d.device_name) AS title,
-            i.thumbnail_url -- <<< ADD THIS LINE
+            i.thumbnail_url
         FROM BORROW b
         JOIN ITEM i ON b.item_id = i.item_id
         LEFT JOIN BOOK bk ON i.item_id = bk.item_id AND i.category = 'BOOK'
@@ -387,30 +459,6 @@ async function findLoansByUserId(userId) {
     const [rows] = await db.query(sql, [userId, loanedOutStatusId]);
     return rows;
 }
-/*
-// --- Get History for User (Updated) ---
-async function findLoanHistoryByUserId(userId) {
-     const returnedStatusId = await getStatusId(db, 'Returned');
-     const lostStatusId = await getStatusId(db, 'Lost');
-     const sql = `
-        SELECT 
-            b.borrow_id, 
-            b.item_id,
-            b.return_date,
-            COALESCE(bk.title, m.title, d.device_name) AS title,
-            bs.status_name
-        FROM BORROW b
-        JOIN ITEM i ON b.item_id = i.item_id
-        JOIN BORROW_STATUS bs ON b.status_id = bs.status_id
-        LEFT JOIN BOOK bk ON i.item_id = bk.item_id AND i.category = 'BOOK'
-        LEFT JOIN MOVIE m ON i.item_id = m.item_id AND i.category = 'MOVIE'
-        LEFT JOIN DEVICE d ON i.item_id = d.item_id AND i.category = 'DEVICE'
-        WHERE b.user_id = ? AND b.status_id IN (?, ?); -- Returned or Lost
-    `;
-    const [rows] = await db.query(sql, [userId, returnedStatusId, lostStatusId]);
-    return rows;
-}
-*/
 
 async function findLoanHistoryByUserId(userId) {
      const returnedStatusId = await getStatusId(db, 'Returned');
@@ -422,7 +470,7 @@ async function findLoanHistoryByUserId(userId) {
             b.return_date,
             COALESCE(bk.title, m.title, d.device_name) AS title,
             bs.status_name,
-            i.thumbnail_url -- <<< ADD THIS LINE
+            i.thumbnail_url
         FROM BORROW b
         JOIN ITEM i ON b.item_id = i.item_id
         JOIN BORROW_STATUS bs ON b.status_id = bs.status_id
@@ -435,7 +483,6 @@ async function findLoanHistoryByUserId(userId) {
     return rows;
 }
 
-// --- Get Holds for User (Pickup Requests) ---
 async function findHoldsByUserId(userId) {
    const sql = `
         SELECT 
@@ -443,7 +490,8 @@ async function findHoldsByUserId(userId) {
             h.item_id,
             h.created_at,
             h.expires_at,
-            COALESCE(bk.title, m.title, d.device_name) AS title
+            COALESCE(bk.title, m.title, d.device_name) AS title,
+            i.thumbnail_url
         FROM HOLD h
         JOIN ITEM i ON h.item_id = i.item_id
         LEFT JOIN BOOK bk ON i.item_id = bk.item_id AND i.category = 'BOOK'
@@ -455,7 +503,6 @@ async function findHoldsByUserId(userId) {
     return rows;
 }
 
-// --- Get Waitlist items for User ---
 async function findWaitlistByUserId(userId) {
     const sql = `
         SELECT 
@@ -474,7 +521,6 @@ async function findWaitlistByUserId(userId) {
     return rows;
 }
 
-// --- Get Fines for User ---
 async function findFinesByUserId(userId) {
     const sql = `
         SELECT 
@@ -501,8 +547,7 @@ async function findFinesByUserId(userId) {
     return rows;
 }
 
-// --- Staff pays a fine ---
-async function payFine(fineId, staffUserId) { // staffUserId for auth later
+async function payFine(fineId, staffUserId) {
     const sql = 'UPDATE FINE SET date_paid = NOW() WHERE fine_id = ? AND date_paid IS NULL';
     const [result] = await db.query(sql, [fineId]);
     if (result.affectedRows === 0) {
@@ -528,8 +573,7 @@ async function userPayFine(fineId, userId) {
     return { fine_id: fineId, message: 'Fine marked as paid.' };
 }
 
-// --- Staff waives a fine ---
-async function waiveFine(fineId, reason, staffUserId) { // staffUserId for auth
+async function waiveFine(fineId, reason, staffUserId) {
      const sql = 'UPDATE FINE SET waived_at = NOW(), waived_reason = ? WHERE fine_id = ? AND date_paid IS NULL AND waived_at IS NULL';
     const [result] = await db.query(sql, [reason, fineId]);
     if (result.affectedRows === 0) {
@@ -557,8 +601,7 @@ async function findAllStatus(type) {
     return rows;
 }
 
-async function findAllBorrows(filters = {}) { // Add filters later if needed
-    // TODO: Add filtering logic based on status, user search, item search, etc.
+async function findAllBorrows(filters = {}) {
     const sql = `
         SELECT 
             b.borrow_id, 
@@ -567,7 +610,7 @@ async function findAllBorrows(filters = {}) { // Add filters later if needed
             b.borrow_date,
             b.due_date, 
             b.return_date,
-            bs.status_name, -- Get status name instead of ID
+            bs.status_name, 
             u.firstName, 
             u.lastName,
             COALESCE(bk.title, m.title, d.device_name) AS item_title,
@@ -580,30 +623,15 @@ async function findAllBorrows(filters = {}) { // Add filters later if needed
         LEFT JOIN BOOK bk ON i.item_id = bk.item_id AND i.category = 'BOOK'
         LEFT JOIN MOVIE m ON i.item_id = m.item_id AND i.category = 'MOVIE'
         LEFT JOIN DEVICE d ON i.item_id = d.item_id AND i.category = 'DEVICE'
-        ORDER BY b.borrow_date DESC; -- Show newest first
+        ORDER BY b.borrow_date DESC;
     `;
     const [rows] = await db.query(sql);
     return rows;
 }
 
-async function findAllHolds(filters = {}) { // Add filters later
-    // TODO: Implement filtering based on status, user, item, date range
-    // --- ADDED: Build WHERE clause based on filters ---
-
+async function findAllHolds(filters = {}) {
     let whereClauses = [];
     let queryParams = [];
-
-    if (filters.status) {
-        const statusFilters = filters.status.split(','); // Expecting comma-separated if multiple
-        // Need to map status names back to the CASE statement string in SQL
-        // Or filter AFTER fetching (simpler for now, less efficient for large data)
-        // Let's filter after fetching for simplicity in this example.
-        // A more efficient approach would build a WHERE clause like:
-        // WHERE (CASE ... END) IN (?) 
-        // queryParams.push(statusFilters);
-    }
-    // --- TODO: Add WHERE clauses for user search, item search, date range ---
-    // --- END ADDED ---
 
     const sql = `
         SELECT 
@@ -614,12 +642,11 @@ async function findAllHolds(filters = {}) { // Add filters later
             h.expires_at,
             h.picked_up_at,
             h.canceled_at,
-            -- Calculate hold status based on dates
             CASE
                 WHEN h.picked_up_at IS NOT NULL THEN 'Picked Up'
                 WHEN h.canceled_at IS NOT NULL THEN 'Canceled'
                 WHEN h.expires_at < NOW() AND h.picked_up_at IS NULL AND h.canceled_at IS NULL THEN 'Expired'
-                ELSE 'Pending Pickup' -- Active and not expired
+                ELSE 'Pending Pickup' 
             END AS hold_status, 
             u.firstName,
             u.lastName,
@@ -633,40 +660,33 @@ async function findAllHolds(filters = {}) { // Add filters later
         LEFT JOIN BOOK bk ON i.item_id = bk.item_id AND i.category = 'BOOK'
         LEFT JOIN MOVIE m ON i.item_id = m.item_id AND i.category = 'MOVIE'
         LEFT JOIN DEVICE d ON i.item_id = d.item_id AND i.category = 'DEVICE'
-        -- WHERE clauses for filtering would go here
-        ORDER BY h.created_at DESC; -- Show newest first
+        ORDER BY h.created_at DESC;
     `;
-    console.log("findAllHolds: Fetching all holds..."); // Debugging
-    const [rows] = await db.query(sql, queryParams); // Pass params
+    console.log("findAllHolds: Fetching all holds..."); 
+    const [rows] = await db.query(sql, queryParams); 
 
-    // --- ADDED: Filter results in JavaScript (Simpler than complex SQL WHERE for CASE) ---
     let filteredRows = rows;
     if (filters.status) {
         const statusFilters = filters.status.split(',');
-         console.log("Filtering by status:", statusFilters); // Debugging
+         console.log("Filtering by status:", statusFilters); 
         filteredRows = rows.filter(row => statusFilters.includes(row.hold_status));
     }
-    // --- END ADDED ---
 
-    console.log(`findAllHolds: Returning ${filteredRows.length} rows after filtering.`); // Debugging
-    return filteredRows; // Return the filtered results
+    console.log(`findAllHolds: Returning ${filteredRows.length} rows after filtering.`);
+    return filteredRows; 
 }
 
-/**
- * Cancels an active hold (staff action).
- * This is a transaction.
- */
-async function cancelHold(holdId, staffUserId) { // staffUserId for auth later
+async function cancelHold(holdId, staffUserId) {
     const conn = await db.getConnection();
     try {
         await conn.beginTransaction();
 
-        // 1. Get Hold details & lock related item
+        // 1. Get Hold details
         const [holds] = await conn.query(
             `SELECT item_id 
              FROM HOLD 
              WHERE hold_id = ? AND picked_up_at IS NULL AND canceled_at IS NULL AND expires_at >= NOW()
-             FOR UPDATE`, // Lock the HOLD row
+             FOR UPDATE`, 
             [holdId]
         );
         if (holds.length === 0) throw new Error('Active hold not found or already processed/expired.');
@@ -679,7 +699,7 @@ async function cancelHold(holdId, staffUserId) { // staffUserId for auth later
             [holdId]
         );
 
-        // 3. Update ITEM status (put item back into circulation)
+        // 3. Update ITEM status
         await conn.query(
             'UPDATE ITEM SET on_hold = on_hold - 1, available = available + 1 WHERE item_id = ?', 
             [itemId]
@@ -697,60 +717,7 @@ async function cancelHold(holdId, staffUserId) { // staffUserId for auth later
     }
 }
 
-/**
- * Allows Staff to directly check out an available item to a user.
- * This is a transaction.
- */
-async function staffCheckoutItem(itemId, userId, staffUserId) { // staffUserId for logging/auth later
-    const conn = await db.getConnection();
-    try {
-        await conn.beginTransaction();
-        const loanedOutStatusId = await getStatusId(conn, 'Loaned Out');
-
-        // 1. Check Availability & Lock Item
-        const [items] = await conn.query(
-            'SELECT available, category FROM ITEM WHERE item_id = ? FOR UPDATE', 
-            [itemId]
-        );
-        if (items.length === 0) throw new Error('Item not found.');
-        if (items[0].available <= 0) throw new Error('Item is not currently available for checkout.');
-        
-        const { category } = items[0];
-
-        // 2. Get Loan Policy
-        const policy = await getLoanPolicyForItem(conn, itemId);
-        const dueDate = new Date();
-        dueDate.setDate(dueDate.getDate() + policy.loan_days);
-
-        // 3. Update ITEM status
-        await conn.query(
-            'UPDATE ITEM SET available = available - 1, loaned_out = loaned_out + 1 WHERE item_id = ?', 
-            [itemId]
-        );
-
-        // 4. Create BORROW record
-        const borrowId = `B${Date.now()}${Math.floor(Math.random()*100)}`; // Simple unique ID
-        const borrowSql = `
-            INSERT INTO BORROW (borrow_id, borrow_date, due_date, status_id, user_id, item_id)
-            VALUES (?, CURDATE(), ?, ?, ?, ?)
-        `;
-        await conn.query(borrowSql, [borrowId, dueDate, loanedOutStatusId, userId, itemId]);
-
-        await conn.commit();
-        return { borrow_id: borrowId, message: `Item checked out to user ${userId}. Due: ${dueDate.toLocaleDateString()}` };
-
-    } catch (error) {
-        await conn.rollback();
-        console.error("Error in staffCheckoutItem transaction:", error);
-        throw error;
-    } finally {
-        conn.release();
-    }
-}
-
-// --- ADDED: Find ALL Fines (for Staff) ---
-async function findAllFines(filters = {}) { // Add filters later
-    // TODO: Implement filtering (by status, user, date range)
+async function findAllFines(filters = {}) {
     const sql = `
         SELECT 
             f.fine_id,
@@ -769,27 +736,23 @@ async function findAllFines(filters = {}) { // Add filters later
             i.item_id
         FROM FINE f
         JOIN USER u ON f.user_id = u.user_id
-        LEFT JOIN BORROW b ON f.borrow_id = b.borrow_id -- Use LEFT JOIN in case borrow deleted?
+        LEFT JOIN BORROW b ON f.borrow_id = b.borrow_id
         LEFT JOIN ITEM i ON b.item_id = i.item_id
         LEFT JOIN BOOK bk ON i.item_id = bk.item_id AND i.category = 'BOOK'
         LEFT JOIN MOVIE m ON i.item_id = m.item_id AND i.category = 'MOVIE'
         LEFT JOIN DEVICE d ON i.item_id = d.item_id AND i.category = 'DEVICE'
-        -- WHERE clauses for filtering go here
         ORDER BY f.date_issued DESC; 
     `;
      const [rows] = await db.query(sql);
     return rows;
 }
 
-// --- ADDED: Staff Manually Creates Fine ---
-async function staffCreateFine(fineData, staffUserId) { // staffUserId for logging/auth
+async function staffCreateFine(fineData, staffUserId) {
     const { borrow_id, user_id, fee_type, amount, notes } = fineData;
 
-    // Validation
     if (!borrow_id || !user_id || !fee_type || !amount) {
         throw new Error('Missing required fields (borrow_id, user_id, fee_type, amount).');
     }
-    // Validate fee_type against ENUM ('LATE','LOST','DAMAGED')
     const validFeeTypes = ['LATE', 'LOST', 'DAMAGED'];
     if (!validFeeTypes.includes(fee_type.toUpperCase())) {
         throw new Error(`Invalid fee_type. Must be one of: ${validFeeTypes.join(', ')}`);
@@ -803,6 +766,7 @@ async function staffCreateFine(fineData, staffUserId) { // staffUserId for loggi
 
     return { fine_id: result.insertId, message: 'Fine created successfully.' };
 }
+
 
 module.exports = {
     requestPickup,

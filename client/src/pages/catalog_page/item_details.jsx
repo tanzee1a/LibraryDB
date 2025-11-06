@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { FaRegFileAlt } from "react-icons/fa";
 import { IoMdGlobe } from "react-icons/io";
-import { IoBookOutline, IoCalendarClearOutline, IoBarcodeOutline, IoInformationCircleOutline, IoTimerOutline } from "react-icons/io5";
+import { IoBookOutline, IoCalendarClearOutline, IoBarcodeOutline, IoInformationCircleOutline, IoTimerOutline, IoHeartOutline } from "react-icons/io5";
 import { MdDevicesOther } from "react-icons/md";
 import { TbBuildingFactory2 } from "react-icons/tb";
 import { BsTicketPerforated } from "react-icons/bs";
@@ -24,6 +24,22 @@ function ItemDetails({ isStaff }) {
   // Used to hide buttons after a successful request
   const [requestMade, setRequestMade] = useState(false);
   // --- END NEW STATE ---
+
+  // --- ADD STATE FOR WISHLIST ---
+  const [isWishlistSubmitting, setIsWishlistSubmitting] = useState(false);
+  const [wishlistMessage, setWishlistMessage] = useState({ type: '', text: '' });
+  const [isWishlisted, setIsWishlisted] = useState(false); // We'll need to check this
+  // --- END ADD ---
+
+  // --- ADD: Function to get headers ---
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('authToken'); 
+    if (!token) return null;
+    return {
+      'Authorization': `Bearer ${token}`, 
+      'Content-Type': 'application/json'
+    };
+  };
 
   useEffect(() => {
     if (itemId) {
@@ -47,6 +63,46 @@ function ItemDetails({ isStaff }) {
     }
   }, [itemId]);
 
+
+  // --- ADD: New handler for Wishlist ---
+  const handleWishlistAction = async () => {
+    if (isWishlistSubmitting) return;
+
+    const headers = getAuthHeaders();
+    if (!headers) {
+      setWishlistMessage({ type: 'error', text: 'You must be logged in to save items.' });
+      return;
+    }
+
+    setIsWishlistSubmitting(true);
+    setWishlistMessage({ type: '', text: '' });
+    
+    // We'll assume POST to add, DELETE to remove.
+    // TODO: You'll need logic to check if item is *already* wishlisted.
+    // For now, this just adds it.
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/wishlist/${itemId}`, {
+        method: 'POST', // Use 'DELETE' to remove
+        headers: headers,
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'An error occurred.'); 
+      }
+
+      // Success!
+      setWishlistMessage({ type: 'success', text: 'Saved for later!' });
+      setIsWishlisted(true); // Disable the button
+
+    } catch (err) {
+      setWishlistMessage({ type: 'error', text: err.message || 'Could not save item.' });
+    } finally {
+      setIsWishlistSubmitting(false);
+    }
+  };
+  // --- END ADD ---
 
   // --- ADD NEW HANDLER FUNCTION ---
   /**
@@ -238,6 +294,24 @@ function ItemDetails({ isStaff }) {
               <p className={`action-message ${actionMessage.type}`}>
                 {actionMessage.text}
               </p>
+            )}
+
+            {wishlistMessage.text && (
+              <p className={`action-message ${wishlistMessage.type}`}>
+                {wishlistMessage.text}
+              </p>
+            )}
+
+            {!isWishlisted && (
+              <button 
+                className="action-button secondary-button" 
+                style={{marginTop: '10px'}}
+                onClick={handleWishlistAction}
+                disabled={isWishlistSubmitting}
+              >
+                <IoHeartOutline style={{marginRight: '8px'}} />
+                {isWishlistSubmitting ? 'Saving...' : 'Save for Later'}
+              </button>
             )}
 
             {/* Only show buttons if a request hasn't been successfully made */}
