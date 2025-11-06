@@ -16,7 +16,7 @@ import Reports from './pages/reports/Reports.jsx';
 import Navbar from './pages/navbar/navbar.jsx';
 import Footer from './pages/footer/footer.jsx';
 import Staff_page from './pages/staff_dashboard/StaffDashboard.jsx';
-import StaffRoute from './pages/StaffRoute.jsx'; // 👈 Import the guard
+import StaffRoute from './pages/staffAuthRoutes/StaffRoute.jsx'; // 👈 Import the guard
 import { useState, useEffect } from 'react';
 import './App.css';
 

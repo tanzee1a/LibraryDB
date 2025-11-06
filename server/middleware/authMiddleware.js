@@ -62,7 +62,7 @@ function staffProtect(req, res, next) {
     }
 }
 
-function headLibrarianProtect(req, res, next) {
+/* function headLibrarianProtect(req, res, next) {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         res.writeHead(401, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
@@ -90,5 +90,6 @@ function headLibrarianProtect(req, res, next) {
         return res.end(JSON.stringify({ message: 'Not authorized, token failed' }));
     }
 }
+    */
 
-module.exports = { protect, staffProtect, headLibrarianProtect };
+module.exports = { protect, staffProtect/*, headLibrarianProtect */};

@@ -26,7 +26,7 @@ const { searchItems } = require('./controllers/searchController');
 const { getOverdueReport, getPopularityReport, getFineReport } = require('./controllers/reportController');
 const { protect } = require('./middleware/authMiddleware'); // <--- ADD THIS IMPORT
 const { getDashboardStats, getMyStaffProfile } = require('./controllers/staffController');
-const { staffProtect, headLibrarianProtect } = require('./middleware/authMiddleware');
+const { staffProtect/*, headLibrarianProtect*/ } = require('./middleware/authMiddleware');
 
 const server = http.createServer((req, res) => {
     // --- CORS Headers ---
@@ -231,15 +231,15 @@ const server = http.createServer((req, res) => {
         }
         // reports routes
         else if (req.url === '/api/reports/overdue' && req.method === 'GET') {
-            headLibrarianProtect(req, res, () => getOverdueReport(req, res));
+            staffProtect(req, res, () => getOverdueReport(req, res));
             return;
         }
         else if (req.url === '/api/reports/popular' && req.method === 'GET') {
-            headLibrarianProtect(req, res, () => getPopularityReport(req, res));
+            staffProtect(req, res, () => getPopularityReport(req, res));
             return;
         }
         else if (req.url === '/api/reports/fines' && req.method === 'GET') {
-            headLibrarianProtect(req, res, () => getFineReport(req, res));
+            staffProtect(req, res, () => getFineReport(req, res));
             return;
         }
     
