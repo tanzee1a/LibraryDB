@@ -31,4 +31,35 @@ function protect(req, res, next) {
     }
 }
 
-module.exports = { protect };
+// Middleware to protect routes AND check for 'Staff' role
+function staffProtect(req, res, next) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        res.writeHead(401, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        return res.end(JSON.stringify({ message: 'Not authorized, no token' }));
+    }
+
+    const token = authHeader.split(' ')[1];
+
+    try {
+        const decoded = jwt.verify(token, SECRET);
+        
+        // 🔥 CRITICAL STAFF CHECK 🔥
+        if (decoded.role !== 'Staff' && decoded.role !== 'Librarian') { 
+             // Assuming your staff roles are 'Staff' or 'Librarian'
+             res.writeHead(403, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+             return res.end(JSON.stringify({ message: 'Forbidden, insufficient role access' }));
+        }
+
+        req.userId = decoded.id; 
+        req.userRole = decoded.role; // Optionally attach the role
+        
+        next(); 
+    } catch (error) {
+        console.error("Token verification error:", error.message);
+        res.writeHead(401, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        return res.end(JSON.stringify({ message: 'Not authorized, token failed' }));
+    }
+}
+
+module.exports = { protect, staffProtect };

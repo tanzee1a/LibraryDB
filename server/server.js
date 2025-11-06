@@ -26,6 +26,7 @@ const { searchItems } = require('./controllers/searchController');
 const { getOverdueReport, getPopularityReport, getFineReport } = require('./controllers/reportController');
 const { protect } = require('./middleware/authMiddleware'); // <--- ADD THIS IMPORT
 const { getDashboardStats, getMyStaffProfile } = require('./controllers/staffController');
+const { staffProtect } = require('./middleware/authMiddleware');
 
 const server = http.createServer((req, res) => {
     // --- CORS Headers ---
@@ -56,40 +57,40 @@ const server = http.createServer((req, res) => {
             const id = req.url.split('/')[3];
             getItem(req, res, id);
         } else if (req.url === '/api/items/book' && req.method === 'POST') {
-            createBook(req, res);
+            staffProtect(req, res, () => createBook(req, res));
         } else if (req.url.match(/^\/api\/items\/book\/([a-zA-Z0-9-]+)$/) && req.method === 'PUT') {
             const id = req.url.split('/')[4];
-            updateBook(req, res, id);
+            staffProtect(req, res, () => updateBook(req, res, id));
         } else if (req.url === '/api/items/movie' && req.method === 'POST') {
-            createMovie(req, res);
+            staffProtect(req, res, () => createMovie(req, res));
         } else if (req.url.match(/^\/api\/items\/movie\/([a-zA-Z0-9-]+)$/) && req.method === 'PUT') {
             const id = req.url.split('/')[4];
-            updateMovie(req, res, id);
+            staffProtect(req, res, () => updateMovie(req, res, id));
         } else if (req.url === '/api/items/device' && req.method === 'POST') {
-            createDevice(req, res);
+            staffProtect(req, res, () => createDevice(req, res));
         } else if (req.url.match(/^\/api\/items\/device\/([a-zA-Z0-9-]+)$/) && req.method === 'PUT') {
             const id = req.url.split('/')[4];
-            updateDevice(req, res, id);
+            staffProtect(req, res, () => updateDevice(req, res, id));
         } else if (req.url.match(/^\/api\/items\/([a-zA-Z0-9-]+)$/) && req.method === 'DELETE') {
             const id = req.url.split('/')[3];
-            deleteItem(req, res, id);
+            staffProtect(req, res, () => deleteItem(req, res, id));
         }
 
-        else if (req.url.match(/^\/api\/users\/([a-zA-Z0-9-]+)$/) && req.method === 'GET') { // Get specific user
+        else if (req.url.match(/^\/api\/users\/([a-zA-Z0-9-]+)$/) && req.method === 'GET') { 
             const userId = req.url.split('/')[3];
-            getUserProfile(req, res, userId); // TODO: Protect - Staff only
+            staffProtect(req, res, () => getUserProfile(req, res, userId)); 
         }
         else if (req.url.match(/^\/api\/users\/([a-zA-Z0-9-]+)\/borrows$/) && req.method === 'GET') { 
             const userId = req.url.split('/')[3];
-            getUserBorrowHistory(req, res, userId); // TODO: Protect 
+            staffProtect(req, res, () => getUserBorrowHistory(req, res, userId)); 
         }
-         else if (req.url.match(/^\/api\/users\/([a-zA-Z0-9-]+)\/holds$/) && req.method === 'GET') { 
+        else if (req.url.match(/^\/api\/users\/([a-zA-Z0-9-]+)\/holds$/) && req.method === 'GET') { 
             const userId = req.url.split('/')[3];
-            getUserHoldHistory(req, res, userId); // TODO: Protect 
+            staffProtect(req, res, () => getUserHoldHistory(req, res, userId)); 
         }
-         else if (req.url.match(/^\/api\/users\/([a-zA-Z0-9-]+)\/fines$/) && req.method === 'GET') { 
+        else if (req.url.match(/^\/api\/users\/([a-zA-Z0-9-]+)\/fines$/) && req.method === 'GET') { 
             const userId = req.url.split('/')[3];
-            getUserFineHistory(req, res, userId); // TODO: Protect 
+            staffProtect(req, res, () => getUserFineHistory(req, res, userId)); 
         }
 
         // --- Loan/Hold/Waitlist Routes (User Actions) ---
@@ -100,21 +101,16 @@ const server = http.createServer((req, res) => {
             return;
         } else if (req.url.match(/^\/api\/holds\/([0-9]+)\/pickup$/) && req.method === 'POST') {
             const holdId = req.url.split('/')[3];
-            // FIX: Wrap staff routes in protect too (assuming staff is logged in)
-            protect(req, res, () => pickupHold(req, res, holdId)); 
-            return;
+            staffProtect(req, res, () => pickupHold(req, res, holdId)); 
         } else if (req.url.match(/^\/api\/return\/([A-Za-z0-9-]+)$/) && req.method === 'POST') {
             const borrowId = req.url.split('/')[3];
-            protect(req, res, () => returnItem(req, res, borrowId)); 
-            return;
-        } else if (req.url.match(/^\/api\/borrows\/([A-Za-z0-9-]+)\/lost$/) && req.method === 'POST') {
+            staffProtect(req, res, () => returnItem(req, res, borrowId)); 
+        }else if (req.url.match(/^\/api\/borrows\/([A-Za-z0-9-]+)\/lost$/) && req.method === 'POST') {
             const borrowId = req.url.split('/')[3];
-            protect(req, res, () => markLost(req, res, borrowId)); 
-            return;
+            staffProtect(req, res, () => markLost(req, res, borrowId));
         } else if (req.url.match(/^\/api\/borrows\/([A-Za-z0-9-]+)\/found$/) && req.method === 'POST') {
             const borrowId = req.url.split('/')[3];
-            protect(req, res, () => markFound(req, res, borrowId)); 
-            return;
+            staffProtect(req, res, () => markFound(req, res, borrowId));
         } 
         else if (req.url.match(/^\/api\/waitlist\/([a-zA-Z0-9-]+)$/) && req.method === 'POST') {
             const itemId = req.url.split('/')[3];
@@ -158,22 +154,20 @@ const server = http.createServer((req, res) => {
             return;
         }
         
-        else if (req.url === '/api/fines' && req.method === 'GET') { // Get all fines
-            getAllFines(req, res); // TODO: Protect - Staff only
+        else if (req.url === '/api/fines' && req.method === 'GET') { 
+            staffProtect(req, res, () => getAllFines(req, res));
         }
-        else if (req.url === '/api/fines' && req.method === 'POST') { // Staff creates fine
-            staffCreateFine(req, res); // TODO: Protect - Staff only
+        else if (req.url === '/api/fines' && req.method === 'POST') { 
+            staffProtect(req, res, () => staffCreateFine(req, res));
         }
         
         // --- Fine Management Routes (Staff) ---
-         else if (req.url.match(/^\/api\/fines\/([0-9]+)\/pay$/) && req.method === 'POST') {
+        else if (req.url.match(/^\/api\/fines\/([0-9]+)\/pay$/) && req.method === 'POST') {
             const fineId = req.url.split('/')[3];
-            protect(req, res, (req, res) => payFine(req, res, fineId));
-            return;
+            staffProtect(req, res, () => payFine(req, res, fineId));
         } else if (req.url.match(/^\/api\/fines\/([0-9]+)\/waive$/) && req.method === 'POST') {
             const fineId = req.url.split('/')[3];
-            protect(req, res, (req, res) => waiveFine(req, res, fineId));
-            return;
+            staffProtect(req, res, () => waiveFine(req, res, fineId));
         }
 
         // --- Wishlist Routes ---
@@ -208,48 +202,42 @@ const server = http.createServer((req, res) => {
 
         // --- STAFF manages BORROW ROUTE ---
         else if (req.url === '/api/borrows' && req.method === 'GET') {
-            getAllBorrows(req, res);
+            staffProtect(req, res, () => getAllBorrows(req, res));
         }
         else if (req.url === '/api/staff/dashboard-stats' && req.method === 'GET') {
-            protect(req, res, () => getDashboardStats(req, res));
+            staffProtect(req, res, () => getDashboardStats(req, res));
             return;
         }
         else if (req.url === '/api/staff/my-profile' && req.method === 'GET') {
-            protect(req, res, () => getMyStaffProfile(req, res));
+            staffProtect(req, res, () => getMyStaffProfile(req, res));
             return;
         }
-        else if (req.url === '/api/users' && req.method === 'GET') { // Get all users
-            getAllUsers(req, res); // TODO: Protect - Staff only
+        else if (req.url === '/api/users' && req.method === 'GET') { 
+            staffProtect(req, res, () => getAllUsers(req, res)); 
         }
-        else if (req.url === '/api/users' && req.method === 'POST') { // Staff creates user
-            staffCreateUser(req, res); // TODO: Protect - Staff only
+        else if (req.url === '/api/users' && req.method === 'POST') { 
+            staffProtect(req, res, () => staffCreateUser(req, res)); 
         }
         // Use startsWith to ignore potential query strings like '?'
-        else if (req.url.startsWith('/api/holds') && req.method === 'GET') { // Get all active holds
-            getAllHolds(req, res);
+        else if (req.url.startsWith('/api/holds') && req.method === 'GET') { 
+            staffProtect(req, res, () => getAllHolds(req, res));
         }
         else if (req.url === '/api/borrows/checkout' && req.method === 'POST') {
-            staffCheckoutItem(req, res);
+            staffProtect(req, res, () => staffCheckoutItem(req, res));
         }
-        else if (req.url.match(/^\/api\/holds\/([0-9]+)\/cancel$/) && req.method === 'POST') { // Cancel a hold
+        else if (req.url.match(/^\/api\/holds\/([0-9]+)\/cancel$/) && req.method === 'POST') { 
             const holdId = req.url.split('/')[3];
-            cancelHold(req, res, holdId);
+            staffProtect(req, res, () => cancelHold(req, res, holdId));
         }
         // reports routes
         else if (req.url === '/api/reports/overdue' && req.method === 'GET') {
-            // Protect this route, then call the controller
-            protect(req, res, () => getOverdueReport(req, res));
-            return;
+            staffProtect(req, res, () => getOverdueReport(req, res));
         }
         else if (req.url === '/api/reports/popular' && req.method === 'GET') {
-            // Protect this route, then call the controller
-            protect(req, res, () => getPopularityReport(req, res));
-            return;
+            staffProtect(req, res, () => getPopularityReport(req, res));
         }
         else if (req.url === '/api/reports/fines' && req.method === 'GET') {
-            // Protect this route, then call the controller
-            protect(req, res, () => getFineReport(req, res));
-            return;
+            staffProtect(req, res, () => getFineReport(req, res));
         }
     
         // --- Not Found ---

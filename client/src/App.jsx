@@ -16,6 +16,7 @@ import Reports from './pages/reports/Reports.jsx';
 import Navbar from './pages/navbar/navbar.jsx';
 import Footer from './pages/footer/footer.jsx';
 import Staff_page from './pages/staff_dashboard/StaffDashboard.jsx';
+import StaffRoute from './pages/StaffRoute.jsx'; // 👈 Import the guard
 import { useState, useEffect } from 'react';
 import './App.css';
 
@@ -84,16 +85,86 @@ function App() {
           setIsStaff={setIsStaff}
         />
   } />
-
-        {/* STAFF */}
-        <Route path="/user" element={<UserProfile />} />
-        <Route path="/manage-users" element={<ManageUsers />} />
-        <Route path="/user/:userId" element={<UserProfile />} />
-        <Route path="/manage-borrows" element={<ManageBorrows />} />
-        <Route path="/manage-holds" element={<ManageHolds />} />
-        <Route path="/manage-fines" element={<ManageFines />} />
-        <Route path="/staff_page" element={<Staff_page />} />
-        <Route path="/reports" element={<Reports />} />
+  <Route path="/access-denied" element={
+            <div style={{ padding: '50px', textAlign: 'center' }}>
+                <h2>Access Denied</h2>
+                <p>You do not have the required permissions to view this page.</p>
+                <p><a href="/">Go to Home</a></p>
+            </div>
+        } />
+  <Route 
+          path="/staff_page" 
+          element={
+            <StaffRoute>
+              <Staff_page />
+            </StaffRoute>
+          } 
+        />
+        
+        <Route 
+          path="/user" 
+          element={
+            <StaffRoute>
+              <UserProfile />
+            </StaffRoute>
+          } 
+        />
+        
+        {/* Route with parameter, needs to be protected */}
+        <Route 
+          path="/user/:userId" 
+          element={
+            <StaffRoute>
+              <UserProfile />
+            </StaffRoute>
+          } 
+        />
+        
+        <Route 
+          path="/manage-users" 
+          element={
+            <StaffRoute>
+              <ManageUsers />
+            </StaffRoute>
+          } 
+        />
+        
+        <Route 
+          path="/manage-borrows" 
+          element={
+            <StaffRoute>
+              <ManageBorrows />
+            </StaffRoute>
+          } 
+        />
+        
+        <Route 
+          path="/manage-holds" 
+          element={
+            <StaffRoute>
+              <ManageHolds />
+            </StaffRoute>
+          } 
+        />
+        
+        <Route 
+          path="/manage-fines" 
+          element={
+            <StaffRoute>
+              <ManageFines />
+            </StaffRoute>
+          } 
+        />
+        
+        <Route 
+          path="/reports" 
+          element={
+            <StaffRoute>
+              <Reports />
+            </StaffRoute>
+          } 
+        />
+        
       </Routes>
       <Footer />
     </BrowserRouter>
