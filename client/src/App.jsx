@@ -17,6 +17,7 @@ import Navbar from './pages/navbar/navbar.jsx';
 import Footer from './pages/footer/footer.jsx';
 import Staff_page from './pages/staff_dashboard/StaffDashboard.jsx';
 import StaffRoute from './pages/staffAuthRoutes/StaffRoute.jsx'; // 👈 Import the guard
+import LibrarianRoute from "./pages/staffAuthRoutes/librarianRoute.jsx";
 import { useState, useEffect } from 'react';
 import './App.css';
 
@@ -159,9 +160,9 @@ function App() {
         <Route 
           path="/reports" 
           element={
-            <StaffRoute>
+            <LibrarianRoute>
               <Reports />
-            </StaffRoute>
+            </LibrarianRoute>
           } 
         />
         

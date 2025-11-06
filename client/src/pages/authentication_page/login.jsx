@@ -27,11 +27,17 @@ function Login({ setIsStaff, setIsLoggedIn }) {
       localStorage.setItem('authToken', data.token);
       localStorage.setItem('userRole', data.user.role);
       localStorage.setItem('userFirstName', data.user.firstName);
+      localStorage.setItem('staffRole', data.user.staffRole); // Librarian / Assistant Librarian / null
+
+
 
       // 2. Update React state immediately (optional, but good practice)
       const isStaffUser = data.user.role === 'Staff';
       setIsStaff(isStaffUser);
       setIsLoggedIn(true);
+
+      const isLibrarian = data.user.staffRole === 'Librarian';
+      const isAssistantLibrarian = data.user.staffRole === 'Assistant Librarian';
 
       // 3. Navigate the user
       if (isStaffUser) {

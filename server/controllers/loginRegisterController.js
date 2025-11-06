@@ -95,6 +95,7 @@ async function loginUser(req, res) {
           U.user_id,
           U.email,
           UR.role_name AS role, -- Get the role NAME from USER_ROLE
+          SR.role_name AS staffRole,
           U.firstName,
           U.lastName,
           UC.password_hash
@@ -104,6 +105,8 @@ async function loginUser(req, res) {
           USER_CREDENTIAL UC ON U.email = UC.email
         JOIN 
           USER_ROLE UR ON U.role_id = UR.role_id -- Join to get the role name
+        LEFT JOIN STAFF S ON U.user_id = S.user_id
+        LEFT JOIN STAFF_ROLES SR ON S.role_id = SR.role_id
         WHERE 
           U.email = ?`, 
         [email]
@@ -126,7 +129,7 @@ async function loginUser(req, res) {
 
       // Assuming jwt and SECRET are defined/imported globally
       const token = jwt.sign(
-        { id: user.user_id, email: user.email, role: user.role },
+        { id: user.user_id, email: user.email, role: user.role, staffRole: user.staffRole || null},
         SECRET,
         { expiresIn: '1h' }
       );
@@ -139,7 +142,8 @@ async function loginUser(req, res) {
           email: user.email,
           role: user.role,
           firstName: user.firstName,
-          lastName: user.lastName
+          lastName: user.lastName,
+          staffRole: user.staffRole || null,
         }
       }));
     } catch (err) {
