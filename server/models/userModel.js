@@ -1,44 +1,54 @@
 // models/userModel.js
 const db = require('../config/db'); 
-
-const bcrypt = require('bcrypt'); // --- ADDED: Import bcrypt ---
+const bcrypt = require('bcrypt');
 
 /**
  * Finds a user by their ID.
  */
 async function findById(userId) {
-    const sql = `
-        SELECT user_id, email, role, firstName, lastName 
-        FROM USER 
-        WHERE user_id = ?
-    `;
-    const [rows] = await db.query(sql, [userId]);
-    return rows[0]; // Returns the user object or undefined if not found
-}
-
-// --- ADDED: Find ALL Users (Patrons and Staff) ---
-async function findAllUsers() {
+    // --- MODIFIED: JOIN to get role_name ---
     const sql = `
         SELECT 
             u.user_id, 
             u.email, 
-            u.role, 
+            ur.role_name AS role, -- Get the name from USER_ROLE
+            u.firstName, 
+            u.lastName 
+        FROM USER u
+        JOIN USER_ROLE ur ON u.role_id = ur.role_id -- Join to get the role
+        WHERE u.user_id = ?
+    `;
+    // --- END MODIFICATION ---
+    const [rows] = await db.query(sql, [userId]);
+    return rows[0]; // Returns the user object or undefined if not found
+}
+
+// --- MODIFIED: Find ALL Users (Patrons and Staff) ---
+async function findAllUsers() {
+    // --- MODIFIED: JOIN to get role_name and check role_name ---
+    const sql = `
+        SELECT 
+            u.user_id, 
+            u.email, 
+            ur.role_name AS role, -- Get the name from USER_ROLE
             u.firstName, 
             u.lastName,
-            -- Optionally join staff roles if needed
             sr.role_name AS staff_role 
         FROM USER u
-        LEFT JOIN STAFF s ON u.user_id = s.user_id AND u.role = 'Staff'
+        JOIN USER_ROLE ur ON u.role_id = ur.role_id -- Join to get the role
+        -- Check role_name from the new table
+        LEFT JOIN STAFF s ON u.user_id = s.user_id AND ur.role_name = 'Staff'
         LEFT JOIN STAFF_ROLES sr ON s.role_id = sr.role_id
         ORDER BY u.lastName, u.firstName;
     `;
+    // --- END MODIFICATION ---
     const [rows] = await db.query(sql);
-    // TODO: Maybe add counts for borrows/holds/fines per user if needed for display?
     return rows;
 }
 
-// --- ADDED: Staff Creates User (with Hashing) ---
+// --- MODIFIED: Staff Creates User (with Hashing) ---
 async function staffCreateUser(userData) {
+    // 'role' is the role NAME (e.g., "Student") from the frontend
     const { user_id, email, role, firstName, lastName, temporaryPassword } = userData;
 
     // Basic validation
@@ -54,14 +64,28 @@ async function staffCreateUser(userData) {
     try {
         await conn.beginTransaction();
 
-        // 1. Insert into USER table (NO password_hash here)
-        const userSql = `
-            INSERT INTO USER (user_id, email, role, firstName, lastName)
-            VALUES (?, ?, ?, ?, ?)
-        `; // Assumes USER table still has email
-        await conn.query(userSql, [user_id, email, role, firstName, lastName]);
+        // --- STEP 1: Get the role_id from the role_name ---
+        const [roleRows] = await conn.query(
+            'SELECT role_id FROM USER_ROLE WHERE role_name = ?', 
+            [role]
+        );
 
-        // 2. Insert into USER_CREDENTIAL table
+        if (roleRows.length === 0) {
+            throw new Error(`Invalid user role specified: ${role}`);
+        }
+        const role_id = roleRows[0].role_id; // This is the ID we need
+        // --- END STEP 1 ---
+
+        // --- STEP 2: Insert into USER table (using role_id) ---
+        const userSql = `
+            INSERT INTO USER (user_id, email, role_id, firstName, lastName)
+            VALUES (?, ?, ?, ?, ?)
+        `; 
+        // Pass the role_id (number) instead of the role (name)
+        await conn.query(userSql, [user_id, email, role_id, firstName, lastName]);
+        // --- END STEP 2 ---
+
+        // 3. Insert into USER_CREDENTIAL table (No change)
         const credentialSql = `
             INSERT INTO USER_CREDENTIAL (email, password_hash) 
             VALUES (?, ?)
@@ -69,7 +93,8 @@ async function staffCreateUser(userData) {
         await conn.query(credentialSql, [email, password_hash]);
 
 
-        // 3. If the role is 'Staff', also insert into STAFF table
+        // 4. If the role is 'Staff', also insert into STAFF table (No change)
+        //    (The 'role' variable is still the name, so this check works)
         if (role === 'Staff') {
             const defaultStaffRoleId = 3; // Clerk
             const staffSql = 'INSERT INTO STAFF (user_id, role_id) VALUES (?, ?)';
@@ -78,11 +103,11 @@ async function staffCreateUser(userData) {
 
         await conn.commit();
         // Return user data (excluding password)
-        return { user_id, email, role, firstName, lastName };
+        return { user_id, email, role, firstName, lastName }; // Return the NAME
 
     } catch (error) {
         await conn.rollback();
-        // Check for duplicate user_id or email errors (email PK in USER_CREDENTIAL)
+        // Check for duplicate user_id or email errors (No change)
         if (error.code === 'ER_DUP_ENTRY') {
              if (error.sqlMessage.includes('USER.PRIMARY')) {
                  throw new Error('User ID already exists.');
@@ -99,26 +124,32 @@ async function staffCreateUser(userData) {
     }
 }
 
-// --- ADDED: Find User Profile with History Counts ---
+// --- MODIFIED: Find User Profile with History Counts ---
 async function findUserProfileById(userId) {
-    const conn = await db.getConnection(); // Use a connection for multiple queries
+    const conn = await db.getConnection();
     try {
-        // 1. Get Base User Info
+        // --- STEP 1: Get Base User Info (MODIFIED) ---
         const userSql = `
             SELECT 
-                u.user_id, u.email, u.role, u.firstName, u.lastName,
+                u.user_id, u.email, 
+                ur.role_name AS role, -- Get the name from USER_ROLE
+                u.firstName, u.lastName,
                 sr.role_name AS staff_role 
             FROM USER u
-            LEFT JOIN STAFF s ON u.user_id = s.user_id AND u.role = 'Staff'
+            JOIN USER_ROLE ur ON u.role_id = ur.role_id -- Join to get the role
+            -- Check role_name from the new table
+            LEFT JOIN STAFF s ON u.user_id = s.user_id AND ur.role_name = 'Staff'
             LEFT JOIN STAFF_ROLES sr ON s.role_id = sr.role_id
             WHERE u.user_id = ?;
         `;
+        // --- END MODIFICATION ---
         const [userRows] = await conn.query(userSql, [userId]);
         if (userRows.length === 0) {
             return undefined; // User not found
         }
         const userProfile = userRows[0];
 
+        // --- Steps 2, 3, 4 are UNCHANGED ---
         // 2. Get Current Borrows Count
         const loanedOutStatusId = 2; // Assuming 'Loaned Out'
         const [borrowCountRows] = await conn.query(
@@ -140,22 +171,18 @@ async function findUserProfileById(userId) {
             [userId]
         );
         userProfile.outstanding_fines = fineSumRows[0]?.total_fines || 0;
-
-        // --- Fetch Detailed History (Separate API calls recommended) ---
-        // For simplicity now, we only add counts. The detailed lists below should
-        // ideally be fetched via separate API calls triggered by the frontend tabs.
-        // We will add separate functions for these later if needed.
-
+        
         return userProfile;
 
     } catch (error) {
         console.error(`Error fetching profile for user ${userId}:`, error);
-        throw error; // Let controller handle it
+        throw error; 
     } finally {
-        if (conn) conn.release(); // Release connection
+        if (conn) conn.release(); 
     }
 }
 
+// --- NO CHANGES NEEDED FOR THESE FUNCTIONS ---
 async function findBorrowHistoryForUser(userId) {
     const returnedStatusId = 3; // 'Returned'
     const lostStatusId = 4;     // 'Lost'
@@ -176,15 +203,12 @@ async function findBorrowHistoryForUser(userId) {
         LEFT JOIN MOVIE m ON i.item_id = m.item_id AND i.category = 'MOVIE'
         LEFT JOIN DEVICE d ON i.item_id = d.item_id AND i.category = 'DEVICE'
         WHERE b.user_id = ? 
-        -- Optionally filter only Returned/Lost, or show all for staff view?
-        -- AND b.status_id IN (?, ?) 
         ORDER BY b.borrow_date DESC;
     `;
-    const [rows] = await db.query(sql, [userId /*, returnedStatusId, lostStatusId */ ]);
+    const [rows] = await db.query(sql, [userId]);
     return rows;
 }
 
-// --- ADDED: Fetch Detailed Hold History for a User ---
 async function findHoldHistoryForUser(userId) {
     const sql = `
         SELECT 
@@ -214,7 +238,6 @@ async function findHoldHistoryForUser(userId) {
     return rows;
 }
 
-// --- ADDED: Fetch Detailed Fine History for a User ---
 async function findFineHistoryForUser(userId) {
      const sql = `
         SELECT 
@@ -240,6 +263,8 @@ async function findFineHistoryForUser(userId) {
      const [rows] = await db.query(sql, [userId]);
     return rows;
 }
+// --- END NO CHANGES ---
+
 
 module.exports = {
     findById,
