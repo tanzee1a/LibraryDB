@@ -26,7 +26,7 @@ const { searchItems } = require('./controllers/searchController');
 const { getOverdueReport, getPopularityReport, getFineReport } = require('./controllers/reportController');
 const { protect } = require('./middleware/authMiddleware'); // <--- ADD THIS IMPORT
 const { getDashboardStats, getMyStaffProfile } = require('./controllers/staffController');
-const { staffProtect/*, headLibrarianProtect*/ } = require('./middleware/authMiddleware');
+const { staffProtect} = require('./middleware/authMiddleware');
 
 const server = http.createServer((req, res) => {
     // --- CORS Headers ---
