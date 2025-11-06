@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { IoBookOutline, IoPeopleOutline, IoSwapHorizontalOutline, IoHourglassOutline, IoWalletOutline, IoDocumentTextOutline, IoPersonCircleOutline } from 'react-icons/io5';
+// --- ADDED IoPersonCircleOutline for profile ---
+import { IoBookOutline, IoPeopleOutline, IoSwapHorizontalOutline, IoHourglassOutline, IoWalletOutline, IoDocumentTextOutline, IoPersonCircleOutline, IoNotificationsOutline } from 'react-icons/io5';
 import './StaffDashboard.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
@@ -124,7 +125,11 @@ function StaffDashboard() {
       {/* Navigation Cards Section */}
       <h2>Management Tools</h2>
       <div className="action-grid">
-        {/* ... (Management Links for Items, Users, Borrows, Holds, Fines) ... */}
+        <Link to="/notifications" className="action-card">
+          <IoNotificationsOutline className="action-icon" />
+          Notifications
+          <small>See recent alerts and updates.</small>
+        </Link>
         <Link to="/search" className="action-card">
           <IoBookOutline className="action-icon" />
           Manage Items
