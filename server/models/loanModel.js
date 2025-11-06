@@ -511,7 +511,8 @@ async function findHoldsByUserId(userId) {
             h.item_id,
             h.created_at,
             h.expires_at,
-            COALESCE(bk.title, m.title, d.device_name) AS title
+            COALESCE(bk.title, m.title, d.device_name) AS title,
+            i.thumbnail_url
         FROM HOLD h
         JOIN ITEM i ON h.item_id = i.item_id
         LEFT JOIN BOOK bk ON i.item_id = bk.item_id AND i.category = 'BOOK'
