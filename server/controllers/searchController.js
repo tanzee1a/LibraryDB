@@ -13,18 +13,6 @@ async function searchItems(req, res) {
         const filters = parsedUrl.query; // Get all query params as potential filters
         delete filters.q; // Remove 'q' itself from filters object
 
-        // 1. Check if there is anything to search for.
-        // The browse button uses the empty search to an empty search term will just return everything
-        emptySearch: if (Object.keys(filters).length === 0) {
-            if (!searchTerm.trim()) {
-                break emptySearch;
-            }
-            res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-            return res.end(JSON.stringify([])); // Nothing to search, return empty
-        }
-        
-        // 2. If we are here, we have either a term, filters, or both.
-        // Call the search model, which should be able to handle both.
         const basicResults = await Search.searchItems(searchTerm, filters);
 
         // 3. If no basic results, return empty
