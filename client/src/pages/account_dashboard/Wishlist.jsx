@@ -109,7 +109,7 @@ export default function Wishlist() {
                 onError={(e) => { e.target.onerror = null; e.target.src='/placeholder-image.png'; }}
               />
               <div>
-                <div className="item-title">{w.title}</div>
+                <div className="item-title"><a className='result-link' href={`/item/${w.item_id}`}>{w.title}</a></div>
                 <div className="item-sub">Saved: {new Date(w.created_at).toLocaleDateString()}</div>
               </div>
               <div>
