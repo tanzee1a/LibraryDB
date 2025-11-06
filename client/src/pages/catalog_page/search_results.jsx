@@ -382,19 +382,10 @@ function SearchResults({ isStaff }) {
                 return (
                     <div className='result-details'>
                         <p><strong>Category:</strong> {item.category || 'N/A'}</p>
-                        <p><strong>Manufacturer:</strong> {item.manufacturer || 'N/A'}</p>
+                        <p><strong>Manufacturer:</strong> {item.creators || 'N/A'}</p>
                         <p><strong>Device Type:</strong> {item.device_type_name || 'N/A'}</p>
                     </div>
                 );
-        }
-        if (item.category === "BOOK") {
-            return <p><strong>Authors:</strong> {item.creators || 'N/A'}</p>;
-        }
-        if (item.category === "MOVIE") {
-            return <p><strong>Directors:</strong> {item.creators || 'N/A'}</p>;
-        }
-        if (item.category === "DEVICE") {
-            return <p><strong>Manufacturer:</strong> {item.creators || 'N/A'}</p>;
         }
         return null;
     };
