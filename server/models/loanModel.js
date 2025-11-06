@@ -211,27 +211,6 @@ async function returnItem(borrowId, staffUserId) { // staffUserId for auth later
             [returnedStatusId, borrowId]
         );
 
-        // --- STEP 4: Check for fine (MODIFIED) ---
-        const today = new Date();
-        const due = new Date(dueDate);
-        if (today > due) {
-            const daysLate = Math.ceil((today - due) / (1000 * 60 * 60 * 24));
-            // Get policy using new helper
-            const policy = await getLoanPolicy(conn, userId, itemId); 
-            if (daysLate > 0 && policy.daily_late_fee > 0) {
-                const totalFine = daysLate * policy.daily_late_fee;
-                const fineSql = `
-                    INSERT INTO FINE (borrow_id, user_id, fee_type, amount, notes)
-                    VALUES (?, ?, 'LATE', ?, ?)
-                `;
-                await conn.query(fineSql, [
-                    borrowId, userId, totalFine, 
-                    `Returned ${daysLate} day(s) late.`
-                ]);
-            }
-        }
-        // --- END STEP 4 ---
-
         await conn.commit();
         return { borrow_id: borrowId, message: 'Item returned successfully.' };
 
