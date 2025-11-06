@@ -82,7 +82,7 @@ export default function Holds() {
               
               <div>
                 {/* --- CHANGE 2: Change div to Link --- */}
-                <Link to={`/item/${h.item_id}`} className="item-title">
+                <Link to={`/item/${h.item_id}`} className="item-title result-link">
                   {h.title}
                 </Link>
                 {/* --- End Changes --- */}

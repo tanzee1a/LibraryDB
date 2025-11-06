@@ -1,17 +1,20 @@
-import React, { useState } from "react";
-import { Link } from 'react-router-dom'
+import { useState } from "react";
+import { Link, useNavigate } from 'react-router-dom'
+
 import "./register.css";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 import Logo from "../../assets/logo-dark.webp"
 
 
-export default function Register() {
+function Register({ setIsStaff, setIsLoggedIn }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [errors, setErrors] = useState({});
   const [successMsg, setSuccessMsg] = useState("");
+
+  const navigate = useNavigate();
 
   // Input validation
   const validate = () => {
@@ -55,20 +58,36 @@ export default function Register() {
         })
       });
 
-      const data = await response.json();
+      if (!response.ok) {
+        const data = await response.json();
+        alert(data.message);
+        return;
+      }
 
-      if (response.ok) {
-        setSuccessMsg("Registration successful! You can now log in.");
-        setEmail("");
-        setPassword("");
-        setFirstName("");
-        setLastName("");
+      // If we reach here, registration succeeded -> auto-login
+      const loginResponse = await fetch(`${API_BASE_URL}/api/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+
+      console.log('Login response status:', loginResponse);
+      const loginData = await loginResponse.json();
+      console.log('Login response data:', loginData);
+
+      if (loginResponse.ok) {
+        localStorage.setItem('authToken', loginData.token);
+        localStorage.setItem('userRole', loginData.user.role);
+        localStorage.setItem('userFirstName', loginData.user.firstName);
+        navigate('/', { replace: true });
       } else {
-        alert(data.message || "Registration failed");
+        const loginErrorMsg = loginData?.message || "Auto-login failed. Please log in manually.";
+        console.error('Auto-login failed:', loginErrorMsg);
+        alert(loginErrorMsg);
       }
     } catch (err) {
       console.error(err);
-      alert("Error connecting to server");
+      alert(err.message || "An error occurred. Please try again.");
     }
   };
 
@@ -158,3 +177,5 @@ export default function Register() {
     </div>
   );
 }
+
+export default Register;

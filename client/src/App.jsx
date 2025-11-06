@@ -72,7 +72,7 @@ function App() {
           element={
             isLoggedIn
               ? <Navigate to="/" replace /> // Redirect to home if already signed in
-              : <Register />
+              : <Register setIsStaff={setIsStaff} setIsLoggedIn={setIsLoggedIn} />
           }
         />
         <Route path="/notifications" element={<Notifications />} />

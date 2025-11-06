@@ -13,7 +13,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000
 
 const SECTIONS = [
   { key: 'overview', label: 'Overview', icon: <IoHomeOutline className="nav-icon" /> },
-  { key: 'loans', label: 'Loans', icon: <IoBookOutline className="nav-icon" /> },
+  { key: 'loans', label: 'Current Loans', icon: <IoBookOutline className="nav-icon" /> },
   { key: 'fines', label: 'Fines', icon: <IoWalletOutline className="nav-icon" /> },
   { key: 'history', label: 'Loan History', icon: <IoTimeOutline className="nav-icon" /> },
   { key: 'holds', label: 'Holds', icon: <IoHourglassOutline className="nav-icon" /> },
@@ -87,7 +87,7 @@ export default function AccountDashboard({ isLoggedIn, setIsLoggedIn, isStaff, s
 
             {active === 'loans' && (
               <section className="card">
-                <div className="section-header"><IoBookOutline className="icon" /><h2 className="section-title">Loans</h2></div>
+                <div className="section-header"><IoBookOutline className="icon" /><h2 className="section-title">Current Loans</h2></div>
                 <Loans />
               </section>
             )}

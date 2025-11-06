@@ -60,7 +60,7 @@ export default function Loans() {
               onError={(e) => { e.target.onerror = null; e.target.src='/placeholder-image.png'; }} // Handle broken image links
             />
             <div>
-              <div className="item-title">{item.title}</div>
+              <div className="item-title"><a className='result-link' href={`/item/${item.item_id}`}>{item.title}</a></div>
               <div className="item-sub">Due by {new Date(due).toLocaleDateString()}</div>
             </div>
             {/* --- REMOVED BUTTONS --- */}
