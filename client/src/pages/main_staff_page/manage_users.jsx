@@ -51,10 +51,42 @@ function ManageUsers() {
     const fetchUsers = () => {
         setLoading(true);
         setError('');
-        fetch(`${API_BASE_URL}/api/users`) // Fetch from backend
-            .then(res => res.ok ? res.json() : Promise.reject('Failed to fetch users'))
+
+        const token = localStorage.getItem('authToken'); 
+        const authHeaders = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}` 
+        };
+        
+        if (!token) {
+            setError('Authentication token missing. Please log in.');
+            setLoadingStats(false);
+            setLoadingProfile(false);
+            return;
+        }
+
+        fetch(`${API_BASE_URL}/api/users`, {
+            method: 'GET',
+            // 2. Add the Authorization header
+            headers: {
+                'Authorization': `Bearer ${token}`, // CRITICAL: Send the token
+                'Content-Type': 'application/json'
+            }
+        }) // Fetch from backend
+            .then(res => {
+                // Check for explicit 401/403 errors and provide better messaging
+                if (res.status === 401 || res.status === 403) {
+                    return Promise.reject('Unauthorized access or insufficient privileges.');
+                }
+                return res.ok ? res.json() : Promise.reject('Failed to fetch users');
+            })
             .then(data => { setUsers(data || []); setLoading(false); })
-            .catch(err => { console.error("Fetch Users Error:", err); setError('Could not load users.'); setLoading(false); });
+            .catch(err => { 
+                console.error("Fetch Users Error:", err); 
+                // Update error message to be more informative
+                setError(`Could not load users. (${err instanceof Error ? err.message : err})`); 
+                setLoading(false); 
+            });
     };
 
     useEffect(() => {

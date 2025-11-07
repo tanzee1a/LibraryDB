@@ -35,9 +35,25 @@ function UserProfile() {
     const fetchUserProfile = () => {
         setLoading(true);
         setError('');
-        fetch(`${API_BASE_URL}/api/users/${userId}`)
+    
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            setError('Authentication required to view this profile.');
+            setLoading(false);
+            return;
+        }
+    
+        fetch(`${API_BASE_URL}/api/users/${userId}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`, // CRITICAL: Add Auth Header
+                'Content-Type': 'application/json'
+            }
+        })
             .then(res => {
                 if (res.status === 404) throw new Error('User not found');
+                // Check for unauthorized access
+                if (res.status === 401 || res.status === 403) throw new Error('Unauthorized to access user data.'); 
                 if (!res.ok) throw new Error('Failed to fetch user profile');
                 return res.json();
             })
@@ -60,24 +76,40 @@ function UserProfile() {
 
     // Add this useEffect inside the UserProfile component
     useEffect(() => {
-        if (!userId) return; // Don't fetch if userId isn't available yet
+        if (!userId) return; 
 
         let endpoint = '';
         if (activeSection === 'borrows') endpoint = `/api/users/${userId}/borrows`;
         else if (activeSection === 'holds') endpoint = `/api/users/${userId}/holds`;
         else if (activeSection === 'fines') endpoint = `/api/users/${userId}/fines`;
-        else return; // Do nothing if section is unknown
-
+        else return; 
+    
         setLoadingHistory(true);
         setHistoryError('');
-        // Clear previous data for visual feedback
-        if (activeSection === 'borrows') setBorrowHistory([]);
-        if (activeSection === 'holds') setHoldHistory([]);
-        if (activeSection === 'fines') setFineHistory([]);
-
-        fetch(`${API_BASE_URL}${endpoint}`)
-            .then(res => res.ok ? res.json() : Promise.reject(`Failed to fetch ${activeSection}`))
+        // ... clear previous data ...
+    
+        // --- Authentication Logic for History Fetch ---
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            setHistoryError('Authentication missing for history data.');
+            setLoadingHistory(false);
+            return;
+        }
+        // --- End Auth Logic ---
+    
+        fetch(`${API_BASE_URL}${endpoint}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`, // CRITICAL: Add Auth Header
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(res => {
+                if (res.status === 401 || res.status === 403) throw new Error('Unauthorized to view history.');
+                return res.ok ? res.json() : Promise.reject(`Failed to fetch ${activeSection}`);
+            })
             .then(data => {
+                // ... (rest of your success logic remains the same)
                 if (activeSection === 'borrows') setBorrowHistory(data || []);
                 if (activeSection === 'holds') setHoldHistory(data || []);
                 if (activeSection === 'fines') setFineHistory(data || []);
@@ -85,10 +117,10 @@ function UserProfile() {
             })
             .catch(err => {
                 console.error(`Fetch ${activeSection} Error:`, err);
-                setHistoryError(`Could not load ${activeSection} history.`);
+                setHistoryError(`Could not load ${activeSection} history. (${err.message})`);
                 setLoadingHistory(false);
             });
-
+    
     }, [activeSection, userId]); // Re-run when tab or user changes
 
     // --- Edit/Save Logic ---
@@ -105,25 +137,35 @@ function UserProfile() {
     async function handleSaveChanges() {
         setIsSaving(true);
         setSaveError('');
+        
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            setSaveError('Authentication required to save changes.');
+            setIsSaving(false);
+            return;
+        }
+    
         try {
-            // --- TODO: Create PUT /api/users/:userId endpoint ---
             const response = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' /* Add Auth header */ },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}` // CRITICAL: Add Auth Header
+                },
                 body: JSON.stringify({ // Send only editable fields
                     firstName: editedUser.firstName,
                     lastName: editedUser.lastName,
                     email: editedUser.email,
-                    role: editedUser.role // Ensure backend handles role changes correctly (e.g., adding/removing from STAFF table)
+                    role: editedUser.role
                 })
             });
             if (!response.ok) {
                  const errData = await response.json();
-                 throw new Error(errData.error || 'Failed to save changes');
+                 throw new Error(errData.error || `Failed to save changes (Status: ${response.status})`);
             }
             // Success
-            setUser(editedUser); // Update displayed user data
-            setIsEditing(false); // Exit edit mode
+            setUser(editedUser);
+            setIsEditing(false);
         } catch (err) {
             console.error("Save User Error:", err);
             setSaveError(err.message);
@@ -131,7 +173,6 @@ function UserProfile() {
             setIsSaving(false);
         }
     }
-
     function handleInputChange(e) {
         const { name, value } = e.target;
         setEditedUser(prev => ({ ...prev, [name]: value }));
