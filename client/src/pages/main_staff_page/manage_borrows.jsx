@@ -187,10 +187,40 @@ function ManageBorrows() {
     const fetchBorrows = () => {
         setLoading(true);
         setError('');
-        fetch(`${API_BASE_URL}/api/borrows`) // Fetch all borrows
-            .then(r => { if (!r.ok) throw new Error('Network response failed'); return r.json(); })
-            .then(data => { setBorrows(data || []); setLoading(false); })
-            .catch(err => { console.error("Fetch Borrows Error:", err); setError('Could not load borrows.'); setLoading(false); });
+        
+        // 1. Get Token and Check
+        const token = localStorage.getItem('authToken'); 
+        if (!token) {
+            setError('Authentication token missing. Please log in.');
+            setLoading(false); 
+            return;
+        }
+
+        // 2. Execute Fetch with Headers
+        fetch(`${API_BASE_URL}/api/borrows`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`, // CRITICAL: Authorization header
+                'Content-Type': 'application/json'
+            }
+        }) // Fetch all borrows
+            .then(r => {
+                // Check for explicit 401/403 errors
+                if (r.status === 401 || r.status === 403) {
+                    throw new Error('Unauthorized access or insufficient privileges.');
+                }
+                if (!r.ok) throw new Error('Network response failed'); 
+                return r.json(); 
+            })
+            .then(data => { 
+                setBorrows(data || []); 
+                setLoading(false); 
+            })
+            .catch(err => { 
+                console.error("Fetch Borrows Error:", err); 
+                setError(`Could not load borrows. (${err.message})`); 
+                setLoading(false); 
+            });
     };
 
     useEffect(() => {

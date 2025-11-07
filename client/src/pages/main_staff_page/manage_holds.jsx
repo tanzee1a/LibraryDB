@@ -43,6 +43,19 @@ function ManageHolds() {
         // TODO: Add filter params from selectedFilters to the fetch URL
         const queryString = searchParams.toString(); // For now, just use existing URL params
 
+        const token = localStorage.getItem('authToken'); 
+        const authHeaders = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}` 
+        };
+        
+        if (!token) {
+            setError('Authentication token missing. Please log in.');
+            setLoadingStats(false);
+            setLoadingProfile(false);
+            return;
+        }
+
         fetch(`${API_BASE_URL}/api/holds?${queryString}`) // Include query string
             .then(r => { if (!r.ok) throw new Error('Network response failed'); return r.json(); })
             .then(data => { setHolds(data || []); setLoading(false); })
@@ -54,34 +67,53 @@ function ManageHolds() {
         setLoading(true); // Start loading when params change
         setError('');
 
-        // Derive current filters directly from searchParams for the fetch
+        // 1. Get Token and Check
+        const token = localStorage.getItem('authToken'); 
+        if (!token) {
+            // Use the correct state setter (setLoading)
+            setError('Authentication token missing. Please log in.');
+            setLoading(false); 
+            return;
+        }
+
+        // Derive current filters directly from searchParams for the fetch (rest of your logic)
         const currentFilters = {};
         filterOptions().forEach(group => {
             const paramValue = searchParams.get(group.param);
             currentFilters[group.param] = paramValue ? paramValue.split(',') : [];
         });
 
-        // Construct query string for the API call
         const queryString = searchParams.toString();
         console.log("FETCHING with:", queryString); // Debug log
 
-        fetch(`${API_BASE_URL}/api/holds?${queryString}`)
+        // 2. Execute Fetch with Headers
+        fetch(`${API_BASE_URL}/api/holds?${queryString}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`, // CRITICAL: Authorization header
+                'Content-Type': 'application/json'
+            }
+        })
             .then(r => {
+                // Better error handling for 401/403
+                if (r.status === 401 || r.status === 403) {
+                    throw new Error('Unauthorized or Forbidden access.');
+                }
                 if (!r.ok) throw new Error(`Network response failed (${r.status})`);
                 return r.json();
             })
             .then(data => {
-                console.log("Received holds:", data.length); // Debug log
+                console.log("Received holds:", data.length);
                 setHolds(data || []);
-                setLoading(false); // Stop loading on success
+                setLoading(false);
             })
             .catch(err => {
                 console.error("Fetch Holds Error:", err);
-                setError('Could not load holds.');
-                setLoading(false); // Stop loading on error
+                setError(`Could not load holds. (${err.message})`);
+                setLoading(false);
             });
 
-        // No need to call setSelectedFilters here anymore
+        // Fetch status options (no auth needed, keep as is)
         fetchHoldStatus();
     }, [searchParams]); // Depend ONLY on searchParams
 
