@@ -1,0 +1,187 @@
+// pages/reports/Reports.jsx
+import React, { useState, useEffect } from 'react';
+import './Reports-e.css'; // Make sure this CSS file is imported
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
+const reportOptions = [
+    { key: 'overdue', label: 'Overdue Items', endpoint: '/api/reports/overdue' },
+    { key: 'popular', label: 'Most Popular Items (Last 90 Days)', endpoint: '/api/reports/popular' },
+    { key: 'fines', label: 'Users with Outstanding Fines', endpoint: '/api/reports/fines' },
+];
+
+function Reports() {
+    const [selectedReportKey, setSelectedReportKey] = useState(reportOptions[0].key); 
+    const [reportData, setReportData] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+
+    // Fetch data when selectedReportKey changes (NO CHANGES NEEDED HERE)
+    useEffect(() => {
+        const selectedReport = reportOptions.find(r => r.key === selectedReportKey);
+        if (!selectedReport) return;
+
+        setLoading(true);
+        setError('');
+        setReportData([]); 
+        
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            setError('Authentication token missing. Please log in.');
+            setLoading(false);
+            return;
+        }
+        
+        const authHeaders = {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` 
+        };
+
+        fetch(`${API_BASE_URL}${selectedReport.endpoint}`, { method: "POST" }, {headers: authHeaders },
+             {body:"asd;fg;gnar"}) 
+            .then(res => {
+                if (res.status === 401) {
+                    throw new Error('Unauthorized');
+                }
+                if (!res.ok) throw new Error(`Network error ${res.status}`);
+                return res.json();
+            })
+            .then(data => {
+                setReportData(data || []);
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error(`Failed to fetch ${selectedReport.label}:`, err);
+                setError(`Could not load report: ${err.message}`);
+                setLoading(false);
+            });
+
+    }, [selectedReportKey]); 
+
+    // Helper function to render table (NO CHANGES NEEDED HERE)
+    const renderReportTable = () => {
+        if (loading) return <p>Loading report data...</p>;
+        if (error) return <p style={{ color: 'red' }}>{error}</p>;
+        if (reportData.length === 0) return <p>No data available for this report.</p>;
+
+        const headers = Object.keys(reportData[0]);
+
+        return (
+            <div>
+                <table className="report-table">
+                    <thead>
+                        <tr>
+                            {headers.map(header => <th key={header}>{header.replace(/_/g, ' ').toUpperCase()}</th>)}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {reportData.map((row, index) => (
+                            <tr key={index}>
+                                {headers.map(header => <td key={header}>{formatCell(row[header], header)}</td>)}
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        );
+    };
+
+    const renderOverdueFilter = () => {
+
+        return (
+            <div>
+                <label for="dmin">Due Date Min: </label>
+                <input id="dmin" name="dmin" type="date"></input>
+
+                <label for="dmax">Due Date Max: </label>
+                <input id="dmax" name="dmax" type="date"></input>
+                
+                <label for="bookCheck">Books: </label>
+                <input id="bookCheck" name="bookCheck" type="checkbox" checked></input>
+                <label for="movieCheck">Movies: </label>
+                <input id="movieCheck" name="movieCheck" type="checkbox" checked></input>
+                <label for="deviceCheck">Devices: </label>
+                <input id="deviceCheck" name="deviceCheck" type="checkbox" checked></input>
+            </div>
+        );
+    };
+
+    const renderPopularFilter = () => {
+
+        return (
+            <div>
+                <label for="popStart">Due Date Min: </label>
+                <input id="popStart" name="popStart" type="date"></input>
+                
+                <label for="minBrw">Minimum Borrowed: </label>
+                <input id="minBrw" name="minBrw" type="text"></input>
+
+                <label for="bookCheck1">Books: </label>
+                <input id="bookCheck1" name="bookCheck1" type="checkbox" checked></input>
+                <label for="movieCheck1">Movies: </label>
+                <input id="movieCheck1" name="movieCheck1" type="checkbox" checked></input>
+                <label for="deviceCheck1">Devices: </label>
+                <input id="deviceCheck1" name="deviceCheck1" type="checkbox" checked></input>                
+            </div>
+        );
+    };
+
+    const renderFineFilter = () => {
+
+        return (
+            <div>
+                <label for="minOwe">Minimum Owed: </label>
+                <input id="minOwe" name="minOwe" type="text"></input>
+
+                <label for="minFines">Minimum Total Fines: </label>
+                <input id="minFines" name="minFines" type="text"></input>
+            </div>
+        );
+    };
+
+    // Helper to format cells (NO CHANGES NEEDED HERE)
+    const formatCell = (value, headerKey) => {
+        if (value === null || value === undefined) return '-';
+        if (headerKey.includes('date') && value) {
+            return new Date(value).toLocaleDateString();
+        }
+        if (headerKey.includes('amount') || headerKey.includes('fee')) {
+             if (typeof value === 'number') return `$${value.toFixed(2)}`;
+             if (typeof value === 'string') return `$${parseFloat(value).toFixed(2)}`; 
+        }
+        return value;
+    };
+
+    // --- UPDATED RETURN BLOCK ---
+    return (
+        <div className="page-container reports-container">
+            <h1>Library Reports</h1>
+
+            {/* This new wrapper will create the two-column layout */}
+            <div className="reports-layout">
+                
+                {/* 1. The new side navigation */}
+                <div className="reports-nav">
+                    {reportOptions.map(r => (
+                        <button 
+                            key={r.key}
+                            // Apply 'active' class if this report is selected
+                            className={`nav-button ${r.key === selectedReportKey ? 'active' : ''}`}
+                            onClick={() => setSelectedReportKey(r.key)}
+                        >
+                            {r.label}
+                        </button>
+                    ))}
+                </div>
+
+                {/* 2. The existing content area */}
+                <div className="report-content">
+                    <h2>{reportOptions.find(r => r.key === selectedReportKey)?.label}</h2>
+                    {renderReportTable()}
+                </div>
+
+            </div> {/* End .reports-layout */}
+        </div>
+    );
+}
+
+export default Reports;

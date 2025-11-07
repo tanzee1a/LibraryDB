@@ -12,7 +12,7 @@ import ManageFines from './pages/main_staff_page/manage_fines.jsx';
 import Notifications from './pages/main_staff_page/notifications.jsx';
 import AccountDashboard from './pages/account_dashboard/AccountDashboard.jsx';
 import StaffDashboard from './pages/staff_dashboard/StaffDashboard.jsx';
-import Reports from './pages/reports/Reports.jsx';
+import Reports from './pages/reports-eric/Reports-e.jsx';
 import Navbar from './pages/navbar/navbar.jsx';
 import Footer from './pages/footer/footer.jsx';
 import Staff_page from './pages/staff_dashboard/StaffDashboard.jsx';
