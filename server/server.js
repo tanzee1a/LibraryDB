@@ -6,7 +6,7 @@ console.log("-----------------------");
 
 // Import controllers
 const { 
-    getItems, getItem, getLanguages, getMovieFormats,
+    getItems, getItem, getLanguages, getMovieFormats, getTags,
     createBook, updateBook, 
     createMovie, updateMovie, 
     createDevice, updateDevice,
@@ -53,6 +53,9 @@ const server = http.createServer((req, res) => {
         else if (req.url === '/api/movie-formats' && req.method === 'GET') {
             getMovieFormats(req, res); // Call the controller function for formats
         } 
+        else if (req.url === '/api/tags' && req.method === 'GET') {
+            getTags(req, res); // Call the controller function for tags
+        }
         else if (req.url.match(/^\/api\/items\/([a-zA-Z0-9-]+)$/) && req.method === 'GET') {
             const id = req.url.split('/')[3];
             getItem(req, res, id);

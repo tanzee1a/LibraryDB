@@ -62,6 +62,20 @@ async function getMovieFormats(req, res){
     }
 }
 
+
+async function getTags(req, res){
+    try {
+        // Call the new function from your Item model
+        const tags = await Item.findAllTags(); // <--- Use Item.findAllTags()
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify(tags));
+    } catch (error) {
+        console.error("Error getting tags:", error);
+        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ message: 'Server error fetching tags', error: error.message }));
+    }
+}
+
 // --- CREATE Functions ---
 
 // @desc Create a book
@@ -326,6 +340,7 @@ module.exports = {
     getItem,
     getLanguages,
     getMovieFormats,
+    getTags,
     createBook,
     deleteItem,
     updateBook,

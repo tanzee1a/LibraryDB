@@ -14,20 +14,6 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000
  * @param {'request' | 'waitlist'} actionType 
  */
 
-const filterOptions = [
-    { 
-        category: 'Item Type', 
-        param: 'category', // URL parameter name
-        options: ['BOOK', 'MOVIE', 'DEVICE'] 
-    },
-    { 
-        category: 'Genre (Books/Movies)', 
-        param: 'genre', // URL parameter name
-        options: ['Sci-Fi', 'Fantasy', 'Drama', 'Action', 'Thriller', 'Comedy', 'Animation'] // Add more
-    },
-    // Add more filter categories like Audience, Language ID, etc.
-];
-
 function SearchResults({ isStaff }) {
     const [results, setResults] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -44,6 +30,18 @@ function SearchResults({ isStaff }) {
     const [formatsLoading, setFormatsLoading] = useState(true);
     const [formatsError, setFormatsError] = useState('');
 
+    const [filterOptions, setFilterOptions] = useState([
+        // Initialize with the static 'Item Type' filter
+        { 
+            category: 'Item Type', 
+            param: 'category',
+            options: ['BOOK', 'MOVIE', 'DEVICE'] 
+        }
+    ]);
+
+    const [tagsLoading, setTagsLoading] = useState(true);
+
+
     // --- ADD NEW STATE ---
     // This tracks the ID of the *specific* item being submitted
     const [submittingItemId, setSubmittingItemId] = useState(null); 
@@ -53,16 +51,15 @@ function SearchResults({ isStaff }) {
     const [successfulRequestIds, setSuccessfulRequestIds] = useState(new Set());
     // --- END NEW STATE ---
 
-    const initialFilters = () => {
+    // This function now just reads from searchParams
+    const initialFilters = () => { //
         const filters = {};
-        filterOptions.forEach(group => {
-            const paramValue = searchParams.get(group.param);
-            if (paramValue) {
-                filters[group.param] = paramValue.split(','); 
-            } else {
-                filters[group.param] = [];
+        // We can't use the state-based filterOptions here, so we'll just read all params
+        for (const [key, value] of searchParams.entries()) {
+            if (key !== 'q') {
+                filters[key] = value.split(',');
             }
-        });
+        }
         return filters;
     };
     const [selectedFilters, setSelectedFilters] = useState(initialFilters);
@@ -128,6 +125,35 @@ function SearchResults({ isStaff }) {
         };
 
         fetchMovieFormats(); // Call fetch formats on mount
+
+        const fetchTags = async () => {
+            setTagsLoading(true);
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/tags`);
+                if (!response.ok) throw new Error('Failed to fetch tags');
+                const data = await response.json();
+                
+                // Get just the tag names and sort them
+                const tagNames = data.map(tag => tag.tag_name).sort((a, b) => a.localeCompare(b));
+                
+                // Update the filterOptions state
+                setFilterOptions(prevOptions => [
+                    prevOptions[0], // Keep the 'Item Type' filter
+                    { // Add the new dynamic 'Tags' filter
+                        category: 'Tags',
+                        param: 'tag',
+                        options: tagNames 
+                    }
+                ]);
+            } catch (e) {
+                console.error("Failed to fetch tags:", e);
+                // You could set a tagsError state here
+            } finally {
+                setTagsLoading(false);
+            }
+        };
+
+        fetchTags(); // Call fetch tags on mount
 
     }, [query, searchParams]);
 
@@ -487,21 +513,25 @@ function SearchResults({ isStaff }) {
                         <div key={filterGroup.param} className="filter-category">
                             <h3>{filterGroup.category}</h3>
                             <hr className='thin-divider divider--tight' />
-                            <ul>
-                                {filterGroup.options.map((option) => (
-                                    <li key={option}>
-                                        <label>
-                                            <input 
-                                                type="checkbox" 
-                                                value={option}
-                                                // Check if option is in the state for this filter param
-                                                checked={selectedFilters[filterGroup.param]?.includes(option) || false}
-                                                onChange={() => handleFilterChange(filterGroup.param, option)}
-                                            /> {option}
-                                        </label>
-                                    </li>
-                                ))}
-                            </ul>
+                            {/* Add loading check for tags */}
+                            {filterGroup.param === 'tag' && tagsLoading ? (
+                                <p>Loading tags...</p>
+                            ) : (
+                                <ul>
+                                    {filterGroup.options.map((option) => (
+                                        <li key={option}>
+                                            <label>
+                                                <input 
+                                                    type="checkbox" 
+                                                    value={option}
+                                                    checked={selectedFilters[filterGroup.param]?.includes(option) || false}
+                                                    onChange={() => handleFilterChange(filterGroup.param, option)}
+                                                /> {option}
+                                            </label>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
                         </div>
                     ))}
                 </div>
