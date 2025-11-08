@@ -781,6 +781,58 @@ async function staffCreateFine(fineData, staffUserId) {
     return { fine_id: result.insertId, message: 'Fine created successfully.' };
 }
 
+async function cancelMyHold(holdId, userId) {
+    const conn = await db.getConnection();
+    try {
+        await conn.beginTransaction();
+
+        // 1. Get Hold details AND verify ownership
+        // This is the key change: we add "AND user_id = ?"
+        const [holds] = await conn.query(
+            `SELECT item_id 
+             FROM HOLD 
+             WHERE hold_id = ? AND user_id = ? 
+               AND picked_up_at IS NULL 
+               AND canceled_at IS NULL 
+               AND expires_at >= NOW()
+             FOR UPDATE`, 
+            [holdId, userId] // Pass both IDs
+        );
+
+        if (holds.length === 0) {
+            // This error now triggers if:
+            // 1. The hold doesn't exist.
+            // 2. The hold is already picked up/canceled/expired.
+            // 3. The hold belongs to a *different* user.
+            throw new Error('Active hold not found or does not belong to user.');
+        }
+        
+        const { item_id: itemId } = holds[0];
+
+        // 2. Update HOLD status
+        await conn.query(
+            'UPDATE HOLD SET canceled_at = NOW() WHERE hold_id = ?', 
+            [holdId]
+        );
+
+        // 3. Update ITEM status
+        await conn.query(
+            'UPDATE ITEM SET on_hold = on_hold - 1, available = available + 1 WHERE item_id = ?', 
+            [itemId]
+        );
+
+        await conn.commit();
+        return { hold_id: holdId, message: 'Your hold has been canceled.' };
+
+    } catch (error) {
+        await conn.rollback();
+        console.error("Error in cancelMyHold transaction:", error);
+        throw error;
+    } finally {
+        conn.release();
+    }
+}
+
 
 module.exports = {
     requestPickup,
@@ -803,5 +855,6 @@ module.exports = {
     staffCheckoutItem,
     findAllFines,
     staffCreateFine,
-    findAllStatus
+    findAllStatus,
+    cancelMyHold
 };

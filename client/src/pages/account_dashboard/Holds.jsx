@@ -10,6 +10,10 @@ export default function Holds() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // State for the cancel operation
+  const [cancelingId, setCancelingId] = useState(null); // Tracks which hold is being canceled
+  const [cancelError, setCancelError] = useState(''); // For cancel-specific errors
+
   // Helper function to get headers
   const getAuthHeaders = () => {
     const token = localStorage.getItem('authToken');
@@ -54,12 +58,55 @@ export default function Holds() {
     fetchHolds();
   }, []);
 
+  // Function to handle canceling a hold
+  const handleCancelHold = async (holdId) => {
+    const headers = getAuthHeaders();
+    if (!headers) {
+        setCancelError('Authentication error. Please log in again.');
+        return;
+    }
+
+    setCancelingId(holdId); // Set loading state for this specific item
+    setCancelError('');
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/holds/${holdId}`, {
+        method: 'DELETE',
+        headers: headers
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.message || 'Failed to cancel hold.');
+      }
+
+      // Success: Remove the hold from the local state
+      setHolds(currentHolds => 
+        currentHolds.filter(hold => hold.hold_id !== holdId)
+      );
+
+    } catch (err) {
+      console.error("Cancel Hold Error:", err);
+      setCancelError(err.message);
+    } finally {
+      setCancelingId(null); // Remove loading state
+    }
+  };
+
   // --- Render Logic ---
   if (loading) return <div>Loading holds…</div>;
   if (error) return <div>{error}</div>;
 
   return (
     <div>
+      {cancelError && (
+        <div 
+          className="error-message" 
+          style={{ color: 'red', marginBottom: '15px' }}
+        >
+          Error: {cancelError}
+        </div>
+      )}
       {holds.length === 0 ? (
         <div className="list-item" style={{ padding: '8px 0' }}>
           <div className="thumb-icon" aria-hidden="true"><IoHourglassOutline /></div>
@@ -90,9 +137,16 @@ export default function Holds() {
                 <div className="item-sub">Requested: {new Date(h.created_at).toLocaleDateString()}</div>
                 <div className="item-sub">Pickup Expires: {new Date(h.expires_at).toLocaleDateString()}</div>
               </div>
-              <div>
-                {/* Optional: Add Cancel Hold button later */}
+              <div className="item-actions"> {/* Added a wrapper div */}
+                <button
+                  className="btn danger"
+                  onClick={() => handleCancelHold(h.hold_id)}
+                  disabled={cancelingId === h.hold_id} // Disable button while this item is being canceled
+                >
+                  {cancelingId === h.hold_id ? 'Canceling...' : 'Cancel Hold'}
+                </button>
               </div>
+              {/* --- END NEW --- */}
             </li>
           ))}
         </ul>

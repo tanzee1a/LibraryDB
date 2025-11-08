@@ -382,6 +382,36 @@ async function staffCreateFine(req, res) {
     }
 }
 
+// @desc    User cancels their *own* active hold
+// @route   DELETE /api/holds/:holdId
+// REQUIRES: protect middleware (sets req.userId)
+async function cancelMyHold(req, res, holdId) {
+  try {
+    const userId = req.userId; // 🔑 Sourced from auth middleware
+
+    // Call the model function from your Loan model
+    const result = await Loan.cancelMyHold(Number(holdId), userId);
+
+    // 200 OK - successfully deleted/canceled
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify(result));
+
+  } catch (error) {
+    console.error("Error in cancelMyHold controller:", error);
+    
+    let statusCode = 400; // Bad Request
+    
+    // Send 404 if the hold wasn't found or didn't belong to the user
+    if (error.message.toLowerCase().includes('not found')) {
+        statusCode = 404; // Not Found
+    }
+
+    res.writeHead(statusCode, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ message: 'Could not cancel hold', error: error.message }));
+  }
+}
+
+
 module.exports = {
     requestPickup,
     pickupHold,
@@ -403,5 +433,6 @@ module.exports = {
     staffCheckoutItem,
     getAllFines,
     staffCreateFine,
-    getAllStatus
+    getAllStatus,
+    cancelMyHold
 };
