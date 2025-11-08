@@ -1,8 +1,8 @@
 const db = require('../config/db');
 
 async function searchItems(searchTerm, filters = {}, searchType = 'Description') {
-    const queryTerm = `%${searchTerm}%`; 
-    const exactTerm = searchTerm; 
+    const queryTerm = `%${searchTerm}%`;
+    const exactTerm = searchTerm;
     const startsWithTerm = `${searchTerm}%`;
 
     let sqlParts = [];
@@ -11,14 +11,14 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description')
     const categoryFilter = filters.category ? filters.category.split(',') : [];
     const tagFilter = filters.tag ? filters.tag.split(',') : []; //
 
-    const selectClause = 
-    `   SELECT 
+    const selectClause =
+    `   SELECT
             i.item_id, i.category, i.thumbnail_url, i.available, i.on_hold, i.loaned_out, i.earliest_available_date,
-            %TITLE_FIELD% AS title, 
-            %CREATOR_FIELD% AS creators 
-    `; //
-    const fromItemJoin = `FROM ITEM i `; //
-    
+            %TITLE_FIELD% AS title,
+            %CREATOR_FIELD% AS creators
+    `;
+    const fromItemJoin = `FROM ITEM i `;
+
     // --- 1. Build BOOK Query Part ---
     if (categoryFilter.length === 0 || categoryFilter.includes('BOOK')) {
         let bookParams = [];
@@ -42,30 +42,27 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description')
                         ELSE 3                     -- Contains match
                     END AS sort_priority
                 `;
-                bookParams.push(exactTerm, startsWithTerm); // Add params for CASE
+                bookParams.push(exactTerm, startsWithTerm);
             } else if (searchType === 'Author') {
                 bookWhereClauses.push(`(a.first_name LIKE ? OR a.last_name LIKE ?)`);
                 bookParams.push(queryTerm, queryTerm);
                 bookSelect += `, 4 AS sort_priority`; // Default low priority
             } else if (searchType === 'Tag') {
-                // Tag logic will be added below
+                // tag logic is added within the tagFilter section
                 bookSelect += `, 4 AS sort_priority`;
             } else { // Default 'Description' search
                 bookWhereClauses.push(`(b.title LIKE ? OR i.description LIKE ? OR a.first_name LIKE ? OR a.last_name LIKE ?)`);
                 bookParams.push(queryTerm, queryTerm, queryTerm, queryTerm);
                 bookSelect += `, 4 AS sort_priority`;
             }
-        } 
-        else {
+        } else {
             bookSelect += `, 4 AS sort_priority`; // Default low priority if no search term
         }
-
         // Category Filter logic
         if (categoryFilter.length > 0) {
             bookWhereClauses.push(`i.category IN (?)`);
             bookParams.push(categoryFilter);
         }
-
         // Tag Filter logic
         if (tagFilter.length > 0 || searchType === 'Tag') {
             bookJoins.push(
@@ -85,16 +82,16 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description')
         const whereString = bookWhereClauses.length > 0 ? `WHERE ${bookWhereClauses.join(' AND ')}` : '';
 
         sqlParts.push(`
-            ( ${selectClause.replace('%TITLE_FIELD%', 'b.title').replace('%CREATOR_FIELD%', `GROUP_CONCAT(DISTINCT a.first_name, ' ', a.last_name SEPARATOR ', ')`)}
+            ( ${bookSelect}
               ${fromItemJoin}
               ${bookJoins.join('\n')}
-              ${whereString} 
-              GROUP BY i.item_id 
+              ${whereString}
+              GROUP BY i.item_id
             )
         `);
         finalParams.push(...bookParams);
     }
-    
+
     // --- 2. Build MOVIE Query Part ---
      if (categoryFilter.length === 0 || categoryFilter.includes('MOVIE')) {
         let movieParams = [];
@@ -138,7 +135,7 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description')
             movieParams.push(categoryFilter);
         }
         // Tag filter logic
-        if (tagFilter.length > 0 || searchType === 'Tag') {
+        if (tagFilter.length > 0 || (searchType === 'Tag' && searchTerm.trim())) {
             movieJoins.push(
                 `JOIN ITEM_TAG it ON i.item_id = it.item_id`,
                 `JOIN TAG t ON it.tag_id = t.tag_id`
@@ -156,7 +153,7 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description')
         const whereString = movieWhereClauses.length > 0 ? `WHERE ${movieWhereClauses.join(' AND ')}` : '';
         
         sqlParts.push(`
-             ( ${selectClause.replace('%TITLE_FIELD%', 'm.title').replace('%CREATOR_FIELD%', `GROUP_CONCAT(DISTINCT d.first_name, ' ', d.last_name SEPARATOR ', ')`)}
+             ( ${movieSelect}
                ${fromItemJoin}
                ${movieJoins.join('\n')}
                ${whereString}
@@ -205,9 +202,9 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description')
         if (categoryFilter.length > 0) {
             deviceWhereClauses.push(`i.category IN (?)`);
             deviceParams.push(categoryFilter);
-        }
+        }        
         // Tag filter logic
-        if (tagFilter.length > 0 || searchType === 'Tag') {
+        if (tagFilter.length > 0 || (searchType === 'Tag' && searchTerm.trim())) {
             deviceJoins.push(
                 `JOIN ITEM_TAG it ON i.item_id = it.item_id`,
                 `JOIN TAG t ON it.tag_id = t.tag_id`
@@ -225,11 +222,11 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description')
         const whereString = deviceWhereClauses.length > 0 ? `WHERE ${deviceWhereClauses.join(' AND ')}` : '';
 
         sqlParts.push(`
-            ( ${selectClause.replace('%TITLE_FIELD%', 'd.device_name').replace('%CREATOR_FIELD%', 'd.manufacturer')}
+            ( ${deviceSelect}
               ${fromItemJoin}
               ${deviceJoins.join('\n')}
               ${whereString}
-              GROUP BY i.item_id -- Add GROUP BY to prevent duplicates from tags
+              GROUP BY i.item_id
             )
         `);
         finalParams.push(...deviceParams);
