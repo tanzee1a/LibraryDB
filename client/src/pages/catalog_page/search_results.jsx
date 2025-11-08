@@ -22,6 +22,8 @@ function SearchResults({ isStaff }) {
     const query = searchParams.get('q') || '';
     const [localSearchTerm, setLocalSearchTerm] = useState(query);
 
+    const [searchType, setSearchType] = useState(searchParams.get('searchType') || 'Description');
+
     const [languages, setLanguages] = useState([]);
     const [languagesLoading, setLanguagesLoading] = useState(true);
     const [languagesError, setLanguagesError] = useState('');
@@ -165,9 +167,10 @@ function SearchResults({ isStaff }) {
             const term = localSearchTerm.trim();
             
             if (term) {
-                setSearchParams({ ...currentParams, q: term }); 
+                setSearchParams({ ...currentParams, q: term, searchType: searchType }); 
             } else {
                 delete currentParams.q; 
+                delete currentParams.searchType;
                 setSearchParams(currentParams);
             }
         }
@@ -491,6 +494,21 @@ function SearchResults({ isStaff }) {
                     />
                      {/* Optional: Add a button that calls handleSearch onClick */}
                     {/* <button onClick={handleSearch}>Search</button> */}
+                    
+                    <select 
+                        className="search-type-dropdown" 
+                        value={searchType} 
+                        onChange={(e) => setSearchType(e.target.value)}
+                    >
+                        <option value="Description">Description</option>
+                        <option value="Title">Title</option>
+                        <option value="Manufacturer">Manufacturer</option>
+                        <option value="Author">Author</option>
+                        <option value="Director">Director</option>
+                        <option value="Tag">Tag</option>
+                        {/* <option value="User">User</option> -- Only if you implement user search */}
+                    </select>
+
                 </div>
             </div>
             <div className="search-results-contents">

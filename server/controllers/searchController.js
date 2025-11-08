@@ -10,10 +10,13 @@ async function searchItems(req, res) {
     try {
         const parsedUrl = url.parse(req.url, true);
         const searchTerm = parsedUrl.query.q || ''; // Get the 'q' parameter
+        const searchType = parsedUrl.query.searchType || 'Description';
         const filters = parsedUrl.query; // Get all query params as potential filters
         delete filters.q; // Remove 'q' itself from filters object
+        delete filters.searchType // Remove 'searchType' itself from filters object
 
-        const basicResults = await Search.searchItems(searchTerm, filters);
+
+        const basicResults = await Search.searchItems(searchTerm, filters, searchType);
 
         // 3. If no basic results, return empty
         if (!basicResults || basicResults.length === 0) {
