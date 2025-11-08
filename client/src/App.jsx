@@ -2,7 +2,6 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import HomePage from './pages/home_page/homepage.jsx';
 import Login from './pages/authentication_page/login.jsx';
 import Register from './pages/authentication_page/register.jsx';
-import Notifications from './pages/notifications/notification.jsx';
 import ItemDetails from './pages/catalog_page/item_details.jsx';
 import SearchResults from './pages/catalog_page/search_results.jsx';
 import UserProfile from './pages/main_staff_page/user_profile.jsx';
@@ -10,12 +9,15 @@ import ManageUsers from './pages/main_staff_page/manage_users.jsx';
 import ManageBorrows from './pages/main_staff_page/manage_borrows.jsx';
 import ManageHolds from './pages/main_staff_page/manage_holds.jsx';
 import ManageFines from './pages/main_staff_page/manage_fines.jsx';
+import Notifications from './pages/main_staff_page/notifications.jsx';
 import AccountDashboard from './pages/account_dashboard/AccountDashboard.jsx';
 import StaffDashboard from './pages/staff_dashboard/StaffDashboard.jsx';
 import Reports from './pages/reports/Reports.jsx';
 import Navbar from './pages/navbar/navbar.jsx';
 import Footer from './pages/footer/footer.jsx';
 import Staff_page from './pages/staff_dashboard/StaffDashboard.jsx';
+import StaffRoute from './pages/staffAuthRoutes/StaffRoute.jsx'; // 👈 Import the guard
+import LibrarianRoute from "./pages/staffAuthRoutes/librarianRoute.jsx";
 import { useState, useEffect } from 'react';
 import './App.css';
 
@@ -71,7 +73,7 @@ function App() {
           element={
             isLoggedIn
               ? <Navigate to="/" replace /> // Redirect to home if already signed in
-              : <Register />
+              : <Register setIsStaff={setIsStaff} setIsLoggedIn={setIsLoggedIn} />
           }
         />
         <Route path="/notifications" element={<Notifications />} />
@@ -84,16 +86,86 @@ function App() {
           setIsStaff={setIsStaff}
         />
   } />
-
-        {/* STAFF */}
-        <Route path="/user" element={<UserProfile />} />
-        <Route path="/manage-users" element={<ManageUsers />} />
-        <Route path="/user/:userId" element={<UserProfile />} />
-        <Route path="/manage-borrows" element={<ManageBorrows />} />
-        <Route path="/manage-holds" element={<ManageHolds />} />
-        <Route path="/manage-fines" element={<ManageFines />} />
-        <Route path="/staff_page" element={<Staff_page />} />
-        <Route path="/reports" element={<Reports />} />
+  <Route path="/access-denied" element={
+            <div style={{ padding: '50px', textAlign: 'center' }}>
+                <h2>Access Denied</h2>
+                <p>You do not have the required permissions to view this page.</p>
+                <p><a href="/">Go to Home</a></p>
+            </div>
+        } />
+  <Route 
+          path="/staff_page" 
+          element={
+            <StaffRoute>
+              <Staff_page />
+            </StaffRoute>
+          } 
+        />
+        
+        <Route 
+          path="/user" 
+          element={
+            <StaffRoute>
+              <UserProfile />
+            </StaffRoute>
+          } 
+        />
+        
+        {/* Route with parameter, needs to be protected */}
+        <Route 
+          path="/user/:userId" 
+          element={
+            <StaffRoute>
+              <UserProfile />
+            </StaffRoute>
+          } 
+        />
+        
+        <Route 
+          path="/manage-users" 
+          element={
+            <StaffRoute>
+              <ManageUsers />
+            </StaffRoute>
+          } 
+        />
+        
+        <Route 
+          path="/manage-borrows" 
+          element={
+            <StaffRoute>
+              <ManageBorrows />
+            </StaffRoute>
+          } 
+        />
+        
+        <Route 
+          path="/manage-holds" 
+          element={
+            <StaffRoute>
+              <ManageHolds />
+            </StaffRoute>
+          } 
+        />
+        
+        <Route 
+          path="/manage-fines" 
+          element={
+            <StaffRoute>
+              <ManageFines />
+            </StaffRoute>
+          } 
+        />
+        
+        <Route 
+          path="/reports" 
+          element={
+            <LibrarianRoute>
+              <Reports />
+            </LibrarianRoute>
+          } 
+        />
+        
       </Routes>
       <Footer />
     </BrowserRouter>

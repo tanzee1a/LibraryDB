@@ -56,7 +56,7 @@ async function findOrCreateTagId(conn, tagName) {
 
 // --- FIND ALL ITEMS (Basic for now) ---
 async function findAll() {
-    const sql = 'SELECT * FROM ITEM ORDER BY category'; // Keep it simple for now
+    const sql = 'SELECT * FROM ITEM'; // Keep it simple for now
     const [rows] = await db.query(sql);
     return rows;
 }
@@ -171,7 +171,14 @@ async function remove(id) {
 
 async function findAllLanguages() {
     // Select only the needed columns from the LANGUAGE table
-    const sql = 'SELECT language_id, name FROM LANGUAGE ORDER BY name'; // Order by most popular
+    const sql = 'SELECT language_id, name FROM LANGUAGE ORDER BY name'; // Order by name
+    const [rows] = await db.query(sql);
+    return rows;
+}
+
+async function findAllTags() {
+    // Select only the needed columns from the LANGUAGE table
+    const sql = 'SELECT * FROM TAG ORDER BY tag_id'; // Order by name
     const [rows] = await db.query(sql);
     return rows;
 }
@@ -181,6 +188,7 @@ async function findAllMovieFormats() {
     const [rows] = await db.query(sql);
     return rows;
 }
+
 
 // --- CREATE BOOK (Updated for new schema) ---
 async function createBook(bookData) {
@@ -530,6 +538,7 @@ module.exports = {
     findById,
     findAllLanguages,
     findAllMovieFormats,
+    findAllTags,
     remove,
     createBook,
     updateBook,
