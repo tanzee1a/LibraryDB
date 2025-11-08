@@ -6,7 +6,7 @@ console.log("-----------------------");
 
 // Import controllers
 const { 
-    getItems, getItem, getLanguages, getMovieFormats,
+    getItems, getItem, getLanguages, getMovieFormats, getTags,
     createBook, updateBook, 
     createMovie, updateMovie, 
     createDevice, updateDevice,
@@ -16,7 +16,7 @@ const {
 const { 
     requestPickup, pickupHold, returnItem, markLost, markFound, placeWaitlistHold, 
     getMyLoans, getMyHistory, getMyHolds, getMyWaitlist, getMyFines,
-    payFine, userPayFine, waiveFine, getAllBorrows, getAllHolds, cancelHold, staffCheckoutItem, getAllFines, staffCreateFine, getAllStatus
+    payFine, userPayFine, waiveFine, getAllBorrows, getAllHolds, cancelHold, staffCheckoutItem, getAllFines, staffCreateFine, getAllStatus, cancelMyHold
 } = require('./controllers/loanController');
 
 const { registerUser, loginUser } = require('./controllers/loginRegisterController');
@@ -53,6 +53,9 @@ const server = http.createServer((req, res) => {
         else if (req.url === '/api/movie-formats' && req.method === 'GET') {
             getMovieFormats(req, res); // Call the controller function for formats
         } 
+        else if (req.url === '/api/tags' && req.method === 'GET') {
+            getTags(req, res); // Call the controller function for tags
+        }
         else if (req.url.match(/^\/api\/items\/([a-zA-Z0-9-]+)$/) && req.method === 'GET') {
             const id = req.url.split('/')[3];
             getItem(req, res, id);
@@ -99,7 +102,13 @@ const server = http.createServer((req, res) => {
             // FIX: Ensure req and res are passed to the controller
             protect(req, res, () => requestPickup(req, res, itemId)); 
             return;
-        } else if (req.url.match(/^\/api\/holds\/([0-9]+)\/pickup$/) && req.method === 'POST') {
+        }
+        else if (req.url.match(/^\/api\/holds\/([0-9]+)$/) && req.method === 'DELETE') {
+            const holdId = req.url.split('/')[3];
+            protect(req, res, () => cancelMyHold(req, res, holdId));
+            return;
+        }
+         else if (req.url.match(/^\/api\/holds\/([0-9]+)\/pickup$/) && req.method === 'POST') {
             const holdId = req.url.split('/')[3];
             staffProtect(req, res, () => pickupHold(req, res, holdId)); 
         } else if (req.url.match(/^\/api\/return\/([A-Za-z0-9-]+)$/) && req.method === 'POST') {

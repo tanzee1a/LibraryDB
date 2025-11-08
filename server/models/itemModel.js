@@ -176,11 +176,19 @@ async function findAllLanguages() {
     return rows;
 }
 
+async function findAllTags() {
+    // Select only the needed columns from the LANGUAGE table
+    const sql = 'SELECT * FROM TAG ORDER BY tag_id'; // Order by name
+    const [rows] = await db.query(sql);
+    return rows;
+}
+
 async function findAllMovieFormats() {
     const sql = 'SELECT format_id, format_name FROM MOVIE_FORMAT ORDER BY format_id'; // Order by most popular
     const [rows] = await db.query(sql);
     return rows;
 }
+
 
 // --- CREATE BOOK (Updated for new schema) ---
 async function createBook(bookData) {
@@ -530,6 +538,7 @@ module.exports = {
     findById,
     findAllLanguages,
     findAllMovieFormats,
+    findAllTags,
     remove,
     createBook,
     updateBook,
