@@ -230,15 +230,15 @@ const server = http.createServer((req, res) => {
             staffProtect(req, res, () => cancelHold(req, res, holdId));
         }
         // reports routes
-        else if (req.url === '/api/reports/overdue' && req.method === 'GET') {
+        else if (req.url === '/api/reports/overdue' && req.method === 'POST') {
             staffProtect(req, res, () => getOverdueReport(req, res));
             return;
         }
-        else if (req.url === '/api/reports/popular' && req.method === 'GET') {
+        else if (req.url === '/api/reports/popular' && req.method === 'POST') {
             staffProtect(req, res, () => getPopularityReport(req, res));
             return;
         }
-        else if (req.url === '/api/reports/fines' && req.method === 'GET') {
+        else if (req.url === '/api/reports/fines' && req.method === 'POST') {
             staffProtect(req, res, () => getFineReport(req, res));
             return;
         }

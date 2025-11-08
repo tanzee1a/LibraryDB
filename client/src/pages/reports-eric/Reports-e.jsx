@@ -13,7 +13,7 @@ function Reports() {
     const [selectedReportKey, setSelectedReportKey] = useState(reportOptions[0].key); 
     const [reportData, setReportData] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
+    const [error, setError] = useState('');    
 
     // Fetch data when selectedReportKey changes (NO CHANGES NEEDED HERE)
     useEffect(() => {
@@ -36,8 +36,11 @@ function Reports() {
             'Authorization': `Bearer ${token}` 
         };
 
-        fetch(`${API_BASE_URL}${selectedReport.endpoint}`, { method: "POST" }, {headers: authHeaders },
-             {body:"asd;fg;gnar"}) 
+        fetch(`${API_BASE_URL}${selectedReport.endpoint}`, { 
+            method: "POST" , 
+            headers: authHeaders ,
+            body: "garbage"
+            })
             .then(res => {
                 if (res.status === 401) {
                     throw new Error('Unauthorized');
@@ -54,10 +57,9 @@ function Reports() {
                 setError(`Could not load report: ${err.message}`);
                 setLoading(false);
             });
-
     }, [selectedReportKey]); 
 
-    // Helper function to render table (NO CHANGES NEEDED HERE)
+    // Helper function to render table
     const renderReportTable = () => {
         if (loading) return <p>Loading report data...</p>;
         if (error) return <p style={{ color: 'red' }}>{error}</p>;
@@ -85,55 +87,67 @@ function Reports() {
         );
     };
 
-    const renderOverdueFilter = () => {
+    function renderFilter() {
+        if (selectedReportKey == "overdue") {
+            return renderOverdueFilter();
+        }
+        else if (selectedReportKey == "popular") {
+            return renderPopularFilter();
+        }
+        else if (selectedReportKey == "fines") {
+            return renderFineFilter();
+        }
+    }
+
+    function renderOverdueFilter() {
 
         return (
             <div>
-                <label for="dmin">Due Date Min: </label>
-                <input id="dmin" name="dmin" type="date"></input>
+                <label for="dmin">Earliest Due Date: </label>
+                <input id="dmin" name="dmin" type="date" value=""></input>
 
-                <label for="dmax">Due Date Max: </label>
-                <input id="dmax" name="dmax" type="date"></input>
+                <label for="dmax">Latest Due Date: </label>
+                <input id="dmax" name="dmax" type="date" value=""></input>
                 
                 <label for="bookCheck">Books: </label>
-                <input id="bookCheck" name="bookCheck" type="checkbox" checked></input>
+                <input id="bookCheck" name="bookCheck" type="checkbox"></input>
                 <label for="movieCheck">Movies: </label>
-                <input id="movieCheck" name="movieCheck" type="checkbox" checked></input>
+                <input id="movieCheck" name="movieCheck" type="checkbox"></input>
                 <label for="deviceCheck">Devices: </label>
-                <input id="deviceCheck" name="deviceCheck" type="checkbox" checked></input>
+                <input id="deviceCheck" name="deviceCheck" type="checkbox"></input>
             </div>
         );
     };
 
-    const renderPopularFilter = () => {
+    function renderPopularFilter() {
 
         return (
             <div>
                 <label for="popStart">Due Date Min: </label>
-                <input id="popStart" name="popStart" type="date"></input>
+                <input id="popStart" name="popStart" type="date" value=""></input>
                 
                 <label for="minBrw">Minimum Borrowed: </label>
-                <input id="minBrw" name="minBrw" type="text"></input>
+                <input id="minBrw" name="minBrw" type="number" value=""></input>
 
-                <label for="bookCheck1">Books: </label>
-                <input id="bookCheck1" name="bookCheck1" type="checkbox" checked></input>
-                <label for="movieCheck1">Movies: </label>
-                <input id="movieCheck1" name="movieCheck1" type="checkbox" checked></input>
-                <label for="deviceCheck1">Devices: </label>
-                <input id="deviceCheck1" name="deviceCheck1" type="checkbox" checked></input>                
+                <label for="bookCheck1"> Books: </label>
+                <input id="bookCheck1" name="bookCheck1" type="checkbox"></input>
+                <label for="movieCheck1"> Movies: </label>
+                <input id="movieCheck1" name="movieCheck1" type="checkbox"></input>
+                <label for="deviceCheck1"> Devices: </label>
+                <input id="deviceCheck1" name="deviceCheck1" type="checkbox"></input>                
             </div>
         );
     };
 
-    const renderFineFilter = () => {
+    function renderFineFilter() {
 
         return (
             <div>
-                <label for="minOwe">Minimum Owed: </label>
-                <input id="minOwe" name="minOwe" type="text"></input>
+                <label for="minOwe">Minimum Individual Fines: </label>
+                <input id="minOwe" name="minOwe" type="number" min="0" value=""></input>
 
-                <label for="minFines">Minimum Total Fines: </label>
-                <input id="minFines" name="minFines" type="text"></input>
+                <label for="minFines">Minimum Owed Amount: </label>
+                <input id="minFines" name="minFines" type="number" min="0" value=""></input>
             </div>
         );
     };
@@ -175,6 +189,10 @@ function Reports() {
 
                 {/* 2. The existing content area */}
                 <div className="report-content">
+                    <div className="filter-content">
+                        {selectedReportKey}
+                        {renderFilter()}
+                    </div>
                     <h2>{reportOptions.find(r => r.key === selectedReportKey)?.label}</h2>
                     {renderReportTable()}
                 </div>
