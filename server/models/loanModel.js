@@ -78,7 +78,7 @@ async function requestPickup(itemId, userId) {
     try {
         await conn.beginTransaction();
 
-        // --- STEP 1: Check user's borrow limit (NEW) ---
+        // --- STEP 1: Check user's borrow limit ---
         await checkBorrowLimit(conn, userId);
         // --- END STEP 1 ---
 
@@ -89,6 +89,20 @@ async function requestPickup(itemId, userId) {
         );
         if (items.length === 0) throw new Error('Item not found.');
         if (items[0].available <= 0) throw new Error('Item is not available.');
+
+        // --- STEP 2.5: CHECK FOR EXISTING HOLD (NEW) ---
+        // Check if this user *already* has an active hold on this *exact* item.
+        const [existingHolds] = await conn.query(
+            `SELECT COUNT(*) as holdCount 
+             FROM HOLD 
+             WHERE user_id = ? AND item_id = ? AND expires_at > NOW()`,
+            [userId, itemId]
+        );
+
+        if (existingHolds[0].holdCount > 0) {
+            throw new Error('You already have an active hold on this item.');
+        }
+        // --- END STEP 2.5 ---
 
         // 3. Put item on hold
         await conn.query(
