@@ -26,7 +26,7 @@ async function findOverdueItems(filterData) {
         WHERE 
             b.status_id = ? -- Must be 'Loaned Out'
             ${filterData.date1 != `''` ? `AND b.due_date >= ${filterData.date1}` : ``}
-            AND b.due_date <${filterData.date2 != `''` ? ` ${filterData.date2} AND b.due_date <` : ``} CURDATE() -- Due date must be in the past
+            AND b.due_date <${filterData.date2 != `''` ? ` ${filterData.date2} AND b.due_date <=` : ``} CURDATE() -- Due date must be in the past
             ${filterData.book ? `` : `AND i.category != 'BOOK'`}
             ${filterData.movie ? `` : `AND i.category != 'MOVIE'`}
             ${filterData.device ? `` : `AND i.category != 'DEVICE'`}
@@ -38,7 +38,7 @@ async function findOverdueItems(filterData) {
 
 // --- Report 2: Most Popular Items (Last 90 days) ---
 async function findMostPopularItems(filterData) {
-    days = 90;
+    lastDay = `${filterData.dateLatest != `''` ? filterData.dateLatest : `CURDATE()`}`
     const sql = `
         SELECT 
             b.item_id,
@@ -50,12 +50,18 @@ async function findMostPopularItems(filterData) {
         LEFT JOIN BOOK bk ON i.item_id = bk.item_id AND i.category = 'BOOK'
         LEFT JOIN MOVIE m ON i.item_id = m.item_id AND i.category = 'MOVIE'
         LEFT JOIN DEVICE d ON i.item_id = d.item_id AND i.category = 'DEVICE'
-        WHERE b.borrow_date >= DATE_SUB(CURDATE(), INTERVAL ? DAY) -- Filter by date range
+        WHERE b.borrow_date <= ${lastDay}
+            AND b.borrow_date >= ${filterData.dateEarliest != `''` ? filterData.dateEarliest : `DATE_SUB(${lastDay}, INTERVAL 90 DAY)`} -- Filter by date range
+            ${filterData.book ? `` : `AND i.category != 'BOOK'`}
+            ${filterData.movie ? `` : `AND i.category != 'MOVIE'`}
+            ${filterData.device ? `` : `AND i.category != 'DEVICE'`}
         GROUP BY b.item_id, i.category, item_title -- Group by item
+        HAVING borrow_count >= ${filterData.minBrw}
+            ${filterData.maxBrw != '' ? `AND borrow_count <= ${filterData.maxBrw}` : ``}
         ORDER BY borrow_count DESC -- Order by most popular
-        LIMIT 50; -- Limit results
+        LIMIT ${filterData.maxDis}; -- Limit results
     `;
-    const [rows] = await db.query(sql, [days]);
+    const [rows] = await db.query(sql);
     return rows;
 }
 

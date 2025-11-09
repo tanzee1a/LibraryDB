@@ -5,7 +5,7 @@ import './Reports-e.css'; // Make sure this CSS file is imported
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
 const reportOptions = [
     { key: 'overdue', label: 'Overdue Items', endpoint: '/api/reports/overdue' },
-    { key: 'popular', label: 'Most Popular Items (Last 90 Days)', endpoint: '/api/reports/popular' },
+    { key: 'popular', label: 'Checkout Frequency', endpoint: '/api/reports/popular' },
     { key: 'fines', label: 'Users with Outstanding Fines', endpoint: '/api/reports/fines' },
 ];
 
@@ -69,7 +69,7 @@ function Reports() {
         {
             return JSON.stringify({
                 date1: `'${document.getElementById('dmin').value}'`,
-                date2: `'${document.getElementById('dmax').value}'`,
+                date2: (document.getElementById('dmax').value >= document.getElementById('dmin').value ? `'${document.getElementById('dmax').value}'` : `''`),
                 book: document.getElementById('bookCheck').checked,
                 movie: document.getElementById('movieCheck').checked,
                 device: document.getElementById('deviceCheck').checked
@@ -79,7 +79,12 @@ function Reports() {
         {
             return JSON.stringify({
                 dateEarliest: `'${document.getElementById('popStart').value}'`,
-                minBor: document.getElementById('minBrw').value,
+                dateLatest: `'${document.getElementById('popEnd').value}'`,
+                minBrw: document.getElementById('minBrw').value,
+                maxBrw: (document.getElementById('maxBrw').value != '' ? 
+                    (document.getElementById('maxBrw').value >= document.getElementById('minBrw').value ?
+                    (document.getElementById('maxBrw').value) : '') : ''),
+                maxDis: document.getElementById('maxDis').value,
                 book: document.getElementById('bookCheck1').checked,
                 movie: document.getElementById('movieCheck1').checked,
                 device: document.getElementById('deviceCheck1').checked
@@ -167,12 +172,28 @@ function Reports() {
         return (
             <div>
                 <div>
-                    <label for='popStart'>Due Date Min: </label>
+                    <label for='popStart'>Earliest Borrow Date: </label>
                     <input id='popStart' name='popStart' type='date' class='filter-input'></input>
-                    
-                    <label for='minBrw'>Minimum Borrowed: </label>
-                    <input id='minBrw' name='minBrw' type='number' class='filter-input'></input>
-
+                    -- Defaults to previous 90 days if left blank
+                </div>
+                <div>
+                    <label for='popStart'>Latest Borrow Date: </label>
+                    <input id='popEnd' name='popEnd' type='date' class='filter-input'></input>
+                    -- Defaults to Today if left blank
+                </div>
+                <div>
+                    <label for='minBrw'>Minimum Times Checked-Out: </label>
+                    <input id='minBrw' name='minBrw' type='number' class='filter-input' defaultValue='1' min='0'></input>
+                </div>
+                <div>
+                    <label for='maxBrw'>Maximum Times Checked-Out: </label>
+                    <input id='maxBrw' name='maxBrw' type='number' class='filter-input' min='1'></input>
+                </div>
+                <div>
+                    <label for='maxDis'>Maximum Displayed: </label>
+                    <input id='maxDis' name='maxDis' type='number' class='filter-input' defaultValue='50' min='1'></input>
+                </div>
+                <div>
                     <label for='bookCheck1'> Books: </label>
                     <input id='bookCheck1' name='bookCheck1' type='checkbox' class='filter-input' defaultChecked></input>
                     <label for='movieCheck1'> Movies: </label>
@@ -193,10 +214,10 @@ function Reports() {
             <div>
                 <div>
                     <label for='minOwe'>Minimum Individual Fines: </label>
-                    <input id='minOwe' name='minOwe' type='number' min='0' class='filter-input' defaultChecked></input>
+                    <input id='minOwe' name='minOwe' type='number' min='1' class='filter-input'></input>
 
                     <label for='minFines'>Minimum Owed Amount: </label>
-                    <input id='minFines' name='minFines' type='number' min='0' class='filter-input' defaultChecked></input>
+                    <input id='minFines' name='minFines' type='number' min='0' class='filter-input'></input>
                 </div>
                 <div>
                     <button id='fineButton' onClick={() => {getReport(); }}>Filter</button>
@@ -243,7 +264,6 @@ function Reports() {
                 {/* 2. The existing content area */}
                 <div className='report-content'>
                     <div className='filter-content'>
-                        {selectedReportKey}
                         {renderFilter()}
                     </div>
                     <h2>{reportOptions.find(r => r.key === selectedReportKey)?.label}</h2>
