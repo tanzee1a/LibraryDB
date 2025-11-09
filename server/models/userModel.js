@@ -265,6 +265,85 @@ async function findFineHistoryForUser(userId) {
 }
 // --- END NO CHANGES ---
 
+/**
+ * Staff updates a user's details.
+ */
+async function staffUpdateUser(userId, userData) {
+    // Get data from controller
+    const { firstName, lastName, email, role } = userData;
+
+    const conn = await db.getConnection();
+    try {
+        await conn.beginTransaction();
+
+        // 1. Get the role_id from the role_name (e.g., "Patron")
+        const [roleRows] = await conn.query('SELECT role_id FROM USER_ROLE WHERE role_name = ?', [role]);
+        if (roleRows.length === 0) {
+            throw new Error(`Invalid user role: ${role}`);
+        }
+        const role_id = roleRows[0].role_id;
+
+        // 2. Update the USER table.
+        // Your schema's "ON UPDATE CASCADE" for USER_CREDENTIAL
+        // means changing USER.email here will also update USER_CREDENTIAL.email.
+        const userSql = `
+            UPDATE USER 
+            SET firstName = ?, lastName = ?, email = ?, role_id = ?
+            WHERE user_id = ?
+        `;
+        await conn.query(userSql, [firstName, lastName, email, role_id, userId]);
+
+        // 3. Handle Staff role logic
+        if (role === 'Staff') {
+            // If user is now Staff, add them to STAFF table if not already present
+            const [staffRows] = await conn.query('SELECT * FROM STAFF WHERE user_id = ?', [userId]);
+            if (staffRows.length === 0) {
+                const defaultStaffRoleId = 3; // 'Clerk'
+                await conn.query('INSERT INTO STAFF (user_id, role_id) VALUES (?, ?)', [userId, defaultStaffRoleId]);
+            }
+        } else {
+            // If user is no longer Staff, remove them from STAFF table
+            // ON DELETE CASCADE in schema handles this, but we'll be explicit
+            await conn.query('DELETE FROM STAFF WHERE user_id = ?', [userId]);
+        }
+
+        await conn.commit();
+        return { user_id: userId, ...userData }; // Return updated data
+
+    } catch (error) {
+        await conn.rollback();
+        // Handle duplicate email error
+        if (error.code === 'ER_DUP_ENTRY') {
+            throw new Error('Email address already exists.');
+        }
+        console.error("Error in staffUpdateUser transaction:", error);
+        throw error;
+    } finally {
+        conn.release();
+    }
+}
+
+/**
+ * Staff deletes a user. (HARD DELETE)
+ */
+async function staffDeleteUser(userId) {
+    // WARNING: This is a HARD DELETE.
+    // This will FAIL if the user has any BORROW or FINE records
+    // due to your schema's foreign key constraints.
+    // (HOLD, WISHLIST, STAFF tables should cascade delete).
+    
+    const sql = 'DELETE FROM USER WHERE user_id = ?';
+    try {
+        const [result] = await db.query(sql, [userId]);
+        return result.affectedRows; // 1 if deleted, 0 if not found
+    } catch (error) {
+        // Catch the specific error when records are linked
+        if (error.code === 'ER_ROW_IS_REFERENCED_2') {
+            throw new Error('Cannot delete user: They have existing borrow or fine records.');
+        }
+        throw error;
+    }
+}
 
 module.exports = {
     findById,
@@ -273,5 +352,7 @@ module.exports = {
     findUserProfileById,
     findBorrowHistoryForUser,
     findFineHistoryForUser,
-    findHoldHistoryForUser
+    findHoldHistoryForUser,
+    staffUpdateUser,
+    staffDeleteUser 
 };
