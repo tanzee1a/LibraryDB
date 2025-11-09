@@ -65,6 +65,7 @@ function Register({ setIsStaff, setIsLoggedIn }) {
     console.log("Submitting registration:", { email, password, firstName, lastName, membershipForm, signUpLater });
 
     try {
+      // --- STEP 1: Register the user ---
       const response = await fetch(`${API_BASE_URL}/api/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -82,7 +83,7 @@ function Register({ setIsStaff, setIsLoggedIn }) {
         return;
       }
 
-      // If we reach here, registration succeeded -> auto-login
+      // --- STEP 2: Auto-login to get the new token ---
       const loginResponse = await fetch(`${API_BASE_URL}/api/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -92,22 +93,59 @@ function Register({ setIsStaff, setIsLoggedIn }) {
       const loginData = await loginResponse.json();
       console.log('Login response data:', loginData);
 
-      if (loginResponse.ok) {
-        localStorage.setItem('authToken', loginData.token);
-        localStorage.setItem('userRole', loginData.user.role);
-        localStorage.setItem('userFirstName', loginData.user.firstName);
-        navigate('/', { replace: true });
-      } else {
+      if (!loginResponse.ok) {
         const loginErrorMsg = loginData?.message || "Auto-login failed. Please log in manually.";
         console.error('Auto-login failed:', loginErrorMsg);
         alert(loginErrorMsg);
+        return; // Stop if auto-login fails
       }
+
+      // --- STEP 3: Store login data (token, role, etc.) ---
+      localStorage.setItem('authToken', loginData.token);
+      localStorage.setItem('userRole', loginData.user.role);
+      localStorage.setItem('userFirstName', loginData.user.firstName);
+
+      // --- **** NEW LOGIC **** ---
+      // --- STEP 4: If they didn't skip, sign them up for membership ---
+      if (!signUpLater) {
+        console.log("Auto-login successful, now signing up for membership...");
+        try {
+          const token = loginData.token; // Use the token we just received
+          
+          const membershipResponse = await fetch(`${API_BASE_URL}/api/membership/signup`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}` // Authorize with the new token
+            },
+            body: JSON.stringify(membershipForm) // Send the payment details
+          });
+
+          if (!membershipResponse.ok) {
+            // Don't stop the whole login, just warn them
+            const memError = await membershipResponse.json();
+            alert(`Registration was successful, but membership signup failed: ${memError.message}. Please sign up from your profile.`);
+          } else {
+            console.log("Membership signup successful!");
+          }
+        } catch (memErr) {
+          // Handle fetch error for membership
+          console.error("Membership signup fetch error:", memErr);
+          alert(`Registration was successful, but membership signup failed: ${memErr.message}. Please sign up from your profile.`);
+        }
+      }
+      // --- **** END OF NEW LOGIC **** ---
+
+
+      // --- STEP 5: Navigate to homepage (this now happens last) ---
+      navigate('/', { replace: true });
+
     } catch (err) {
       console.error(err);
       alert(err.message || "An error occurred. Please try again.");
     }
   };
-
+  
   return (
     <div className='page-container login-page-container'>
       <div className = "login-page-content">
