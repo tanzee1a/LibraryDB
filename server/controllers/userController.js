@@ -201,6 +201,42 @@ async function staffDeleteUser(req, res, userId) {
     }
 }
 
+async function changePassword(req, res) {
+    try {
+        const userId = req.userId; // Get user ID from the authentication token
+        const body = await getPostData(req);
+        // Expecting { currentPassword, newPassword } from the frontend
+        const { currentPassword, newPassword } = JSON.parse(body); 
+
+        if (!userId) {
+            res.writeHead(401, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+            return res.end(JSON.stringify({ message: 'User not authenticated' }));
+        }
+        
+        if (!currentPassword || !newPassword) {
+            res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+            return res.end(JSON.stringify({ message: 'Missing current or new password' }));
+        }
+
+        // Call the model function to handle the password update logic
+        const updateSuccessful = await User.changeUserPassword(userId, currentPassword, newPassword);
+
+        if (!updateSuccessful) {
+            // This usually means the current password didn't match
+            res.writeHead(401, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+            return res.end(JSON.stringify({ message: 'Current password incorrect' }));
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        return res.end(JSON.stringify({ message: 'Password updated successfully' }));
+
+    } catch (error) {
+        console.error("Error in changePassword:", error);
+        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ message: 'Could not change password', error: error.message }));
+    }
+}
+
 
 
 // Update exports
@@ -213,5 +249,6 @@ module.exports = {
     getUserHoldHistory,   // <-- Add this
     getUserFineHistory,    // <-- Add this
     staffUpdateUser,
-    staffDeleteUser 
+    staffDeleteUser,
+    changePassword
 };

@@ -7,6 +7,14 @@ export default function UserProfile() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [membershipStatus, setMembershipStatus] = useState('new'); // new, active, canceled, expired
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmNewPassword: ''
+  });
+  const [passwordChangeMessage, setPasswordChangeMessage] = useState({ type: '', text: '' });
+
+  
 
   const membershipSample = {
     status: 'active', // 'active', 'canceled', 'expired'
@@ -54,6 +62,100 @@ export default function UserProfile() {
         setLoading(false);
       });
   }, []);
+
+  function handlePasswordChange(e) {
+    e.preventDefault();
+    setPasswordChangeMessage({ type: '', text: '' });
+
+    const { currentPassword, newPassword, confirmNewPassword } = passwordForm;
+
+    if (newPassword !== confirmNewPassword) {
+        setPasswordChangeMessage({ type: 'error', text: 'New password and confirmation do not match.' });
+        return;
+    }
+
+    const token = getToken();
+    if (!token) return;
+    
+    const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+    };
+
+    const body = JSON.stringify({ 
+        currentPassword, 
+        newPassword // Only send necessary fields
+    });
+
+    fetch(`${API_BASE_URL}/api/my-profile/change-password`, {
+        method: 'POST',
+        headers,
+        body,
+    })
+    .then(async res => {
+        const data = await res.json();
+        if (!res.ok) {
+            // Backend sends 401 for incorrect current password or 500 for server error
+            throw new Error(data.message || 'Failed to change password.');
+        }
+        return data;
+    })
+    .then(data => {
+        setPasswordChangeMessage({ type: 'success', text: 'Password updated successfully!' });
+        // Clear the form after success
+        setPasswordForm({ currentPassword: '', newPassword: '', confirmNewPassword: '' });
+    })
+    .catch(err => {
+        console.error("Password change error:", err);
+        setPasswordChangeMessage({ type: 'error', text: err.message || 'An unexpected error occurred.' });
+    }); 
+  }
+
+
+  // --- NEW RENDER FUNCTION ---
+  function renderPasswordChangeSection() {
+      if (user?.role === 'Staff' || user?.role === 'Admin') {
+          return <p className='small-spacing'>Staff password management is handled internally.</p>;
+      }
+
+      return (
+          <>
+              <p className='small-spacing'>Update your account password below.</p>
+              <form className="info-form" onSubmit={handlePasswordChange}>
+                  <input
+                      className="input-field"
+                      type="password"
+                      placeholder="Current Password"
+                      value={passwordForm.currentPassword}
+                      onChange={e => setPasswordForm({...passwordForm, currentPassword: e.target.value})}
+                      required
+                  />
+                  <input
+                      className="input-field"
+                      type="password"
+                      placeholder="New Password"
+                      value={passwordForm.newPassword}
+                      onChange={e => setPasswordForm({...passwordForm, newPassword: e.target.value})}
+                      required
+                  />
+                  <input
+                      className="input-field"
+                      type="password"
+                      placeholder="Confirm New Password"
+                      value={passwordForm.confirmNewPassword}
+                      onChange={e => setPasswordForm({...passwordForm, confirmNewPassword: e.target.value})}
+                      required
+                  />
+                  {passwordChangeMessage.text && (
+                      <p style={{ color: passwordChangeMessage.type === 'error' ? 'red' : 'green' }}>
+                          {passwordChangeMessage.text}
+                      </p>
+                  )}
+                  <button type="submit" className="btn secondary-button">Change Password</button>
+              </form>
+          </>
+      );
+    }
 
   function handleMembershipSignup(e) {
     e.preventDefault();
@@ -256,6 +358,10 @@ export default function UserProfile() {
         <h3>Membership</h3>
         {renderMembershipSection()}
       </div>
+      <div className='membership-info'>
+          <h3>Password</h3>
+          {renderPasswordChangeSection()}
+        </div>
     </div>
   );
 }

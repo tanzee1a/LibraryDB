@@ -21,12 +21,13 @@ const {
 
 const { registerUser, loginUser } = require('./controllers/loginRegisterController');
 const { saveItem, unsaveItem, getMyWishlist } = require('./controllers/wishlistController');
-const { getMyProfile, getAllUsers, staffCreateUser, getUserProfile, getUserBorrowHistory, getUserHoldHistory, getUserFineHistory, staffUpdateUser, staffDeleteUser} = require('./controllers/userController');
+const { getMyProfile, getAllUsers, staffCreateUser, getUserProfile, getUserBorrowHistory, getUserHoldHistory, getUserFineHistory, staffUpdateUser, staffDeleteUser, changePassword} = require('./controllers/userController');
 const { searchItems } = require('./controllers/searchController');
 const { getOverdueReport, getPopularityReport, getFineReport } = require('./controllers/reportController');
 const { protect } = require('./middleware/authMiddleware'); // <--- ADD THIS IMPORT
 const { getDashboardStats, getMyStaffProfile } = require('./controllers/staffController');
 const { staffProtect} = require('./middleware/authMiddleware');
+
 
 const server = http.createServer((req, res) => {
     // --- CORS Headers ---
@@ -160,6 +161,10 @@ const server = http.createServer((req, res) => {
         else if (req.url === '/api/my-profile' && req.method === 'GET') {
             // FIX: Correctly wrap the controller function
             protect(req, res, () => getMyProfile(req, res));
+            return;
+        }
+        else if (req.url === '/api/my-profile/change-password' && req.method === 'POST') {
+            protect(req, res, () => changePassword(req, res));
             return;
         }
         
