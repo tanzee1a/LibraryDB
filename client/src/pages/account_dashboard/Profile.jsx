@@ -9,6 +9,14 @@ export default function UserProfile() {
   // const [membershipStatus, setMembershipStatus] = useState('expired'); // new, active, canceled, expired
   const [membershipStatus, setMembershipStatus] = useState(null); // <-- Set to null initially
   const [membershipInfo, setMembershipInfo] = useState(null); // <-- Store membership details
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmNewPassword: ''
+  });
+  const [passwordChangeMessage, setPasswordChangeMessage] = useState({ type: '', text: '' });
+
+  
 
 // const membershipSample = { ... } // <-- REMOVE THIS
 /*
@@ -88,6 +96,50 @@ function getStatusFromData(data) {
       });
   }, []);
 
+   // --- NEW RENDER FUNCTION ---
+  function renderPasswordChangeSection() {
+      if (user?.role === 'Staff' || user?.role === 'Admin') {
+          return <p className='small-spacing'>Staff password management is handled internally.</p>;
+      }
+
+      return (
+          <>
+              <p className='small-spacing'>Update your account password below.</p>
+              <form className="info-form" onSubmit={handlePasswordChange}>
+                  <input
+                      className="input-field"
+                      type="password"
+                      placeholder="Current Password"
+                      value={passwordForm.currentPassword}
+                      onChange={e => setPasswordForm({...passwordForm, currentPassword: e.target.value})}
+                      required
+                  />
+                  <input
+                      className="input-field"
+                      type="password"
+                      placeholder="New Password"
+                      value={passwordForm.newPassword}
+                      onChange={e => setPasswordForm({...passwordForm, newPassword: e.target.value})}
+                      required
+                  />
+                  <input
+                      className="input-field"
+                      type="password"
+                      placeholder="Confirm New Password"
+                      value={passwordForm.confirmNewPassword}
+                      onChange={e => setPasswordForm({...passwordForm, confirmNewPassword: e.target.value})}
+                      required
+                  />
+                  {passwordChangeMessage.text && (
+                      <p style={{ color: passwordChangeMessage.type === 'error' ? 'red' : 'green' }}>
+                          {passwordChangeMessage.text}
+                      </p>
+                  )}
+                  <button type="submit" className="btn secondary-button">Change Password</button>
+              </form>
+          </>
+      );
+    }
 
   function handleMembershipSignup(e) {
     e.preventDefault();
@@ -294,6 +346,10 @@ function getStatusFromData(data) {
         <h3>Membership</h3>
         {renderMembershipSection()}
       </div>
+      <div className='membership-info'>
+          <h3>Password</h3>
+          {renderPasswordChangeSection()}
+        </div>
     </div>
   );
 }

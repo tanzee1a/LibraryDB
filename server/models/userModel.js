@@ -425,6 +425,45 @@ async function staffDeleteUser(userId) {
     }
 }
 
+async function changeUserPassword(userId, currentPassword, newPassword) {
+    // 1. Get the user's email and current password hash
+    const userSql = `
+        SELECT uc.password_hash, u.email 
+        FROM USER_CREDENTIAL uc
+        JOIN USER u ON uc.email = u.email 
+        WHERE u.user_id = ?
+    `;
+    const [userRows] = await db.query(userSql, [userId]);
+
+    if (userRows.length === 0) {
+        // Should not happen if protect middleware works, but a safe check
+        throw new Error('User not found.'); 
+    }
+    
+    const { password_hash, email } = userRows[0];
+    
+    // 2. Compare the provided currentPassword with the stored hash
+    const isMatch = await bcrypt.compare(currentPassword, password_hash);
+
+    if (!isMatch) {
+        return false; // Current password incorrect
+    }
+    
+    // 3. Hash the new password
+    const saltRounds = 10;
+    const new_password_hash = await bcrypt.hash(newPassword, saltRounds);
+
+    // 4. Update the password hash in USER_CREDENTIAL
+    const updateSql = `
+        UPDATE USER_CREDENTIAL
+        SET password_hash = ?
+        WHERE email = ?
+    `;
+    const [result] = await db.query(updateSql, [new_password_hash, email]);
+
+    return result.affectedRows > 0;
+}
+
 module.exports = {
     findById,
     findAllUsers,
@@ -434,5 +473,6 @@ module.exports = {
     findFineHistoryForUser,
     findHoldHistoryForUser,
     staffUpdateUser,
-    staffDeleteUser 
+    staffDeleteUser,
+    changeUserPassword
 };
