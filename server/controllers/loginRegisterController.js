@@ -13,72 +13,87 @@ function generateUserId() {
 
 // REGISTER NEW USER
 async function registerUser(req, res) {
-    let body = '';
-    req.on('data', chunk => (body += chunk.toString()));
-    req.on('end', async () => {
-      // --- Use a connection for a transaction ---
-      const conn = await pool.getConnection();
-      try {
-        const { email, password, firstName, lastName } = JSON.parse(body);
-  
-        if (!email || !password) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          return res.end(JSON.stringify({ error: true, message: 'Email and password required' }));
-        }
-        
-        await conn.beginTransaction(); // Start transaction
-
-        // --- STEP 1: Get the role_id for 'Patron' ---
-        const roleName = 'Patron';
-        const [roleRows] = await conn.query(
-            'SELECT role_id FROM USER_ROLE WHERE role_name = ?',
-            [roleName]
-        );
-
-        if (roleRows.length === 0) {
-            throw new Error("Default role 'Patron' not found in USER_ROLE table.");
-        }
-        const role_id = roleRows[0].role_id;
-        // --- END STEP 1 ---
-
-        // Hash password
-        const hashedPassword = await bcrypt.hash(password, 10);
-  
-        // Generate user_id
-        const userId = generateUserId();
-        
-        // --- STEP 2: Insert into USER table (using role_id) ---
-        await conn.query(
-          'INSERT INTO USER (user_id, email, role_id, firstName, lastName) VALUES (?, ?, ?, ?, ?)',
-          [userId, email, role_id, firstName || '', lastName || '']
-        );
-
-        await pool.query(
-          'INSERT INTO USER_CREDENTIAL (email, password_hash) VALUES (?, ?)',
-          [email, hashedPassword]
-        );
-  
-        await conn.commit(); // Commit transaction
-
-        res.writeHead(201, { 'Content-Type': 'application/json' });
-        // Return the roleName for clarity
-        res.end(JSON.stringify({ message: 'User registered successfully', userId, role: roleName })); 
+  let body = '';
+  req.on('data', chunk => (body += chunk.toString()));
+  req.on('end', async () => {
+    // 1. Initialize 'conn' outside of the try block
+    let conn; 
+    try {
+      // 2. MOVE the connection acquisition inside the try block
+      conn = await pool.getConnection(); 
       
-      } catch (err) {
-        console.error(err);
-        if (err.code === 'ER_DUP_ENTRY') {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: true, message: err.sqlMessage }));
-        } else if (err.code) {
-          res.writeHead(500, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: true, code: err.code, message: err.sqlMessage || 'Error registering user' }));
-        } else {
-          res.writeHead(500, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: true, message: 'Error registering user' }));
-        }
+      const { email, password, firstName, lastName } = JSON.parse(body);
+
+      if (!email || !password) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ error: true, message: 'Email and password required' }));
       }
-    });
-  }
+      
+      await conn.beginTransaction(); // Start transaction
+
+      // --- STEP 1: Get the role_id for 'Patron' ---
+      const roleName = 'Patron';
+      const [roleRows] = await conn.query(
+          'SELECT role_id FROM USER_ROLE WHERE role_name = ?',
+          [roleName]
+      );
+
+      if (roleRows.length === 0) {
+          // This error will be caught by the catch block below
+          throw new Error("Default role 'Patron' not found in USER_ROLE table."); 
+      }
+      const role_id = roleRows[0].role_id;
+      // --- END STEP 1 ---
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Generate user_id
+      const userId = generateUserId();
+      
+      // --- STEP 2: Insert into USER table (using role_id) ---
+      await conn.query(
+        'INSERT INTO USER (user_id, email, role_id, firstName, lastName) VALUES (?, ?, ?, ?, ?)',
+        [userId, email, role_id, firstName || '', lastName || '']
+      );
+
+      await conn.query(
+        'INSERT INTO USER_CREDENTIAL (email, password_hash) VALUES (?, ?)',
+        [email, hashedPassword]
+      );
+
+      await conn.commit(); // Commit transaction
+
+      res.writeHead(201, { 'Content-Type': 'application/json' });
+      // Return the roleName for clarity
+      res.end(JSON.stringify({ message: 'User registered successfully', userId, role: roleName })); 
+    
+    } catch (err) {
+      console.error('Registration Error:', err);
+      // 3. Rollback is safe because 'conn' is defined outside and checked here
+      if (conn) {
+          // Only roll back if the transaction was started
+          await conn.rollback().catch(e => console.error("Rollback failed:", e)); 
+      }
+
+      if (err.code === 'ER_DUP_ENTRY') {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: true, message: err.sqlMessage }));
+      } else if (err.code) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: true, code: err.code, message: err.sqlMessage || 'Error registering user' }));
+      } else {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: true, message: 'Error registering user' }));
+      }
+    } finally {
+      // 4. Release is safe because 'conn' is defined outside and checked here
+      if (conn) {
+          conn.release();
+      }
+    }
+  });
+}
 
 // LOGIN USER
 async function loginUser(req, res) {
