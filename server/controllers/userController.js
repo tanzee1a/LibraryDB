@@ -155,6 +155,53 @@ async function getUserFineHistory(req, res, userId) {
     }
 }
 
+// @desc Staff updates a user's profile
+// @route PUT /api/users/:userId
+async function staffUpdateUser(req, res, userId) {
+    try {
+        // TODO: Add Auth check - Staff only
+        const body = await getPostData(req);
+        // Gets { firstName, lastName, email, role } from frontend
+        const userData = JSON.parse(body); 
+
+        const updatedUser = await User.staffUpdateUser(userId, userData);
+        
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        return res.end(JSON.stringify(updatedUser));
+
+    } catch (error) {
+        console.error(`Error updating user ${userId}:`, error);
+        const statusCode = error.message.includes('exists') ? 400 : 500;
+        res.writeHead(statusCode, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ message: 'Could not update user', error: error.message }));
+    }
+}
+
+// @desc Staff deletes a user
+// @route DELETE /api/users/:userId
+async function staffDeleteUser(req, res, userId) {
+    try {
+        // TODO: Add Auth check - Staff only
+        const affectedRows = await User.staffDeleteUser(userId);
+
+        if (affectedRows === 0) {
+            res.writeHead(404, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+            return res.end(JSON.stringify({ message: 'User not found' }));
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        return res.end(JSON.stringify({ message: `User ${userId} deleted` }));
+
+    } catch (error) {
+        console.error(`Error deleting user ${userId}:`, error);
+        // Handle specific "cannot delete" error
+        const statusCode = error.message.includes('Cannot delete user') ? 409 : 500; // 409 Conflict
+        res.writeHead(statusCode, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ message: 'Could not delete user', error: error.message }));
+    }
+}
+
+
 
 // Update exports
 module.exports = {
@@ -164,5 +211,7 @@ module.exports = {
     getUserProfile,
     getUserBorrowHistory, // <-- Add this
     getUserHoldHistory,   // <-- Add this
-    getUserFineHistory    // <-- Add this
+    getUserFineHistory,    // <-- Add this
+    staffUpdateUser,
+    staffDeleteUser 
 };

@@ -1,7 +1,8 @@
 import './user_profile.css';
 // --- REMOVED sampleData & static thumbnails ---
+// At the top of user_profile.jsx
 import React, { useState, useEffect } from 'react'; // --- ADDED useEffect ---
-import { useParams, Link } from 'react-router-dom';   // --- ADDED useParams, Link ---
+import { useParams, Link, useNavigate } from 'react-router-dom'; // --- ADD useNavigate ---
 import { IoCheckmark, IoTrash, IoTimeOutline, IoHourglassOutline, IoWalletOutline } from "react-icons/io5"; // --- ADDED History Icons ---
 import { MdEdit } from "react-icons/md";
 
@@ -11,6 +12,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000
 function UserProfile() {
     // --- State for fetched user, loading, error, editing ---
     const { userId } = useParams(); // Get user ID from URL
+    const navigate = useNavigate();
     const [user, setUser] = useState(null); // Full profile from API
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -179,26 +181,42 @@ function UserProfile() {
     }
     // --- End Edit/Save ---
 
-    // --- TODO: Delete Logic ---
+    // --- End Edit/Save ---
+
     const handleDeleteUser = async () => {
-         if (window.confirm(`Are you sure you want to delete user ${user.firstName} ${user.lastName}? This cannot be undone.`)) {
-             try {
-                 // --- TODO: Create DELETE /api/users/:userId endpoint ---
-                 /*
-                 const response = await fetch(`${API_BASE_URL}/api/users/${userId}`, { 
-                     method: 'DELETE', 
-                     headers: { ... getAuthHeaders() ... } // Staff Auth needed
-                 });
-                 if (!response.ok) throw new Error('Failed to delete user');
-                 // Redirect back to manage users page on success
-                 // navigate('/manage-users'); 
-                 alert('User deleted (simulation)'); // Placeholder
-                 */
-                 alert('Delete action - Not implemented');
-             } catch (err) {
-                 alert(`Error deleting user: ${err.message}`);
-             }
-         }
+        if (window.confirm(`Are you sure you want to delete user ${user.firstName} ${user.lastName}? This cannot be undone.`)) {
+
+            setIsSaving(true); // Reuse isSaving to disable buttons
+            setSaveError('');
+
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                setSaveError('Authentication required to delete.');
+                setIsSaving(false);
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/users/${userId}`, { 
+                    method: 'DELETE', 
+                    headers: { 
+                        'Authorization': `Bearer ${token}` // Add auth header
+                    } 
+                });
+                if (!response.ok) {
+                    const errData = await response.json(); // Get error from backend
+                    throw new Error(errData.error || 'Failed to delete user');
+                }
+
+                alert('User deleted successfully. Redirecting...'); 
+                navigate('/manage-users'); // Redirect to user list
+
+            } catch (err) {
+                // Display the error from the backend (e.g., "Cannot delete user...")
+                setSaveError(err.message);
+                setIsSaving(false); // Re-enable buttons on failure
+            }
+        }
     };
     // --- End Delete ---
 
@@ -365,10 +383,11 @@ function UserProfile() {
                         </button>
                         {/* Show delete only when NOT editing */}
                         {!isEditing && (
-                            <button className="action-circle-button red-button" onClick={handleDeleteUser}>
+                            <button className="action-circle-button red-button" onClick={handleDeleteUser} disabled={isSaving}>
                                 <IoTrash />
                             </button>
                         )}
+                        
                     </div>
                      {/* Display Save Error */}
                      {saveError && <p style={{ color: 'red', marginTop: '5px' }}>{saveError}</p>}
