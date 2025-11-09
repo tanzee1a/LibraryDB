@@ -157,50 +157,69 @@ const Navbar = ({
     }
 
     const staffNavbar = () => {
-    return (
-        <nav className="nav">
-            <ul className="nav-links">
-            <li><a href="/" className="logo"><img className="logo-image logo-image-small" src={Logo} alt="" />LBRY</a></li>
-            <li><a href="/manage-users">Users</a></li>
-            <li><a href="/search">Items</a></li>
-            <li><a href="/manage-borrows">Borrows</a></li>
-            <li><a href="/manage-holds">Holds</a></li>
-            <li><a href="/manage-fines">Fines</a></li>
-            {renderSearchDropdown()}
-            <li className="dropdown">
-            <button className="nav-icon">
-                <IoPersonCircleOutline />
-            </button>
-            <div className="dropdown-menu">
-                    <div className="dropdown-menu-contents">
-                        <div className="category-column">
-                            <p>Profile</p>
-                            {/* FIX APPLIED HERE: Using && for conditional rendering */}
-                            {isLoggedIn && (
-                                <a
-                                    href="#"
-                                        onClick={(e) => {
-                                        e.preventDefault(); // 🛑 Critical Fix: Prevents browser race condition
-                                        localStorage.removeItem('authToken');
-                                        localStorage.removeItem('userRole');
-                                        localStorage.removeItem('userFirstName');
-                                        setIsStaff(false);
-                                        setIsLoggedIn(false); 
-                                        navigate('/login');; 
-                                    }}
-                                >
-                                Log out
-                                </a>
-                            )}
-                            <a href="/staff_page">Dashboard</a>
+        // 1. Retrieve the role from localStorage
+        const staffRole = localStorage.getItem('staffRole');
+        
+        // 2. Define visibility flag: TRUE for Librarian and Assistant Librarian
+        // This variable controls the links that are NOT available to the Clerk.
+        const isLibrarianRole = staffRole === 'Librarian' || staffRole === 'Assistant Librarian';
+
+        return (
+            <nav className="nav">
+                <ul className="nav-links">
+                <li><a href="/" className="logo"><img className="logo-image logo-image-small" src={Logo} alt="LBRY Logo" />LBRY</a></li>
+                
+                {/* These links are hidden from CLERKS by checking if the user
+                  is a Librarian or Assistant Librarian. 
+                */}
+                {isLibrarianRole && <li><a href="/manage-users">Users</a></li>}
+                {isLibrarianRole && <li><a href="/search">Items</a></li>}
+                
+                {/* These links are the CORE access points and are visible 
+                  to ALL staff, including Clerks.
+                */}
+                <li><a href="/manage-borrows">Borrows</a></li>
+                <li><a href="/manage-holds">Holds</a></li>
+                
+                {/* This link is hidden from CLERKS.
+                */}
+                {isLibrarianRole && <li><a href="/manage-fines">Fines</a></li>}
+
+                {renderSearchDropdown()}
+                <li className="dropdown">
+                <button className="nav-icon">
+                    <IoPersonCircleOutline />
+                </button>
+                <div className="dropdown-menu">
+                        <div className="dropdown-menu-contents">
+                            <div className="category-column">
+                                <p>Profile</p>
+                                {/* ... (Logout logic remains the same) ... */}
+                                {isLoggedIn && (
+                                    <a
+                                        href="#"
+                                            onClick={(e) => {
+                                            e.preventDefault(); 
+                                            localStorage.removeItem('authToken');
+                                            localStorage.removeItem('userRole');
+                                            localStorage.removeItem('userFirstName');
+                                            setIsStaff(false);
+                                            setIsLoggedIn(false); 
+                                            navigate('/login');
+                                        }}
+                                    >
+                                    Log out
+                                    </a>
+                                )}
+                                <a href="/staff_page">Dashboard</a>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </li>
-            </ul>
-        </nav>
-    )
-}
+                </li>
+                </ul>
+            </nav>
+        )
+    }
 
     return (
         <div className="nav-container">
