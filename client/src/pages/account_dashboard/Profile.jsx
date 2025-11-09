@@ -6,14 +6,19 @@ export default function UserProfile() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [membershipStatus, setMembershipStatus] = useState('new'); // new, active, canceled, expired
+  // const [membershipStatus, setMembershipStatus] = useState('expired'); // new, active, canceled, expired
+  const [membershipStatus, setMembershipStatus] = useState(null); // <-- Set to null initially
+  const [membershipInfo, setMembershipInfo] = useState(null); // <-- Store membership details
 
+// const membershipSample = { ... } // <-- REMOVE THIS
+/*
   const membershipSample = {
     status: 'active', // 'active', 'canceled', 'expired'
     cardNumber: '1234567891234',
     signupDate: '2024-01-15T12:00:00Z',
     expireDate: '2024-02-15T12:00:00Z',
   }
+*/
   // Membership form state
   const [membershipForm, setMembershipForm] = useState({
     name: '',
@@ -34,6 +39,29 @@ export default function UserProfile() {
     return token;
   }
 
+   // Add this helper function inside your Profile component
+function getStatusFromData(data) {
+    if (!data.membership_status) {
+        return 'new'; // User has never had a membership
+    }
+
+    const isExpired = new Date(data.expires_at) < new Date();
+
+    if (isExpired) {
+        return 'expired';
+    }
+
+    if (data.membership_status === 'ACTIVE' && data.auto_renew === 0) {
+        return 'canceled';
+    }
+
+    if (data.membership_status === 'ACTIVE') {
+        return 'active';
+    }
+
+    return 'expired'; // Default fallback
+}
+
 
   useEffect(() => {
     const token = getToken();
@@ -47,6 +75,11 @@ export default function UserProfile() {
     .then(res => res.ok ? res.json() : Promise.reject('Failed fetch'))
       .then(data => {
         setUser(data);
+        setMembershipStatus(data.membership_status); // <-- Use backend status
+        setMembershipInfo({ // Store the details for rendering
+          cardNumber: data.card_last_four,
+          expireDate: data.expires_at
+        });
         setLoading(false);
       })
       .catch(err => {
@@ -54,6 +87,7 @@ export default function UserProfile() {
         setLoading(false);
       });
   }, []);
+
 
   function handleMembershipSignup(e) {
     e.preventDefault();
@@ -192,10 +226,11 @@ export default function UserProfile() {
           </>
         );
       case 'active': {
-        const cardEnding = membershipSample.cardNumber.slice(-4) || 'XXXX';
-        const signupDate = new Date(membershipSample?.signupDate || Date.now());
-        const expireDate = new Date(signupDate.getTime() + 30*24*60*60*1000);
+        // Use membershipInfo from state, not membershipSample
+        const cardEnding = membershipInfo?.cardNumber || 'XXXX'; 
+        const expireDate = new Date(membershipInfo?.expireDate || Date.now());
         const nextBillingStr = expireDate.toLocaleDateString();
+        
         return (
           <>
             <p>Your membership is active.</p>
@@ -208,11 +243,13 @@ export default function UserProfile() {
         );
       }
       case 'canceled': {
-        const signupDateC = new Date(membershipSample?.signupDate || Date.now());
-        const expireDateC = new Date(signupDateC.getTime() + 30*24*60*60*1000);
+        // Use membershipInfo from state, not membershipSample
+        const expireDateC = new Date(membershipInfo?.expireDate || Date.now());
         const expireStr = expireDateC.toLocaleDateString();
+        
         return (
           <>
+            {/* FIX: Was </Do>, changed to </p> */}
             <p>Your membership is expiring on {expireStr}.</p>
             <button className="btn primary" onClick={handleRenewMembership}>Join Back</button>
           </>
@@ -226,7 +263,8 @@ export default function UserProfile() {
           </>
         );
       default:
-        return null;
+        // This handles the initial 'null' state while loading
+        return <p>Loading membership details...</p>;
     }
   }
 

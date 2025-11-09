@@ -2,6 +2,7 @@
 const db = require('../config/db'); 
 const bcrypt = require('bcrypt');
 
+const SUSPENSION_THRESHOLD = 20.00;
 /**
  * Finds a user by their ID.
  */
@@ -124,54 +125,91 @@ async function staffCreateUser(userData) {
     }
 }
 
-// --- MODIFIED: Find User Profile with History Counts ---
 async function findUserProfileById(userId) {
     const conn = await db.getConnection();
     try {
-        // --- STEP 1: Get Base User Info (MODIFIED) ---
+        // --- STEP 1: Get Base User Info, Role, Fines, and Suspension ---
         const userSql = `
             SELECT 
-                u.user_id, u.email, 
-                ur.role_name AS role, -- Get the name from USER_ROLE
-                u.firstName, u.lastName,
-                sr.role_name AS staff_role 
+                u.user_id, 
+                u.email, 
+                u.firstName, 
+                u.lastName,
+                r.role_name AS role,
+                r.requires_membership_fee,
+                sr.role_name AS staff_role,
+                COALESCE(f.total_fines, 0.00) AS total_fines,
+                (COALESCE(f.total_fines, 0.00) >= ?) AS is_suspended
             FROM USER u
-            JOIN USER_ROLE ur ON u.role_id = ur.role_id -- Join to get the role
-            -- Check role_name from the new table
-            LEFT JOIN STAFF s ON u.user_id = s.user_id AND ur.role_name = 'Staff'
+            JOIN USER_ROLE r ON u.role_id = r.role_id
+            LEFT JOIN (
+                SELECT user_id, SUM(amount) AS total_fines
+                FROM FINE
+                WHERE date_paid IS NULL AND waived_at IS NULL
+                GROUP BY user_id
+            ) AS f ON u.user_id = f.user_id
+            LEFT JOIN STAFF s ON u.user_id = s.user_id AND r.role_name = 'Staff'
             LEFT JOIN STAFF_ROLES sr ON s.role_id = sr.role_id
-            WHERE u.user_id = ?;
+            WHERE u.user_id = ?
         `;
-        // --- END MODIFICATION ---
-        const [userRows] = await conn.query(userSql, [userId]);
+        
+        const [userRows] = await conn.query(userSql, [SUSPENSION_THRESHOLD, userId]);
+        
         if (userRows.length === 0) {
             return undefined; // User not found
         }
+
         const userProfile = userRows[0];
 
-        // --- Steps 2, 3, 4 are UNCHANGED ---
-        // 2. Get Current Borrows Count
-        const loanedOutStatusId = 2; // Assuming 'Loaned Out'
+        // --- STEP 2: Get Loan and Hold counts (as you had before) ---
+        const loanedOutStatusId = 2; // 'Loaned Out'
         const [borrowCountRows] = await conn.query(
             'SELECT COUNT(*) as count FROM BORROW WHERE user_id = ? AND status_id = ?',
             [userId, loanedOutStatusId]
         );
         userProfile.current_borrows = borrowCountRows[0]?.count || 0;
 
-        // 3. Get Active Holds Count (Pending Pickups)
         const [holdCountRows] = await conn.query(
             'SELECT COUNT(*) as count FROM HOLD WHERE user_id = ? AND picked_up_at IS NULL AND canceled_at IS NULL AND expires_at >= NOW()',
             [userId]
         );
         userProfile.active_holds = holdCountRows[0]?.count || 0;
-
-        // 4. Get Outstanding Fines (Amount)
-        const [fineSumRows] = await conn.query(
-            'SELECT SUM(amount) as total_fines FROM FINE WHERE user_id = ? AND date_paid IS NULL AND waived_at IS NULL',
-            [userId]
-        );
-        userProfile.outstanding_fines = fineSumRows[0]?.total_fines || 0;
         
+        // (Note: outstanding_fines is already included in userProfile from STEP 1)
+        userProfile.outstanding_fines = userProfile.total_fines;
+
+
+        // --- STEP 3: Get Membership Status (NEW) ---
+        if (userProfile.requires_membership_fee) {
+            const membershipSql = "SELECT * FROM PATRON_MEMBERSHIP WHERE user_id = ?";
+            const [membershipRows] = await conn.query(membershipSql, [userId]);
+
+            if (membershipRows.length === 0) {
+                userProfile.membership_status = 'new';
+                userProfile.membership_details = null;
+            } else {
+                const membership = membershipRows[0];
+                const isExpired = new Date(membership.expires_at) < new Date();
+
+                if (isExpired) {
+                    userProfile.membership_status = 'expired';
+                } else if (membership.auto_renew === 0) {
+                    userProfile.membership_status = 'canceled';
+                } else {
+                    userProfile.membership_status = 'active';
+                }
+                
+                
+                userProfile.card_last_four = membership.card_last_four;
+                userProfile.expires_at = membership.expires_at;
+                userProfile.auto_renew = membership.auto_renew;
+                
+            }
+        } else {
+            userProfile.membership_status = null;
+            userProfile.membership_details = null;
+        }
+
         return userProfile;
 
     } catch (error) {
