@@ -13,10 +13,14 @@ function Reports() {
     const [selectedReportKey, setSelectedReportKey] = useState(reportOptions[0].key); 
     const [reportData, setReportData] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');    
+    const [error, setError] = useState('');
+
 
     // Fetch data when selectedReportKey changes (NO CHANGES NEEDED HERE)
-    useEffect(() => {
+    useEffect(() => {getReport();}, [selectedReportKey]); 
+
+    function getReport(fData = {}) {
+
         const selectedReport = reportOptions.find(r => r.key === selectedReportKey);
         if (!selectedReport) return;
 
@@ -37,9 +41,9 @@ function Reports() {
         };
 
         fetch(`${API_BASE_URL}${selectedReport.endpoint}`, { 
-            method: "POST" , 
+            method: 'POST' , 
             headers: authHeaders ,
-            body: "garbage"
+            body: filterPostBody(selectedReportKey)
             })
             .then(res => {
                 if (res.status === 401) {
@@ -57,7 +61,22 @@ function Reports() {
                 setError(`Could not load report: ${err.message}`);
                 setLoading(false);
             });
-    }, [selectedReportKey]); 
+        document.getElementById('lookie-here').innerHTML = JSON.stringify(filterPostBody(selectedReportKey));
+    }
+
+    function filterPostBody(reportKey = '') {
+        if (reportKey = 'overdue')
+        {
+            return {
+                date1: document.getElementById('dmin').value, 
+                date2: document.getElementById('dmax').value, 
+                book: document.getElementById('bookCheck').checked,
+                movie: document.getElementById('movieCheck').checked,
+                device: document.getElementById('deviceCheck').checked
+            }
+        }
+        else return {data: 'nope'}
+    }
 
     // Helper function to render table
     const renderReportTable = () => {
@@ -69,7 +88,7 @@ function Reports() {
 
         return (
             <div>
-                <table className="report-table">
+                <table className='report-table'>
                     <thead>
                         <tr>
                             {headers.map(header => <th key={header}>{header.replace(/_/g, ' ').toUpperCase()}</th>)}
@@ -88,33 +107,42 @@ function Reports() {
     };
 
     function renderFilter() {
-        if (selectedReportKey == "overdue") {
+        if (selectedReportKey == 'overdue') {
             return renderOverdueFilter();
         }
-        else if (selectedReportKey == "popular") {
+        else if (selectedReportKey == 'popular') {
             return renderPopularFilter();
         }
-        else if (selectedReportKey == "fines") {
+        else if (selectedReportKey == 'fines') {
             return renderFineFilter();
         }
     }
 
     function renderOverdueFilter() {
-
         return (
             <div>
-                <label for="dmin">Earliest Due Date: </label>
-                <input id="dmin" name="dmin" type="date" value=""></input>
+                <div>
+                    <label for='dmin'>Earliest Due Date: </label>
+                    <input id='dmin' name='dmin' type='date' class='filter-input'></input>
 
-                <label for="dmax">Latest Due Date: </label>
-                <input id="dmax" name="dmax" type="date" value=""></input>
-                
-                <label for="bookCheck">Books: </label>
-                <input id="bookCheck" name="bookCheck" type="checkbox"></input>
-                <label for="movieCheck">Movies: </label>
-                <input id="movieCheck" name="movieCheck" type="checkbox"></input>
-                <label for="deviceCheck">Devices: </label>
-                <input id="deviceCheck" name="deviceCheck" type="checkbox"></input>
+                    <label for='dmax'>Latest Due Date: </label>
+                    <input id='dmax' name='dmax' type='date' class='filter-input'></input>
+                </div>
+                <div>
+                    <label for='bookCheck'>Books: </label>
+                    <input id='bookCheck' name='bookCheck' type='checkbox' class='filter-input' defaultChecked></input>
+
+                    <label for='movieCheck'>Movies: </label>
+                    <input id='movieCheck' name='movieCheck' type='checkbox' class='filter-input' defaultChecked></input>
+
+                    <label for='deviceCheck'>Devices: </label>
+                    <input id='deviceCheck' name='deviceCheck' type='checkbox' class='filter-input' defaultChecked></input>
+                </div>
+                <div>
+                    <button id='overdueButton' onClick={() => {getReport(); }}>Filter</button>
+                </div>
+                <p id='lookie-here'>
+                </p>
             </div>
         );
     };
@@ -123,18 +151,18 @@ function Reports() {
 
         return (
             <div>
-                <label for="popStart">Due Date Min: </label>
-                <input id="popStart" name="popStart" type="date" value=""></input>
+                <label for='popStart'>Due Date Min: </label>
+                <input id='popStart' name='popStart' type='date' class='filter-input'></input>
                 
-                <label for="minBrw">Minimum Borrowed: </label>
-                <input id="minBrw" name="minBrw" type="number" value=""></input>
+                <label for='minBrw'>Minimum Borrowed: </label>
+                <input id='minBrw' name='minBrw' type='number' class='filter-input'></input>
 
-                <label for="bookCheck1"> Books: </label>
-                <input id="bookCheck1" name="bookCheck1" type="checkbox"></input>
-                <label for="movieCheck1"> Movies: </label>
-                <input id="movieCheck1" name="movieCheck1" type="checkbox"></input>
-                <label for="deviceCheck1"> Devices: </label>
-                <input id="deviceCheck1" name="deviceCheck1" type="checkbox"></input>                
+                <label for='bookCheck1'> Books: </label>
+                <input id='bookCheck1' name='bookCheck1' type='checkbox' class='filter-input' defaultChecked></input>
+                <label for='movieCheck1'> Movies: </label>
+                <input id='movieCheck1' name='movieCheck1' type='checkbox' class='filter-input' defaultChecked></input>
+                <label for='deviceCheck1'> Devices: </label>
+                <input id='deviceCheck1' name='deviceCheck1' type='checkbox' class='filter-input' defaultChecked></input>                
             </div>
         );
     };
@@ -143,11 +171,11 @@ function Reports() {
 
         return (
             <div>
-                <label for="minOwe">Minimum Individual Fines: </label>
-                <input id="minOwe" name="minOwe" type="number" min="0" value=""></input>
+                <label for='minOwe'>Minimum Individual Fines: </label>
+                <input id='minOwe' name='minOwe' type='number' min='0' class='filter-input' defaultChecked></input>
 
-                <label for="minFines">Minimum Owed Amount: </label>
-                <input id="minFines" name="minFines" type="number" min="0" value=""></input>
+                <label for='minFines'>Minimum Owed Amount: </label>
+                <input id='minFines' name='minFines' type='number' min='0' class='filter-input' defaultChecked></input>
             </div>
         );
     };
@@ -167,20 +195,20 @@ function Reports() {
 
     // --- UPDATED RETURN BLOCK ---
     return (
-        <div className="page-container reports-container">
+        <div className='page-container reports-container'>
             <h1>Library Reports</h1>
 
             {/* This new wrapper will create the two-column layout */}
-            <div className="reports-layout">
+            <div className='reports-layout'>
                 
                 {/* 1. The new side navigation */}
-                <div className="reports-nav">
+                <div className='reports-nav'>
                     {reportOptions.map(r => (
                         <button 
                             key={r.key}
                             // Apply 'active' class if this report is selected
                             className={`nav-button ${r.key === selectedReportKey ? 'active' : ''}`}
-                            onClick={() => setSelectedReportKey(r.key)}
+                            onClick={() => {setSelectedReportKey(r.key)}}
                         >
                             {r.label}
                         </button>
@@ -188,8 +216,8 @@ function Reports() {
                 </div>
 
                 {/* 2. The existing content area */}
-                <div className="report-content">
-                    <div className="filter-content">
+                <div className='report-content'>
+                    <div className='filter-content'>
                         {selectedReportKey}
                         {renderFilter()}
                     </div>

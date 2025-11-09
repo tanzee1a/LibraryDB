@@ -6,7 +6,7 @@ const Report = require('../models/reportModel');
 async function getOverdueReport(req, res) {
     try {
         // TODO: Add Auth check - Staff only
-        const data = await Report.findOverdueItems();
+        const data = await Report.findOverdueItems(res.body);
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         return res.end(JSON.stringify(data));
     } catch (error) {

@@ -2,7 +2,7 @@
 const db = require('../config/db');
 
 // --- Report 1: Overdue Items ---
-async function findOverdueItems() {
+async function findOverdueItems(filterValues = {date1:'',date2:'', book:true, movie:true, device:true}) {
     const loanedOutStatusId = 2; // Assuming 2 = 'Loaned Out' from BORROW_STATUS
     const sql = `
         SELECT 
@@ -20,12 +20,16 @@ async function findOverdueItems() {
         JOIN USER u ON b.user_id = u.user_id
         JOIN ITEM i ON b.item_id = i.item_id
         JOIN BORROW_STATUS bs ON b.status_id = bs.status_id
-        LEFT JOIN BOOK bk ON i.item_id = bk.item_id AND i.category = 'BOOK'
-        LEFT JOIN MOVIE m ON i.item_id = m.item_id AND i.category = 'MOVIE'
-        LEFT JOIN DEVICE d ON i.item_id = d.item_id AND i.category = 'DEVICE'
+        ${(filterValues.book) ? `LEFT JOIN BOOK bk ON i.item_id = bk.item_id AND i.category = 'BOOK'` : ``}
+        ${(filterValues.movie) ? `LEFT JOIN MOVIE m ON i.item_id = m.item_id AND i.category = 'MOVIE'` : ``}
+        ${(filterValues.device) ? `LEFT JOIN DEVICE d ON i.item_id = d.item_id AND i.category = 'DEVICE'` : ``}
         WHERE 
             b.status_id = ? -- Must be 'Loaned Out'
-            AND b.due_date < CURDATE() -- Due date must be in the past
+            AND b.due_date < ${ (filterValues.date2 != '' && filterValues.date2) ? `${filterValues.date2} AND b.due_date <` : `` } CURDATE() -- Due date must be in the past
+            ${(filterValues.date1 != '') ? filterValues.date1 : ``}
+            ${(filterValues.book != 'false') ? `` : `AND i.category != 'BOOK'`}
+            ${(filterValues.movie != false) ? `` : `AND i.category != 'MOVIE'`}
+            ${(filterValues.device) ? `` : `AND i.category != 'DEVICE'`}
         ORDER BY days_overdue DESC; 
     `;
     const [rows] = await db.query(sql, [loanedOutStatusId]);
