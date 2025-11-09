@@ -18,6 +18,8 @@ import Footer from './pages/footer/footer.jsx';
 import Staff_page from './pages/staff_dashboard/StaffDashboard.jsx';
 import StaffRoute from './pages/staffAuthRoutes/StaffRoute.jsx'; // 👈 Import the guard
 import LibrarianRoute from "./pages/staffAuthRoutes/librarianRoute.jsx";
+import AssistLibRoute from "./pages/staffAuthRoutes/AssistLibRoute.jsx";
+import ClerkRoute from "./pages/staffAuthRoutes/ClerkRoute.jsx";
 import { useState, useEffect } from 'react';
 import './App.css';
 
@@ -96,18 +98,18 @@ function App() {
   <Route 
           path="/staff_page" 
           element={
-            <StaffRoute>
+            <ClerkRoute>
               <Staff_page />
-            </StaffRoute>
+            </ClerkRoute>
           } 
         />
         
         <Route 
           path="/user" 
           element={
-            <StaffRoute>
+            <AssistLibRoute>
               <UserProfile />
-            </StaffRoute>
+            </AssistLibRoute>
           } 
         />
         
@@ -115,45 +117,45 @@ function App() {
         <Route 
           path="/user/:userId" 
           element={
-            <StaffRoute>
+            <AssistLibRoute>
               <UserProfile />
-            </StaffRoute>
+            </AssistLibRoute>
           } 
         />
         
         <Route 
           path="/manage-users" 
           element={
-            <StaffRoute>
+            <AssistLibRoute>
               <ManageUsers />
-            </StaffRoute>
+            </AssistLibRoute>
           } 
         />
         
         <Route 
           path="/manage-borrows" 
           element={
-            <StaffRoute>
+            <ClerkRoute>
               <ManageBorrows />
-            </StaffRoute>
+            </ClerkRoute>
           } 
         />
         
         <Route 
           path="/manage-holds" 
           element={
-            <StaffRoute>
+            <ClerkRoute>
               <ManageHolds />
-            </StaffRoute>
+            </ClerkRoute>
           } 
         />
         
         <Route 
           path="/manage-fines" 
           element={
-            <StaffRoute>
+            <AssistLibRoute>
               <ManageFines />
-            </StaffRoute>
+            </AssistLibRoute>
           } 
         />
         

@@ -64,6 +64,9 @@ function StaffDashboard() {
   // Determine if the logged-in user is a Head Librarian
   // This depends on the profile state being loaded and checking its role_name property
   const isHeadLibrarian = profile && profile.role_name === 'Librarian';
+  const isAssistLibrarian = profile && profile.role_name === 'Assistant Librarian';
+  const isClerk = profile && profile.role_name === 'Clerk';
+
 
 
   return (
@@ -130,16 +133,20 @@ function StaffDashboard() {
           Notifications
           <small>See recent alerts and updates.</small>
         </Link>
+        {(isHeadLibrarian || isAssistLibrarian) &&  (
         <Link to="/search" className="action-card">
           <IoBookOutline className="action-icon" />
           Manage Items
           <small>Add, edit, or remove books, movies, devices.</small>
         </Link>
+        )}
+        {(isHeadLibrarian || isAssistLibrarian) && (
         <Link to="/manage-users" className="action-card">
           <IoPeopleOutline className="action-icon" />
           Manage Users
           <small>View patron details and manage accounts.</small>
         </Link>
+        )}
          <Link to="/manage-borrows" className="action-card">
           <IoSwapHorizontalOutline className="action-icon" />
           Manage Borrows
@@ -150,12 +157,13 @@ function StaffDashboard() {
           Manage Holds & Requests
           <small>Process pending pickups and view waitlists.</small>
         </Link>
+        {(isHeadLibrarian || isAssistLibrarian) && (
         <Link to="/manage-fines" className="action-card"> 
           <IoWalletOutline className="action-icon" />
           Manage Fines
           <small>View and resolve outstanding fines.</small>
         </Link>
-        
+        )}
         {isHeadLibrarian && (
           <Link to="/reports" className="action-card"> 
             <IoDocumentTextOutline className="action-icon" />

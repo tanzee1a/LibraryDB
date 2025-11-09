@@ -8,4 +8,4 @@ async function hashPassword(password) {
 }
 
 // ⚠️ REPLACE 'your_admin_password_here' with the actual password you want!
-hashPassword('assistLib2025'); 
+hashPassword('clerk2025'); 

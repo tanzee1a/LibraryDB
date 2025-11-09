@@ -7,7 +7,7 @@ const StaffRoute = ({ children }) => {
   const userRole = localStorage.getItem('userRole');
 
   // Define valid staff roles (must match your backend logic)
-  const isStaff = userRole === 'Staff' || userRole === 'Librarian';
+  const isStaff = userRole === 'Staff';
 
   // 2. Check 1: Must be authenticated
   if (!token) {
