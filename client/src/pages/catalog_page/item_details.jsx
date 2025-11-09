@@ -39,6 +39,7 @@ function ItemDetails({ isStaff }) {
   const [isEditSubmitting, setIsEditSubmitting] = useState(false);
   const [editMessage, setEditMessage] = useState({ type: '', text: '' });
   // --- END ADD ---
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // --- ADD: Function to get headers ---
   const getAuthHeaders = () => {
@@ -295,6 +296,48 @@ function ItemDetails({ isStaff }) {
       setIsEditSubmitting(false);
     }
   };
+
+  const handleDelete = async () => {
+    // 1. Confirm with the user first!
+    if (!window.confirm("Are you sure you want to permanently delete this item? This action cannot be undone.")) {
+      return;
+    }
+
+    setIsDeleting(true);
+    setEditMessage({ type: '', text: '' }); // Clear other messages
+
+    const headers = getAuthHeaders(); // Use your existing helper
+    if (!headers) {
+      setEditMessage({ type: 'error', text: 'Authentication failed.' });
+      setIsDeleting(false);
+      return;
+    }
+
+    try {
+      // 2. Call the DELETE endpoint
+      const response = await fetch(`${API_BASE_URL}/api/items/${itemId}`, {
+        method: 'DELETE',
+        headers: headers
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to delete item.');
+      }
+      
+      // 3. Handle Success
+      setEditMessage({ type: 'success', text: 'Item deleted successfully. Redirecting...' });
+      
+      // 4. Redirect to the home page (or search page)
+      setTimeout(() => {
+        navigate('/search'); // Redirect to home
+      }, 2000);
+
+    } catch (err) {
+      setEditMessage({ type: 'error', text: err.message });
+      setIsDeleting(false); // Re-enable button on error
+    }
+  };
   
   // These render functions will be used *inside* the edit sheet
   const renderBookFields = () => (
@@ -547,7 +590,7 @@ function ItemDetails({ isStaff }) {
         </div>
       </div>
       {showEditSheet && formData && (
-        <div className="sheet-overlay" onClick={() => !isEditSubmitting && setShowEditSheet(false)}> 
+        <div className="sheet-overlay" onClick={() => !(isEditSubmitting || isDeleting) && setShowEditSheet(false)}>
           <div className="sheet-container" onClick={(e) => e.stopPropagation()}>
             <h2>Edit Item: {item.title || item.device_name}</h2>
             
@@ -586,14 +629,26 @@ function ItemDetails({ isStaff }) {
 
               {/* --- Actions --- */}
               <div className="sheet-actions">
-                <button type="submit" className="action-button primary-button" disabled={isEditSubmitting}>
+                <button
+                    type="button"
+                    className="action-button red-button"
+                    onClick={handleDelete}
+                    disabled={isEditSubmitting || isDeleting}
+                >
+                    {isDeleting ? 'Deleting...' : 'Delete Item'}
+                </button>
+                <button 
+                    type="submit" 
+                    className="action-button primary-button" 
+                    disabled={isEditSubmitting || isDeleting}
+                >
                     {isEditSubmitting ? 'Saving...' : 'Save Changes'}
                 </button>
                 <button
                     type="button"
                     className="action-button secondary-button"
                     onClick={() => setShowEditSheet(false)}
-                    disabled={isEditSubmitting}
+                    disabled={isEditSubmitting || isDeleting}
                 >
                     Cancel
                 </button>
