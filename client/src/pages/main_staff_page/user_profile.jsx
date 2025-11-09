@@ -1,12 +1,9 @@
 import './user_profile.css';
-// --- REMOVED sampleData & static thumbnails ---
-// At the top of user_profile.jsx
 import React, { useState, useEffect } from 'react'; // --- ADDED useEffect ---
 import { useParams, Link, useNavigate } from 'react-router-dom'; // --- ADD useNavigate ---
 import { IoCheckmark, IoTrash, IoTimeOutline, IoHourglassOutline, IoWalletOutline } from "react-icons/io5"; // --- ADDED History Icons ---
 import { MdEdit } from "react-icons/md";
 
-// --- ADDED API_BASE_URL ---
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
 
 function UserProfile() {
@@ -22,13 +19,12 @@ function UserProfile() {
     const [saveError, setSaveError] = useState('');
     const [activeSection, setActiveSection] = useState('borrows'); // State for history tabs
 
-    // --- ADDED State for history lists ---
+    // State for history lists ---
     const [borrowHistory, setBorrowHistory] = useState([]);
     const [holdHistory, setHoldHistory] = useState([]);
     const [fineHistory, setFineHistory] = useState([]);
     const [loadingHistory, setLoadingHistory] = useState(false);
     const [historyError, setHistoryError] = useState('');
-    // --- END ADDED ---
 
     // --- Currency Formatter ---
     const currencyFormatter = new Intl.NumberFormat('en-US', { /* ... */ });
@@ -61,7 +57,10 @@ function UserProfile() {
             })
             .then(data => {
                 setUser(data);
-                setEditedUser(data); // Initialize edit state
+                setEditedUser({
+                    ...data,
+                    staffRole: data.staff_role || 'Clerk' 
+                });
                 setLoading(false);
             })
             .catch(err => {
@@ -131,7 +130,10 @@ function UserProfile() {
             handleSaveChanges(); // Call save function when toggling off
         } else {
              // Reset edit state to current user data when starting edit
-            setEditedUser({ ...user }); 
+            setEditedUser({ 
+                ...user,
+                staffRole: user.staff_role || 'Clerk'
+            });
             setIsEditing(true);
         }
     }
@@ -154,11 +156,12 @@ function UserProfile() {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}` // CRITICAL: Add Auth Header
                 },
-                body: JSON.stringify({ // Send only editable fields
+                body: JSON.stringify({ 
                     firstName: editedUser.firstName,
                     lastName: editedUser.lastName,
                     email: editedUser.email,
-                    role: editedUser.role
+                    role: editedUser.role, // e.g., "Staff"
+                    staffRole: editedUser.staffRole // e.g., "Clerk"
                 })
             });
             if (!response.ok) {
@@ -166,7 +169,7 @@ function UserProfile() {
                  throw new Error(errData.error || `Failed to save changes (Status: ${response.status})`);
             }
             // Success
-            setUser(editedUser);
+            fetchUserProfile(); // <-- ADD THIS LINE
             setIsEditing(false);
         } catch (err) {
             console.error("Save User Error:", err);
@@ -363,6 +366,8 @@ function UserProfile() {
     if (!user) return <div className="page-container"><p>User not found.</p></div>; // Should not happen if fetch works
     // --- End States ---
 
+    const isOriginalRoleStaff = user.role === 'Staff' || user.role === 'Admin';
+
     return (
         <div>
             <div className="page-container">
@@ -399,13 +404,41 @@ function UserProfile() {
                             <>
                             <p> <strong>User ID:</strong> {user.user_id} </p> {/* ID not editable */}
                             <p> <strong>Email:</strong> <input type="email" name="email" value={editedUser.email} onChange={handleInputChange} className="edit-input" required/> </p>
-                            <p> <strong>Role:</strong>
-                                <select name="role" value={editedUser.role} onChange={handleInputChange} className="edit-input" required>
-                                    <option value="Patron">Patron</option>
-                                    <option value="Staff">Staff</option>
-                                </select>
-                                {/* TODO: Add Staff Role selection if role is Staff */}
-                             </p>
+                            {/* CASE 1: User is NOT staff */}
+                            {!isOriginalRoleStaff ? (
+                                <p> <strong>Role:</strong>
+                                    <select name="role" value={editedUser.role} onChange={handleInputChange} className="edit-input" required>
+                                        {/* Only show non-staff roles */}
+                                        <option value="Patron">Patron</option>
+                                        <option value="Student">Student</option>
+                                        <option value="Faculty">Faculty</option>
+                                    </select>
+                                </p>
+                            ) : (
+                                
+                            /* CASE 2: User IS staff */
+                            <>
+                                <p> <strong>Role:</strong>
+                                    {/* Show a disabled input to "lock" their main role */}
+                                    <input 
+                                        type="text" 
+                                        value={editedUser.role} 
+                                        className="edit-input" 
+                                        disabled 
+                                        style={{ backgroundColor: '#eee', cursor: 'not-allowed' }} 
+                                    />
+                                </p>
+                                
+                                <p> <strong>Staff Role:</strong>
+                                    {/* Show the *editable* staff role dropdown */}
+                                    <select name="staffRole" value={editedUser.staffRole} onChange={handleInputChange} className="edit-input" required>
+                                        <option value="Clerk">Clerk</option>
+                                        <option value="Assistant Librarian">Assistant Librarian</option>
+                                        {/* You can add 'Admin' here if you want to allow changing to Admin */}
+                                    </select>
+                                </p>
+                            </>
+                            )}
                             </>
                         ) : (
                             <>
@@ -440,9 +473,6 @@ function UserProfile() {
                             </div>
                         </div>
                         <div className="search-results-contents">
-                          {/* --- REMOVED Static Filters --- */}
-                          {/* <div className="filter-section"> ... </div> */}
-                          {/* Make list full width */}
                           <div className="search-results-list" style={{width: '100%'}}>{renderHistorySection()}</div>
                         </div>
                     </div>
