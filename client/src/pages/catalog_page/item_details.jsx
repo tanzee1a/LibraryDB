@@ -1,6 +1,7 @@
 import './item_details.css';
+import '../catalog_page/search_results.css';
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { FaRegFileAlt } from "react-icons/fa";
 import { IoMdGlobe } from "react-icons/io";
 import { IoBookOutline, IoCalendarClearOutline, IoBarcodeOutline, IoInformationCircleOutline, IoTimerOutline, IoHeartOutline } from "react-icons/io5";
@@ -12,6 +13,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000
 
 function ItemDetails({ isStaff }) {
   const { itemId } = useParams();
+  const navigate = useNavigate();
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -30,6 +32,14 @@ function ItemDetails({ isStaff }) {
   const [wishlistMessage, setWishlistMessage] = useState({ type: '', text: '' });
   const [isWishlisted, setIsWishlisted] = useState(false); // We'll need to check this
   // --- END ADD ---
+
+  // --- ADD THIS NEW STATE FOR EDIT SHEET ---
+  const [showEditSheet, setShowEditSheet] = useState(false);
+  const [formData, setFormData] = useState(null); // Will hold form data
+  const [isEditSubmitting, setIsEditSubmitting] = useState(false);
+  const [editMessage, setEditMessage] = useState({ type: '', text: '' });
+  // --- END ADD ---
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // --- ADD: Function to get headers ---
   const getAuthHeaders = () => {
@@ -165,6 +175,225 @@ function ItemDetails({ isStaff }) {
   };
   // --- END NEW HANDLER FUNCTION ---
 
+  const handleEditClick = () => {
+    if (!item) return;
+    
+    // Pre-populate formData with item data
+    setFormData({
+      ...item,
+      // Use device_name for title if it's a device
+      title: item.category === 'DEVICE' ? item.device_name : item.title,
+      // Convert arrays to comma-separated strings for the input field
+      tags: item.tags ? item.tags.join(', ') : '',
+      creators: item.creators ? item.creators.join(', ') : '',
+      // Format date for <input type="date">
+      published_date: item.published_date ? new Date(item.published_date).toISOString().split('T')[0] : '',
+      quantity: item.quantity || 0, 
+    });
+    
+    setEditMessage({ type: '', text: '' }); // Clear old messages
+    setShowEditSheet(true); // Open the sheet
+  };
+
+  // Updates formData state as user types
+  const handleFormChange = (e) => {
+    const { name, value, type } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'number' ? parseInt(value) || 0 : value
+    }));
+  };
+
+  // Submits the edit
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    setEditMessage({ type: '', text: '' });
+    setIsEditSubmitting(true);
+
+    const headers = getAuthHeaders(); // Uses your existing function
+    if (!headers) {
+      setEditMessage({ type: 'error', text: 'You must be logged in.' });
+      setIsEditSubmitting(false);
+      return;
+    }
+
+    let endpoint = '';
+    let body = {};
+    const tags = formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
+    const creators = formData.creators ? formData.creators.split(',').map(c => c.trim()).filter(Boolean) : [];
+
+    const commonData = {
+        title: formData.title,
+        description: formData.description,
+        thumbnail_url: formData.thumbnail_url,
+        shelf_location: formData.shelf_location,
+        quantity: parseInt(formData.quantity) || 0,
+        language_id: parseInt(formData.language_id) || null,
+        tags: tags,
+    };
+
+    try {
+      switch (item.category) {
+        case 'BOOK':
+          endpoint = `${API_BASE_URL}/api/items/book/${itemId}`;
+          body = {
+            ...commonData,
+            publisher: formData.publisher,
+            published_date: formData.published_date ? new Date(formData.published_date).toISOString().split('T')[0] : null,
+            page_number: parseInt(formData.page_number) || 0,
+            authors: creators,
+          };
+          break;
+        case 'MOVIE':
+          endpoint = `${API_BASE_URL}/api/items/movie/${itemId}`;
+          body = {
+            ...commonData,
+            format_id: parseInt(formData.format_id) || null,
+            runtime: parseInt(formData.runtime) || 0,
+            rating_id: parseInt(formData.rating_id) || null,
+            release_year: parseInt(formData.release_year) || 0,
+            directors: creators,
+          };
+          break;
+        case 'DEVICE':
+          endpoint = `${API_BASE_URL}/api/items/device/${itemId}`;
+          body = {
+            device_name: formData.title, // 'title' in form maps to 'device_name'
+            description: formData.description,
+            thumbnail_url: formData.thumbnail_url,
+            shelf_location: formData.shelf_location,
+            quantity: parseInt(formData.quantity) || 0,
+            tags: tags,
+            manufacturer: formData.manufacturer,
+            device_type: parseInt(formData.device_type) || null,
+          };
+          break;
+        default:
+          throw new Error('Unknown item category.');
+      }
+
+      const response = await fetch(endpoint, {
+        method: 'PUT',
+        headers: headers,
+        body: JSON.stringify(body),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'An error occurred.');
+      }
+
+      setEditMessage({ type: 'success', text: 'Item updated successfully!' });
+      
+      // Reload the page to see changes
+      setTimeout(() => {
+        window.location.reload(); 
+      }, 1500);
+
+    } catch (err) {
+      setEditMessage({ type: 'error', text: err.message || 'Could not update item.' });
+    } finally {
+      setIsEditSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    // 1. Confirm with the user first!
+    if (!window.confirm("Are you sure you want to permanently delete this item? This action cannot be undone.")) {
+      return;
+    }
+
+    setIsDeleting(true);
+    setEditMessage({ type: '', text: '' }); // Clear other messages
+
+    const headers = getAuthHeaders(); // Use your existing helper
+    if (!headers) {
+      setEditMessage({ type: 'error', text: 'Authentication failed.' });
+      setIsDeleting(false);
+      return;
+    }
+
+    try {
+      // 2. Call the DELETE endpoint
+      const response = await fetch(`${API_BASE_URL}/api/items/${itemId}`, {
+        method: 'DELETE',
+        headers: headers
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to delete item.');
+      }
+      
+      // 3. Handle Success
+      setEditMessage({ type: 'success', text: 'Item deleted successfully. Redirecting...' });
+      
+      // 4. Redirect to the home page (or search page)
+      setTimeout(() => {
+        navigate('/search'); // Redirect to home
+      }, 2000);
+
+    } catch (err) {
+      setEditMessage({ type: 'error', text: err.message });
+      setIsDeleting(false); // Re-enable button on error
+    }
+  };
+  
+  // These render functions will be used *inside* the edit sheet
+  const renderBookFields = () => (
+    <>
+      <label>Authors (comma-separated): 
+        <input type="text" name="creators" value={formData.creators || ''} onChange={handleFormChange} className="edit-input" />
+      </label>
+      <label>Publisher: 
+        <input type="text" name="publisher" value={formData.publisher || ''} onChange={handleFormChange} className="edit-input" />
+      </label>
+      <label>Published Date: 
+        <input type="date" name="published_date" value={formData.published_date || ''} onChange={handleFormChange} className="edit-input" />
+      </label>
+      <label>Page Count: 
+        <input type="number" name="page_number" value={formData.page_number || ''} onChange={handleFormChange} className="edit-input" />
+      </label>
+      <label>Language ID: 
+        <input type="number" name="language_id" value={formData.language_id || ''} onChange={handleFormChange} className="edit-input" />
+      </label>
+    </>
+  );
+  
+  const renderMovieFields = () => (
+    <>
+      <label>Directors (comma-separated): 
+        <input type="text" name="creators" value={formData.creators || ''} onChange={handleFormChange} className="edit-input" />
+      </label>
+      <label>Runtime (minutes): 
+        <input type="number" name="runtime" value={formData.runtime || ''} onChange={handleFormChange} className="edit-input" />
+      </label>
+      <label>Release Year: 
+        <input type="number" name="release_year" value={formData.release_year || ''} onChange={handleFormChange} className="edit-input" />
+      </label>
+      <label>Language ID: 
+        <input type="number" name="language_id" value={formData.language_id || ''} onChange={handleFormChange} className="edit-input" />
+      </label>
+      <label>Format ID: 
+        <input type="number" name="format_id" value={formData.format_id || ''} onChange={handleFormChange} className="edit-input" />
+      </label>
+       <label>Rating ID: 
+        <input type="number" name="rating_id" value={formData.rating_id || ''} onChange={handleFormChange} className="edit-input" />
+      </label>
+    </>
+  );
+
+  const renderDeviceFields = () => (
+    <>
+      <label>Manufacturer: 
+        <input type="text" name="manufacturer" value={formData.manufacturer || ''} onChange={handleFormChange} className="edit-input" />
+      </label>
+       <label>Device Type ID: 
+        <input type="number" name="device_type" value={formData.device_type || ''} onChange={handleFormChange} className="edit-input" />
+      </label>
+    </>
+  );
+
   if (loading) return <div className="page-container"><p>Loading item details...</p></div>;
   if (error) return <div className="page-container"><p style={{ color: 'red' }}>Error: {error}</p></div>;
   if (!item) return <div className="page-container"><p>Item data could not be loaded.</p></div>;
@@ -277,7 +506,11 @@ function ItemDetails({ isStaff }) {
                 onError={(e) => { e.target.onerror = null; e.target.src='/placeholder-image.png'; }}
             />
             { isStaff && (
-              <button className="action-button secondary-button">Edit</button>
+              <button 
+              className="action-button secondary-button"
+              onClick={handleEditClick}>
+              Edit
+            </button>
             )}
             <div className="availability-info">
               <p><strong>Available:</strong> <span>{item.available}</span></p>
@@ -356,6 +589,75 @@ function ItemDetails({ isStaff }) {
           </div>
         </div>
       </div>
+      {showEditSheet && formData && (
+        <div className="sheet-overlay" onClick={() => !(isEditSubmitting || isDeleting) && setShowEditSheet(false)}>
+          <div className="sheet-container" onClick={(e) => e.stopPropagation()}>
+            <h2>Edit Item: {item.title || item.device_name}</h2>
+            
+            {editMessage.text && (
+              <p className={`action-message ${editMessage.type}`}>
+                {editMessage.text}
+              </p>
+            )}
+            
+            {/* We use the same <label>...<input className="edit-input" /></label> structure */}
+            {/* from search_results.jsx to get the same styling. */}
+            <form onSubmit={handleFormSubmit}>
+              <label> Title: 
+                <input type="text" name="title" value={formData.title || ''} onChange={handleFormChange} required className="edit-input" />
+              </label>
+              <label> Description: 
+                <textarea name="description" value={formData.description || ''} onChange={handleFormChange} className="edit-input" />
+              </label>
+              <label> Thumbnail URL: 
+                <input type="url" name="thumbnail_url" value={formData.thumbnail_url || ''} onChange={handleFormChange} className="edit-input" />
+              </label>
+              <label> Shelf Location: 
+                <input type="text" name="shelf_location" value={formData.shelf_location || ''} onChange={handleFormChange} className="edit-input" />
+              </label>
+              <label> Quantity (Total): 
+                <input type="number" name="quantity" min="0" value={formData.quantity || 0} onChange={handleFormChange} required className="edit-input" />
+              </label>
+              <label> Tags (comma-separated): 
+                <input type="text" name="tags" value={formData.tags || ''} onChange={handleFormChange} className="edit-input" />
+              </label>
+
+              {/* --- Conditional Fields --- */}
+              {item.category === 'BOOK' && renderBookFields()}
+              {item.category === 'MOVIE' && renderMovieFields()}
+              {item.category === 'DEVICE' && renderDeviceFields()}
+
+              {/* --- Actions --- */}
+              <div className="sheet-actions">
+                <button
+                    type="button"
+                    className="action-button red-button"
+                    onClick={handleDelete}
+                    disabled={isEditSubmitting || isDeleting}
+                >
+                    {isDeleting ? 'Deleting...' : 'Delete Item'}
+                </button>
+                <button 
+                    type="submit" 
+                    className="action-button primary-button" 
+                    disabled={isEditSubmitting || isDeleting}
+                >
+                    {isEditSubmitting ? 'Saving...' : 'Save Changes'}
+                </button>
+                <button
+                    type="button"
+                    className="action-button secondary-button"
+                    onClick={() => setShowEditSheet(false)}
+                    disabled={isEditSubmitting || isDeleting}
+                >
+                    Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* --- END ADD --- */}
     </div>
   )
 }
