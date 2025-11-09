@@ -61,32 +61,27 @@ function Login({ setIsStaff, setIsLoggedIn }) {
       <div className = "login-page-content">
         <div className='login-form-container fade-in'>
           <h2 className='login-form-title'><img className="logo-image-medium" src={Logo} alt="" /></h2>
-          <div className = "login-form">
-            <form onSubmit={handleSubmit}>
-              <div className="form-group">
-                <input 
-                  id="email"
-                  type="text"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-                <label htmlFor="email">Email</label>
-              </div>
-              <div className="form-group">
-                <input 
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-                <label htmlFor="password">Password</label>
-              </div>
-              <div className="form-group">
+          <div>
+            <form className="info-form" onSubmit={handleSubmit}>
+              <input 
+                id="email"
+                type="text"
+                className="input-field"
+                placeholder='Email'
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+              <input 
+                id="password"
+                type="password"
+                className="input-field"
+                placeholder='Password'
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <div>
                 <p>New user? <a className='result-link' href="/register">Create an account</a></p>
-              </div>
-              <div className="form-group">
                 <button type="submit" className='action-button primary-button'>Login</button>
               </div>
       

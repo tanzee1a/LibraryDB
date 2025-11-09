@@ -13,6 +13,14 @@ function Register({ setIsStaff, setIsLoggedIn }) {
   const [lastName, setLastName] = useState("");
   const [errors, setErrors] = useState({});
   const [successMsg, setSuccessMsg] = useState("");
+  const [membershipForm, setMembershipForm] = useState({
+    name: '',
+    cardNumber: '',
+    expDate: '',
+    cvv: '',
+    billingAddress: '',
+  });
+  const [signUpLater, setSignUpLater] = useState(false);
 
   const navigate = useNavigate();
 
@@ -35,6 +43,14 @@ function Register({ setIsStaff, setIsLoggedIn }) {
       e.password = "Password must be 8–12 characters.";
     }
 
+    if (!signUpLater) {
+      if (!membershipForm.name.trim()) e.name = "Name on card is required.";
+      if (!membershipForm.cardNumber.trim()) e.cardNumber = "Card number is required.";
+      if (!membershipForm.expDate.trim()) e.expDate = "Expiration date is required.";
+      if (!membershipForm.cvv.trim()) e.cvv = "CVV is required.";
+      if (!membershipForm.billingAddress.trim()) e.billingAddress = "Billing address is required.";
+    }
+
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -45,6 +61,8 @@ function Register({ setIsStaff, setIsLoggedIn }) {
     setErrors({});
 
     if (!validate()) return;
+
+    console.log("Submitting registration:", { email, password, firstName, lastName, membershipForm, signUpLater });
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/register`, {
@@ -71,7 +89,6 @@ function Register({ setIsStaff, setIsLoggedIn }) {
         body: JSON.stringify({ email, password })
       });
 
-      console.log('Login response status:', loginResponse);
       const loginData = await loginResponse.json();
       console.log('Login response data:', loginData);
 
@@ -97,63 +114,117 @@ function Register({ setIsStaff, setIsLoggedIn }) {
         <div className='login-form-container fade-in'>
           <h2 className='login-form-title'><img className="logo-image logo-image-medium" src={Logo} alt="" /></h2>
           {successMsg && <div className="notice ok">{successMsg}</div>}
-          <div className = "login-form">
-            <form onSubmit={handleSubmit} noValidate>
-              <div className="form-group">
+          <div>
+            <form className="info-form" onSubmit={handleSubmit} noValidate>
+              <input
+                id="firstName"
+                type="text"
+                className="input-field"
+                placeholder="First Name"
+                maxLength={50}
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+              />
+              {errors.firstName && <div className="error">{errors.firstName}</div>}
+
+              <input
+                id="lastName"
+                type="text"
+                className="input-field"
+                placeholder="Last Name"
+                maxLength={50}
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+              />
+              {errors.lastName && <div className="error">{errors.lastName}</div>}
+
+              <input
+                id="email"
+                type="email"
+                className="input-field"
+                placeholder="Email"
+                maxLength={100}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+              {errors.email && <div className="error">{errors.email}</div>}
+
+              <input
+                id="password"
+                type="password"
+                className="input-field"
+                placeholder="Password"
+                minLength={8}
+                maxLength={12}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              {errors.password && <div className="error">{errors.password}</div>}
+
+              <div>
+                <label className="login-header">Membership Payment Info</label>
+                <p className="login-subheader">Eligible members can checkout items at no cost!</p>
+              </div>
+              <input
+                type="text"
+                className="input-field"
+                placeholder="Name on Card"
+                value={membershipForm.name}
+                onChange={(e) => setMembershipForm({ ...membershipForm, name: e.target.value })}
+                disabled={signUpLater}
+              />
+              {errors.name && <div className="error">{errors.name}</div>}
+              <input
+                type="text"
+                className="input-field"
+                placeholder="Card Number"
+                value={membershipForm.cardNumber}
+                onChange={(e) => setMembershipForm({ ...membershipForm, cardNumber: e.target.value })}
+                disabled={signUpLater}
+              />
+              {errors.cardNumber && <div className="error">{errors.cardNumber}</div>}
+              <div className="flex">
                 <input
-                  id="firstName"
+                  className="input-field input-field-small"
                   type="text"
-                  placeholder="John"
-                  maxLength={50}
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="Exp Date (MM/YY)"
+                  value={membershipForm.expDate}
+                  onChange={(e) => setMembershipForm({ ...membershipForm, expDate: e.target.value })}
+                  disabled={signUpLater}
                 />
-                <label htmlFor="firstName">First Name</label>
-                {errors.firstName && <div className="error">{errors.firstName}</div>}
-              </div>
-              <div className="form-group">
+                {errors.expDate && <div className="error">{errors.expDate}</div>}
                 <input
-                  id="lastName"
+                  className="input-field input-field-small"
                   type="text"
-                  placeholder="Doe"
-                  maxLength={50}
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder="CVV"
+                  value={membershipForm.cvv}
+                  onChange={(e) => setMembershipForm({ ...membershipForm, cvv: e.target.value })}
+                  disabled={signUpLater}
                 />
-                <label htmlFor="lastName">Last Name</label>
-                {errors.lastName && <div className="error">{errors.lastName}</div>}
+                {errors.cvv && <div className="error">{errors.cvv}</div>}
               </div>
-              <div className="form-group">
-                <input
-                  id="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  maxLength={100}
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-                <label htmlFor="email">Email</label>
-                {errors.email && <div className="error">{errors.email}</div>}
-              </div>
-              <div className="form-group">
-                <input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  minLength={8}
-                  maxLength={12}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-                <label htmlFor="password">Password</label>
-                {errors.password && <div className="error">{errors.password}</div>}
+              <input
+                type="text"
+                className="input-field"
+                placeholder="Billing Address"
+                value={membershipForm.billingAddress}
+                onChange={(e) => setMembershipForm({ ...membershipForm, billingAddress: e.target.value })}
+                disabled={signUpLater}
+              />
+              {errors.billingAddress && <div className="error">{errors.billingAddress}</div>}
+              <div>
+                  <input
+                    type="checkbox"
+                    id="signUpLater"
+                    checked={signUpLater}
+                    onChange={(e) => setSignUpLater(e.target.checked)}
+                  />
+                  <label className="login-subheader" htmlFor="signUpLater">Sign up membership later</label>
               </div>
               <div className="form-group">
                 <p>Already have an account? <a className='result-link' href="/login">Log in</a></p>
-              </div>
-              <div className="form-group">
                 <p>
                   By signing up, you agree to our
                   <br />

@@ -45,7 +45,6 @@ textarea:focus {
 
 .action-button {
   width: 100%;
-  max-width: 20rem;
   height: 2.8rem;
   padding: 0.5rem 0;
   margin-bottom: 0.6rem;
@@ -54,6 +53,7 @@ textarea:focus {
   font-weight: bold;
   transition: all 0.2s ease;
   text-decoration: none;
+  box-sizing: border-box;
 }
 
 .primary-button {

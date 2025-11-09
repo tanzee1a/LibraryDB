@@ -55,12 +55,14 @@ export default function UserProfile() {
   }
 
   return (
-    <div className="profile-card">
-      <IoPersonCircleOutline className="avatar-icon" aria-hidden="true" />
-      <div>
-        {/* Use data fetched from the API */}
-        <div className="item-title">{user.firstName} {user.lastName}</div>
-        <div className="profile-meta">User ID: {user.user_id} · {user.email}</div>
+    <div>
+      <div className="profile-card">
+        <IoPersonCircleOutline className="avatar-icon" aria-hidden="true" />
+        <div>
+          {/* Use data fetched from the API */}
+          <div className="item-title">{user.firstName} {user.lastName}</div>
+          <div className="profile-meta">User ID: {user.user_id} · {user.email}</div>
+        </div>
       </div>
     </div>
   );

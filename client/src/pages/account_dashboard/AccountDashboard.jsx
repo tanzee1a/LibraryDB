@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './AccountDashboard.css';
+import { useLocation } from 'react-router-dom';
 import Navbar from '../navbar/navbar.jsx';
-import ProfileCard from './UserProfile';
+import ProfileCard from './ProfileCard.jsx';
+import Profile from './Profile.jsx';
 import Fines from './Fines';
 import Loans from './Loans';
 import BorrowHistory from './BorrowHistory';
@@ -24,7 +26,19 @@ const SECTIONS = [
 ];
 
 export default function AccountDashboard({ isLoggedIn, setIsLoggedIn, isStaff, setIsStaff }) {
-  const [active, setActive] = useState('overview');
+  
+    const location = useLocation();
+    const params = new URLSearchParams(location.search);
+    const sectionFromURL = params.get('section');
+
+    const [active, setActive] = useState(sectionFromURL || 'overview');
+
+    // Optional: sync URL change dynamically
+    useEffect(() => {
+      if (sectionFromURL && sectionFromURL !== active) {
+        setActive(sectionFromURL);
+      }
+    }, [sectionFromURL]);
 
   return (
     <div className="dashboard-container">
@@ -130,7 +144,7 @@ export default function AccountDashboard({ isLoggedIn, setIsLoggedIn, isStaff, s
             {active === 'profile' && (
               <section className="card">
                 <div className="section-header"><IoPersonCircleOutline className="icon" /><h2 className="section-title">Profile</h2></div>
-                <ProfileCard />
+                <Profile/>
               </section>
             )}
           </main>

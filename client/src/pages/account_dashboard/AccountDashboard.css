@@ -188,3 +188,36 @@
 
 .avatar-icon { font-size: 46px; color: var(--primary); }
 .profile-meta { color: var(--muted); font-size: 13px; }
+
+.membership-info {
+  margin-top: 1rem;
+}
+
+.info-form {
+  display: grid;
+  gap: 1rem;
+  margin-top: 12px;
+}
+
+.input-field {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.membership-payment-info {
+  margin-bottom: 1rem;
+}
+
+.flex {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.small-spacing {
+  margin: 4px 0;
+}
