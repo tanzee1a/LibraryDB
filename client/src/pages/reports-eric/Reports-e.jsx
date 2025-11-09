@@ -63,12 +63,13 @@ function Reports() {
             });
     }
 
+    // Gets the filtering info entered
     function filterPostBody(reportKey = '') {
         if (reportKey == 'overdue')
         {
             return JSON.stringify({
-                date1: document.getElementById('dmin').value,
-                date2: document.getElementById('dmax').value,
+                date1: `'${document.getElementById('dmin').value}'`,
+                date2: `'${document.getElementById('dmax').value}'`,
                 book: document.getElementById('bookCheck').checked,
                 movie: document.getElementById('movieCheck').checked,
                 device: document.getElementById('deviceCheck').checked
@@ -77,7 +78,7 @@ function Reports() {
         else if (reportKey == 'popular')
         {
             return JSON.stringify({
-                dateEarliest: document.getElementById('popStart').value,
+                dateEarliest: `'${document.getElementById('popStart').value}'`,
                 minBor: document.getElementById('minBrw').value,
                 book: document.getElementById('bookCheck1').checked,
                 movie: document.getElementById('movieCheck1').checked,

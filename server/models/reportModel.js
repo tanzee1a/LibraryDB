@@ -25,8 +25,8 @@ async function findOverdueItems(filterData) {
         LEFT JOIN DEVICE d ON i.item_id = d.item_id AND i.category = 'DEVICE'
         WHERE 
             b.status_id = ? -- Must be 'Loaned Out'
-            ${filterData.date1 != '' ? `AND b.due_date >= ${filterData.date1}` : ``}
-            AND b.due_date < ${filterData.date2 != '' ? `` : ``}CURDATE() -- Due date must be in the past
+            ${filterData.date1 != `''` ? `AND b.due_date >= ${filterData.date1}` : ``}
+            AND b.due_date <${filterData.date2 != `''` ? ` ${filterData.date2} AND b.due_date <` : ``} CURDATE() -- Due date must be in the past
             ${filterData.book ? `` : `AND i.category != 'BOOK'`}
             ${filterData.movie ? `` : `AND i.category != 'MOVIE'`}
             ${filterData.device ? `` : `AND i.category != 'DEVICE'`}
