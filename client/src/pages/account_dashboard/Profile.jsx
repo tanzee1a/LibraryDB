@@ -16,7 +16,6 @@ export default function UserProfile() {
   });
   const [passwordChangeMessage, setPasswordChangeMessage] = useState({ type: '', text: '' });
 
-  
 
 // const membershipSample = { ... } // <-- REMOVE THIS
 /*
@@ -95,6 +94,54 @@ function getStatusFromData(data) {
         setLoading(false);
       });
   }, []);
+
+    function handlePasswordChange(e) {
+    e.preventDefault();
+    setPasswordChangeMessage({ type: '', text: '' });
+
+    const { currentPassword, newPassword, confirmNewPassword } = passwordForm;
+
+    if (newPassword !== confirmNewPassword) {
+        setPasswordChangeMessage({ type: 'error', text: 'New password and confirmation do not match.' });
+        return;
+    }
+
+    const token = getToken();
+    if (!token) return;
+    
+    const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+    };
+
+    const body = JSON.stringify({ 
+        currentPassword, 
+        newPassword // Only send necessary fields
+    });
+
+    fetch(`${API_BASE_URL}/api/my-profile/change-password`, {
+        method: 'POST',
+        headers,
+        body,
+    })
+    .then(async res => {
+        const data = await res.json();
+        if (!res.ok) {
+            // Backend sends 401 for incorrect current password or 500 for server error
+            throw new Error(data.message || 'Failed to change password.');
+        }
+        return data;
+    })
+    .then(data => {
+        setPasswordChangeMessage({ type: 'success', text: 'Password updated successfully!' });
+        // Clear the form after success
+        setPasswordForm({ currentPassword: '', newPassword: '', confirmNewPassword: '' });
+    })
+    .catch(err => {
+        console.error("Password change error:", err);
+        setPasswordChangeMessage({ type: 'error', text: err.message || 'An unexpected error occurred.' });
+    }); 
+  }
 
    // --- NEW RENDER FUNCTION ---
   function renderPasswordChangeSection() {
