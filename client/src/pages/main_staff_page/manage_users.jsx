@@ -109,35 +109,47 @@ function ManageUsers() {
     // --- MODIFIED: handleAddUserSubmit ---
     async function handleAddUserSubmit(e) { // Make async
         e.preventDefault();
-        setIsSubmitting(true);
-        setSubmitError('');
+    setIsSubmitting(true);
+    setSubmitError('');
 
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/users`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                // Send the state directly (ensure names match backend expectations)
-                body: JSON.stringify(newUser) 
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `HTTP error ${response.status}`);
-            }
-
-            // Success
-            console.log("New User Added:", await response.json());
-            setShowAddUserSheet(false);
-            setNewUser(initialUserState); // Reset form
-            fetchUsers(); // Refresh user list
-
-        } catch (err) {
-            console.error("Add User Error:", err);
-            setSubmitError(`Failed to add user: ${err.message}`);
-        } finally {
-            setIsSubmitting(false);
-        }
+    // --- 1. Get the Auth Token ---
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+        setSubmitError('Authentication token missing. Cannot add user.');
+        setIsSubmitting(false);
+        return;
     }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/users`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                // --- 2. Add the Authorization Header ---
+                'Authorization': `Bearer ${token}` 
+            },
+            // Send the state directly (ensure names match backend expectations)
+            body: JSON.stringify(newUser) 
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `HTTP error ${response.status}`);
+        }
+
+        // Success
+        console.log("New User Added:", await response.json());
+        setShowAddUserSheet(false);
+        setNewUser(initialUserState); // Reset form
+        fetchUsers(); // Refresh user list
+
+    } catch (err) {
+        console.error("Add User Error:", err);
+        setSubmitError(`Failed to add user: ${err.message}`);
+    } finally {
+        setIsSubmitting(false);
+    }
+}
     // --- END MODIFIED ---
 
     return (
