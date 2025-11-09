@@ -19,7 +19,7 @@ function Reports() {
     // Fetch data when selectedReportKey changes (NO CHANGES NEEDED HERE)
     useEffect(() => {getReport();}, [selectedReportKey]); 
 
-    function getReport(fData = {}) {
+    function getReport() {
 
         const selectedReport = reportOptions.find(r => r.key === selectedReportKey);
         if (!selectedReport) return;
@@ -198,7 +198,7 @@ function Reports() {
                     <input id='minFines' name='minFines' type='number' min='0' class='filter-input' defaultChecked></input>
                 </div>
                 <div>
-                    <button id='overdueButton' onClick={() => {getReport(); }}>Filter</button>
+                    <button id='fineButton' onClick={() => {getReport(); }}>Filter</button>
                 </div>
             </div>
         );
