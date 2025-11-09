@@ -1,12 +1,15 @@
 // controllers/reportController.js
 const Report = require('../models/reportModel');
+const { getPostData } = require('../utils');
 
 // @desc Get Overdue Items Report
 // @route GET /api/reports/overdue
 async function getOverdueReport(req, res) {
     try {
         // TODO: Add Auth check - Staff only
-        const data = await Report.findOverdueItems(res.body);
+        const reqPost = await getPostData(req);
+        const reqFilters = JSON.parse(reqPost);
+        const data = await Report.findOverdueItems(reqFilters);
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         return res.end(JSON.stringify(data));
     } catch (error) {
@@ -22,7 +25,9 @@ async function getPopularityReport(req, res) {
     try {
         // TODO: Add Auth check - Staff only
         // Optional: Get 'days' parameter from URL query string? e.g., /api/reports/popular?days=30
-        const data = await Report.findMostPopularItems(/* Pass days if needed */);
+        const reqPost = await getPostData(req);
+        const reqFilters = JSON.parse(reqPost);
+        const data = await Report.findMostPopularItems(reqFilters);
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         return res.end(JSON.stringify(data));
     } catch (error) {
@@ -37,7 +42,9 @@ async function getPopularityReport(req, res) {
 async function getFineReport(req, res) {
     try {
         // TODO: Add Auth check - Staff only
-        const data = await Report.findUsersWithOutstandingFines();
+        const reqPost = await getPostData(req);
+        const reqFilters = JSON.parse(reqPost);
+        const data = await Report.findUsersWithOutstandingFines(reqFilters);
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         return res.end(JSON.stringify(data));
     } catch (error) {

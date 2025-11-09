@@ -2,7 +2,7 @@
 const db = require('../config/db');
 
 // --- Report 1: Overdue Items ---
-async function findOverdueItems(filterValues = {date1:'',date2:'', book:true, movie:true, device:true}) {
+async function findOverdueItems(filterData) {
     const loanedOutStatusId = 2; // Assuming 2 = 'Loaned Out' from BORROW_STATUS
     const sql = `
         SELECT 
@@ -20,24 +20,25 @@ async function findOverdueItems(filterValues = {date1:'',date2:'', book:true, mo
         JOIN USER u ON b.user_id = u.user_id
         JOIN ITEM i ON b.item_id = i.item_id
         JOIN BORROW_STATUS bs ON b.status_id = bs.status_id
-        ${(filterValues.book) ? `LEFT JOIN BOOK bk ON i.item_id = bk.item_id AND i.category = 'BOOK'` : ``}
-        ${(filterValues.movie) ? `LEFT JOIN MOVIE m ON i.item_id = m.item_id AND i.category = 'MOVIE'` : ``}
-        ${(filterValues.device) ? `LEFT JOIN DEVICE d ON i.item_id = d.item_id AND i.category = 'DEVICE'` : ``}
+        LEFT JOIN BOOK bk ON i.item_id = bk.item_id AND i.category = 'BOOK'
+        LEFT JOIN MOVIE m ON i.item_id = m.item_id AND i.category = 'MOVIE'
+        LEFT JOIN DEVICE d ON i.item_id = d.item_id AND i.category = 'DEVICE'
         WHERE 
             b.status_id = ? -- Must be 'Loaned Out'
-            AND b.due_date < ${ (filterValues.date2 != '' && filterValues.date2) ? `${filterValues.date2} AND b.due_date <` : `` } CURDATE() -- Due date must be in the past
-            ${(filterValues.date1 != '') ? filterValues.date1 : ``}
-            ${(filterValues.book != 'false') ? `` : `AND i.category != 'BOOK'`}
-            ${(filterValues.movie != false) ? `` : `AND i.category != 'MOVIE'`}
-            ${(filterValues.device) ? `` : `AND i.category != 'DEVICE'`}
+            ${filterData.date1 != '' ? `AND b.due_date >= ${filterData.date1}` : ``}
+            AND b.due_date < ${filterData.date2 != '' ? `` : ``}CURDATE() -- Due date must be in the past
+            ${filterData.book ? `` : `AND i.category != 'BOOK'`}
+            ${filterData.movie ? `` : `AND i.category != 'MOVIE'`}
+            ${filterData.device ? `` : `AND i.category != 'DEVICE'`}
         ORDER BY days_overdue DESC; 
-    `;
+    `; //DATES ARE NON FUNCTIONAL
     const [rows] = await db.query(sql, [loanedOutStatusId]);
     return rows;
 }
 
 // --- Report 2: Most Popular Items (Last 90 days) ---
-async function findMostPopularItems(days = 90) {
+async function findMostPopularItems(filterData) {
+    days = 90;
     const sql = `
         SELECT 
             b.item_id,
@@ -59,7 +60,7 @@ async function findMostPopularItems(days = 90) {
 }
 
 // --- Report 3: User Fine Summary ---
-async function findUsersWithOutstandingFines() {
+async function findUsersWithOutstandingFines(filterData) {
     const sql = `
         SELECT 
             f.user_id,

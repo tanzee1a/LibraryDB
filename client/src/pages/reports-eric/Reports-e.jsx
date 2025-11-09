@@ -61,21 +61,37 @@ function Reports() {
                 setError(`Could not load report: ${err.message}`);
                 setLoading(false);
             });
-        document.getElementById('lookie-here').innerHTML = JSON.stringify(filterPostBody(selectedReportKey));
     }
 
     function filterPostBody(reportKey = '') {
-        if (reportKey = 'overdue')
+        if (reportKey == 'overdue')
         {
-            return {
-                date1: document.getElementById('dmin').value, 
-                date2: document.getElementById('dmax').value, 
+            return JSON.stringify({
+                date1: document.getElementById('dmin').value,
+                date2: document.getElementById('dmax').value,
                 book: document.getElementById('bookCheck').checked,
                 movie: document.getElementById('movieCheck').checked,
                 device: document.getElementById('deviceCheck').checked
-            }
+            })
         }
-        else return {data: 'nope'}
+        else if (reportKey == 'popular')
+        {
+            return JSON.stringify({
+                dateEarliest: document.getElementById('popStart').value,
+                minBor: document.getElementById('minBrw').value,
+                book: document.getElementById('bookCheck1').checked,
+                movie: document.getElementById('movieCheck1').checked,
+                device: document.getElementById('deviceCheck1').checked
+            })
+        }        
+        else if (reportKey == 'fines')
+        {
+            return JSON.stringify({
+                minOwed: document.getElementById('minOwe').value,
+                fineCount: document.getElementById('minFines').value,
+            })
+        }
+        else return JSON.stringify({data: 'none'});
     }
 
     // Helper function to render table
@@ -141,8 +157,6 @@ function Reports() {
                 <div>
                     <button id='overdueButton' onClick={() => {getReport(); }}>Filter</button>
                 </div>
-                <p id='lookie-here'>
-                </p>
             </div>
         );
     };
@@ -151,18 +165,23 @@ function Reports() {
 
         return (
             <div>
-                <label for='popStart'>Due Date Min: </label>
-                <input id='popStart' name='popStart' type='date' class='filter-input'></input>
-                
-                <label for='minBrw'>Minimum Borrowed: </label>
-                <input id='minBrw' name='minBrw' type='number' class='filter-input'></input>
+                <div>
+                    <label for='popStart'>Due Date Min: </label>
+                    <input id='popStart' name='popStart' type='date' class='filter-input'></input>
+                    
+                    <label for='minBrw'>Minimum Borrowed: </label>
+                    <input id='minBrw' name='minBrw' type='number' class='filter-input'></input>
 
-                <label for='bookCheck1'> Books: </label>
-                <input id='bookCheck1' name='bookCheck1' type='checkbox' class='filter-input' defaultChecked></input>
-                <label for='movieCheck1'> Movies: </label>
-                <input id='movieCheck1' name='movieCheck1' type='checkbox' class='filter-input' defaultChecked></input>
-                <label for='deviceCheck1'> Devices: </label>
-                <input id='deviceCheck1' name='deviceCheck1' type='checkbox' class='filter-input' defaultChecked></input>                
+                    <label for='bookCheck1'> Books: </label>
+                    <input id='bookCheck1' name='bookCheck1' type='checkbox' class='filter-input' defaultChecked></input>
+                    <label for='movieCheck1'> Movies: </label>
+                    <input id='movieCheck1' name='movieCheck1' type='checkbox' class='filter-input' defaultChecked></input>
+                    <label for='deviceCheck1'> Devices: </label>
+                    <input id='deviceCheck1' name='deviceCheck1' type='checkbox' class='filter-input' defaultChecked></input> 
+                </div>
+                <div>
+                    <button id='popularButton' onClick={() => {getReport(); }}>Filter</button>
+                </div>               
             </div>
         );
     };
@@ -171,11 +190,16 @@ function Reports() {
 
         return (
             <div>
-                <label for='minOwe'>Minimum Individual Fines: </label>
-                <input id='minOwe' name='minOwe' type='number' min='0' class='filter-input' defaultChecked></input>
+                <div>
+                    <label for='minOwe'>Minimum Individual Fines: </label>
+                    <input id='minOwe' name='minOwe' type='number' min='0' class='filter-input' defaultChecked></input>
 
-                <label for='minFines'>Minimum Owed Amount: </label>
-                <input id='minFines' name='minFines' type='number' min='0' class='filter-input' defaultChecked></input>
+                    <label for='minFines'>Minimum Owed Amount: </label>
+                    <input id='minFines' name='minFines' type='number' min='0' class='filter-input' defaultChecked></input>
+                </div>
+                <div>
+                    <button id='overdueButton' onClick={() => {getReport(); }}>Filter</button>
+                </div>
             </div>
         );
     };
