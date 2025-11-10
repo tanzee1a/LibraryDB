@@ -80,7 +80,10 @@ async function findUsersWithOutstandingFines(filterData) {
             f.date_paid IS NULL -- Must be unpaid
             AND f.waived_at IS NULL -- Must not be waived
         GROUP BY f.user_id, u.firstName, u.lastName -- Group by user
-        HAVING total_amount_due > 0 -- Only show users who owe money
+        HAVING total_amount_due ${filterData.minOwed != '' ? `>= ${filterData.minOwed}` : `> 0`} -- Only show users who owe money
+            ${filterData.maxOwed != '' ? `AND total_amount_due <= ${filterData.maxOwed}` : ``}
+            ${filterData.fineMin != '' ? `AND number_of_fines >= ${filterData.fineMin}` : ``}
+            ${filterData.fineMax != '' ? `AND number_of_fines <= ${filterData.fineMax}` : ``}
         ORDER BY total_amount_due DESC;
     `;
     const [rows] = await db.query(sql);

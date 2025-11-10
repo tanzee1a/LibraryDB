@@ -94,7 +94,9 @@ function Reports() {
         {
             return JSON.stringify({
                 minOwed: document.getElementById('minOwe').value,
-                fineCount: document.getElementById('minFines').value,
+                maxOwed: document.getElementById('maxOwe').value,
+                fineMin: document.getElementById('minFines').value,
+                fineMax: document.getElementById('maxFines').value
             })
         }
         else return JSON.stringify({data: 'none'});
@@ -213,11 +215,18 @@ function Reports() {
         return (
             <div>
                 <div>
-                    <label for='minOwe'>Minimum Individual Fines: </label>
+                    <label for='minOwe'>Minimum Owed Amount: </label>
                     <input id='minOwe' name='minOwe' type='number' min='1' class='filter-input'></input>
 
-                    <label for='minFines'>Minimum Owed Amount: </label>
+                    <label for='maxOwe'>Maximum Owed Amount: </label>
+                    <input id='maxOwe' name='maxOwe' type='number' min='1' class='filter-input'></input>
+                </div>
+                <div>
+                    <label for='minFines'>Minimum Individual Fines: </label>
                     <input id='minFines' name='minFines' type='number' min='0' class='filter-input'></input>
+                    
+                    <label for='maxFines'>Maximum Individual Fines: </label>
+                    <input id='maxFines' name='maxFines' type='number' min='0' class='filter-input'></input>
                 </div>
                 <div>
                     <button id='fineButton' onClick={() => {getReport(); }}>Filter</button>
