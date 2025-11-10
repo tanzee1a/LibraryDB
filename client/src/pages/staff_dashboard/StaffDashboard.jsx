@@ -79,7 +79,16 @@ function StaffDashboard() {
           <IoPersonCircleOutline className="action-icon" />
           <div>
             <h3>Welcome, {profile.firstName} {profile.lastName}!</h3>
-            <small>Role: {profile.role_name} | ID: {profile.user_id}</small> 
+            <small>
+              Role: {profile.role_name} | ID: {profile.user_id}
+              {' '}•{' '}
+              <a 
+                href="/staff-profile" 
+                className="text-blue-600 hover:text-blue-800 hover:underline"
+              >
+                Change your password here!
+              </a>
+            </small> 
           </div>
         </div>
       ) : (

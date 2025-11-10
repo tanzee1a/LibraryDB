@@ -20,6 +20,7 @@ import StaffRoute from './pages/staffAuthRoutes/StaffRoute.jsx'; // 👈 Import 
 import LibrarianRoute from "./pages/staffAuthRoutes/librarianRoute.jsx";
 import AssistLibRoute from "./pages/staffAuthRoutes/AssistLibRoute.jsx";
 import ClerkRoute from "./pages/staffAuthRoutes/ClerkRoute.jsx";
+import StaffProfile from './pages/staff_dashboard/StaffProfile.jsx'; // 👈 NEW IMPORT: Staff's own profile
 import { useState, useEffect } from 'react';
 import './App.css';
 
@@ -95,6 +96,16 @@ function App() {
                 <p><a href="/">Go to Home</a></p>
             </div>
         } />
+
+        <Route 
+            path="/staff-profile" 
+            element={
+              <StaffRoute> 
+                <StaffProfile /> 
+              </StaffRoute>
+            } 
+          />
+
   <Route 
           path="/staff_page" 
           element={
