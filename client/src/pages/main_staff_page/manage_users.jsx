@@ -1,26 +1,22 @@
 import './manage_users.css';
-// --- REMOVED sampleData ---
-import React, { useState, useEffect } from 'react'; // --- ADDED useEffect ---
+import React, { useState, useEffect } from 'react';
 import { FaPlus } from "react-icons/fa";
-import { Link } from 'react-router-dom'; // --- ADDED Link ---
-
-// --- ADDED API_BASE_URL ---
+import { Link } from 'react-router-dom';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
 
 function ManageUsers() {
-    // --- ADDED State for users, loading, error ---
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    // --- END ADDED ---
 
-    // --- Keep Add User Sheet state/handlers ---
+    // --- Add User Sheet state/handlers ---
     const [showAddUserSheet, setShowAddUserSheet] = useState(false);
     const initialUserState = {
         firstName: '', // Changed from first_name
         lastName: '',  // Changed from last_name
         email: '',
         role: 'Patron', // Matches USER.role enum
+        staffRole: 'Clerk',
         temporaryPassword: '', // Added password field
         user_id: '' // Added User ID field
     };
@@ -35,7 +31,7 @@ function ManageUsers() {
     const userFilterOptions = () => {
         // Get the user's role from localStorage
         const userRole = localStorage.getItem('userRole');
-        let roleOptions = ['Patron', 'Staff', 'Admin'];
+        let roleOptions = ['Patron', 'Student', 'Faculty', 'Staff', 'Admin'];
         // If the role is 'Staff', filter out 'Admin'
         if (userRole === 'Staff') {
             roleOptions = roleOptions.filter(opt => opt !== 'Admin');
@@ -270,10 +266,23 @@ function ManageUsers() {
                     <label> Role:
                         <select name="role" className="edit-input" value={newUser.role} onChange={handleInputChange} required>
                             <option value="Patron">Patron</option>
+                            <option value="Student">Student</option> {/* --- ADDED --- */}
+                            <option value="Faculty">Faculty</option> {/* --- ADDED --- */}
                             <option value="Staff">Staff</option>
                         </select>
                     </label>
-                     {/* TODO: Add Staff Role selection if role is Staff */}
+                    {/* --- ADDED: Conditional Staff Role Dropdown --- */}
+                    {newUser.role === 'Staff' && (
+                        <label> Staff Role:
+                            <select name="staffRole" className="edit-input" value={newUser.staffRole} onChange={handleInputChange} required>
+                                {/* These values MUST match the 'role_name' in your STAFF_ROLES table */}
+                                <option value="Clerk">Clerk</option>
+                                <option value="Assistant Librarian">Assistant Librarian</option>
+                                {/* Add 'Admin' or 'Head Librarian' here if they are in your STAFF_ROLES table */}
+                            </select>
+                        </label>
+                    )}
+                    
                     <div className="sheet-actions">
                     <button type="submit" className="action-button primary-button" disabled={isSubmitting}>
                          {isSubmitting ? 'Adding...' : 'Add User'}
@@ -286,7 +295,6 @@ function ManageUsers() {
                 </div>
             </div>
         )}
-        {/* --- END MODIFIED --- */}
         </div>
     )
 }

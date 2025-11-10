@@ -64,9 +64,27 @@ async function registerUser(req, res) {
 
       await conn.commit(); // Commit transaction
 
+      // After successfully committing, generate a token for the new user
+      const token = jwt.sign(
+        { id: userId, email: email, role: roleName, staffRole: null}, // New user is always a Patron
+        SECRET,
+        { expiresIn: '1h' }
+      );
+      
       res.writeHead(201, { 'Content-Type': 'application/json' });
-      // Return the roleName for clarity
-      res.end(JSON.stringify({ message: 'User registered successfully', userId, role: roleName })); 
+      // Return the token and user info, just like /api/login does
+      res.end(JSON.stringify({ 
+        message: 'User registered successfully',
+        token, // <-- Send the token
+        user: { // <-- Send the nested user object
+          id: userId,
+          email: email,
+          role: roleName,
+          firstName: firstName || '',
+          lastName: lastName || '',
+          staffRole: null
+        }
+      })); 
     
     } catch (err) {
       console.error('Registration Error:', err);

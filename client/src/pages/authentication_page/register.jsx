@@ -55,7 +55,7 @@ function Register({ setIsStaff, setIsLoggedIn }) {
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
     setSuccessMsg("");
     setErrors({});
@@ -65,6 +65,8 @@ function Register({ setIsStaff, setIsLoggedIn }) {
     console.log("Submitting registration:", { email, password, firstName, lastName, membershipForm, signUpLater });
 
     try {
+      // --- STEP 1: Register the user ---
+      // This fetch will now return the token AND user object
       const response = await fetch(`${API_BASE_URL}/api/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -76,38 +78,56 @@ function Register({ setIsStaff, setIsLoggedIn }) {
         })
       });
 
+      const registerData = await response.json();
+
       if (!response.ok) {
-        const data = await response.json();
-        alert(data.message);
+        alert(registerData.message || 'Registration failed');
         return;
       }
+      
+      // --- STEP 2: Store login data (token, role, etc.) ---
+      // We get this directly from the /api/register response now
+      localStorage.setItem('authToken', registerData.token);
+      localStorage.setItem('userRole', registerData.user.role);
+      localStorage.setItem('userFirstName', registerData.user.firstName);
 
-      // If we reach here, registration succeeded -> auto-login
-      const loginResponse = await fetch(`${API_BASE_URL}/api/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
-      });
+      // --- STEP 3: If they didn't skip, sign them up for membership ---
+      if (!signUpLater) {
+        console.log("Registration successful, now signing up for membership...");
+        try {
+          const token = registerData.token; // Use the token we just received
+          
+          const membershipResponse = await fetch(`${API_BASE_URL}/api/membership/signup`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(membershipForm)
+          });
 
-      const loginData = await loginResponse.json();
-      console.log('Login response data:', loginData);
-
-      if (loginResponse.ok) {
-        localStorage.setItem('authToken', loginData.token);
-        localStorage.setItem('userRole', loginData.user.role);
-        localStorage.setItem('userFirstName', loginData.user.firstName);
-        navigate('/', { replace: true });
-      } else {
-        const loginErrorMsg = loginData?.message || "Auto-login failed. Please log in manually.";
-        console.error('Auto-login failed:', loginErrorMsg);
-        alert(loginErrorMsg);
+          if (!membershipResponse.ok) {
+            const memError = await membershipResponse.json();
+            alert(`Registration was successful, but membership signup failed: ${memError.message}. Please sign up from your profile.`);
+          } else {
+            console.log("Membership signup successful!");
+          }
+        } catch (memErr) {
+          console.error("Membership signup fetch error:", memErr);
+          alert(`Registration was successful, but membership signup failed: ${memErr.message}. Please sign up from your profile.`);
+        }
       }
+      // --- **** END OF STEP 3 **** ---
+
+      // --- STEP 4: Navigate to homepage ---
+      navigate('/', { replace: true });
+
     } catch (err) {
       console.error(err);
       alert(err.message || "An error occurred. Please try again.");
     }
   };
-
+  
   return (
     <div className='page-container login-page-container'>
       <div className = "login-page-content">

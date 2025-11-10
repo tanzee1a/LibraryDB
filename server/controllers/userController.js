@@ -4,29 +4,28 @@ const { getPostData } = require('../utils');
 
 // @desc Get profile details for the "logged in" user
 // @route GET /api/my-profile
-// NOTE: This function *requires* the 'protect' middleware to run first,
-// which attaches the user's ID to req.userId.
 async function getMyProfile(req, res) {
     try {
-        // --- KEY CHANGE: Use the user ID attached by the 'protect' middleware ---
-        // The 'protect' middleware should have verified the JWT and set req.userId
-        const userId = req.userId; // Use req.userId instead of the temporary hardcoded ID
+        const userId = req.userId; 
 
         if (!userId) {
-            // This should ideally be caught by the middleware, but is a safe check
             res.writeHead(401, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
             return res.end(JSON.stringify({ message: 'User not authenticated' }));
         }
 
-        const user = await User.findById(userId);
+        // --- *** THIS IS THE KEY CHANGE *** ---
+        // Instead of the simple findById, we use the powerful findUserProfileById,
+        // which now gets membership, fines, and suspension status.
+        const userProfile = await User.findUserProfileById(userId);
+        // --- *** END OF CHANGE *** ---
 
-        if (!user) {
+        if (!userProfile) {
             res.writeHead(404, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
             return res.end(JSON.stringify({ message: 'User profile not found' }));
         }
 
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-        return res.end(JSON.stringify(user));
+        return res.end(JSON.stringify(userProfile)); // Return the full profile
 
     } catch (error) {
         console.error("Error in getMyProfile:", error);
@@ -57,9 +56,9 @@ async function getAllUsers(req, res) {
 async function staffCreateUser(req, res) {
     try {
         // TODO: Add Auth check - Staff only
-        const body = await getPostData(req);
+        const userData = await getPostData(req);
         // Expecting firstName, lastName, email, role, temporaryPassword, user_id
-        const userData = JSON.parse(body); 
+        // const userData = JSON.parse(body); 
 
         // Generate user_id if not provided (optional)
         if (!userData.user_id) {
@@ -160,9 +159,9 @@ async function getUserFineHistory(req, res, userId) {
 async function staffUpdateUser(req, res, userId) {
     try {
         // TODO: Add Auth check - Staff only
-        const body = await getPostData(req);
+        const userData = await getPostData(req);
         // Gets { firstName, lastName, email, role } from frontend
-        const userData = JSON.parse(body); 
+        // const userData = JSON.parse(body); 
 
         const updatedUser = await User.staffUpdateUser(userId, userData);
         

@@ -2,6 +2,7 @@
 const db = require('../config/db'); 
 const bcrypt = require('bcrypt');
 
+const SUSPENSION_THRESHOLD = 20.00;
 /**
  * Finds a user by their ID.
  */
@@ -49,11 +50,15 @@ async function findAllUsers() {
 // --- MODIFIED: Staff Creates User (with Hashing) ---
 async function staffCreateUser(userData) {
     // 'role' is the role NAME (e.g., "Student") from the frontend
-    const { user_id, email, role, firstName, lastName, temporaryPassword } = userData;
+    const { user_id, email, role, firstName, lastName, temporaryPassword, staffRole } = userData;
 
     // Basic validation
     if (!user_id || !email || !role || !firstName || !lastName || !temporaryPassword) {
         throw new Error('Missing required fields for user creation.');
+    }
+
+    if (role === 'Staff' && !staffRole) {
+         throw new Error('Staff Role (e.g., Clerk) is required when creating a Staff user.');
     }
 
     // Hash the temporary password
@@ -92,13 +97,21 @@ async function staffCreateUser(userData) {
         `;
         await conn.query(credentialSql, [email, password_hash]);
 
-
-        // 4. If the role is 'Staff', also insert into STAFF table (No change)
-        //    (The 'role' variable is still the name, so this check works)
         if (role === 'Staff') {
-            const defaultStaffRoleId = 3; // Clerk
+            // 4a. Get the specific staff role_id from STAFF_ROLES
+            const [staffRoleRows] = await conn.query(
+                'SELECT role_id FROM STAFF_ROLES WHERE role_name = ?',
+                [staffRole] // Use the new variable from the frontend
+            );
+
+            if (staffRoleRows.length === 0) {
+                throw new Error(`Invalid staff role specified: ${staffRole}`);
+            }
+            const specificStaffRoleId = staffRoleRows[0].role_id; // This is the dynamic ID
+
+            // 4b. Insert into STAFF table using the dynamically found ID
             const staffSql = 'INSERT INTO STAFF (user_id, role_id) VALUES (?, ?)';
-            await conn.query(staffSql, [user_id, defaultStaffRoleId]);
+            await conn.query(staffSql, [user_id, specificStaffRoleId]); // <-- USE new ID
         }
 
         await conn.commit();
@@ -124,54 +137,91 @@ async function staffCreateUser(userData) {
     }
 }
 
-// --- MODIFIED: Find User Profile with History Counts ---
 async function findUserProfileById(userId) {
     const conn = await db.getConnection();
     try {
-        // --- STEP 1: Get Base User Info (MODIFIED) ---
+        // --- STEP 1: Get Base User Info, Role, Fines, and Suspension ---
         const userSql = `
             SELECT 
-                u.user_id, u.email, 
-                ur.role_name AS role, -- Get the name from USER_ROLE
-                u.firstName, u.lastName,
-                sr.role_name AS staff_role 
+                u.user_id, 
+                u.email, 
+                u.firstName, 
+                u.lastName,
+                r.role_name AS role,
+                r.requires_membership_fee,
+                sr.role_name AS staff_role,
+                COALESCE(f.total_fines, 0.00) AS total_fines,
+                (COALESCE(f.total_fines, 0.00) >= ?) AS is_suspended
             FROM USER u
-            JOIN USER_ROLE ur ON u.role_id = ur.role_id -- Join to get the role
-            -- Check role_name from the new table
-            LEFT JOIN STAFF s ON u.user_id = s.user_id AND ur.role_name = 'Staff'
+            JOIN USER_ROLE r ON u.role_id = r.role_id
+            LEFT JOIN (
+                SELECT user_id, SUM(amount) AS total_fines
+                FROM FINE
+                WHERE date_paid IS NULL AND waived_at IS NULL
+                GROUP BY user_id
+            ) AS f ON u.user_id = f.user_id
+            LEFT JOIN STAFF s ON u.user_id = s.user_id AND r.role_name = 'Staff'
             LEFT JOIN STAFF_ROLES sr ON s.role_id = sr.role_id
-            WHERE u.user_id = ?;
+            WHERE u.user_id = ?
         `;
-        // --- END MODIFICATION ---
-        const [userRows] = await conn.query(userSql, [userId]);
+        
+        const [userRows] = await conn.query(userSql, [SUSPENSION_THRESHOLD, userId]);
+        
         if (userRows.length === 0) {
             return undefined; // User not found
         }
+
         const userProfile = userRows[0];
 
-        // --- Steps 2, 3, 4 are UNCHANGED ---
-        // 2. Get Current Borrows Count
-        const loanedOutStatusId = 2; // Assuming 'Loaned Out'
+        // --- STEP 2: Get Loan and Hold counts (as you had before) ---
+        const loanedOutStatusId = 2; // 'Loaned Out'
         const [borrowCountRows] = await conn.query(
             'SELECT COUNT(*) as count FROM BORROW WHERE user_id = ? AND status_id = ?',
             [userId, loanedOutStatusId]
         );
         userProfile.current_borrows = borrowCountRows[0]?.count || 0;
 
-        // 3. Get Active Holds Count (Pending Pickups)
         const [holdCountRows] = await conn.query(
             'SELECT COUNT(*) as count FROM HOLD WHERE user_id = ? AND picked_up_at IS NULL AND canceled_at IS NULL AND expires_at >= NOW()',
             [userId]
         );
         userProfile.active_holds = holdCountRows[0]?.count || 0;
-
-        // 4. Get Outstanding Fines (Amount)
-        const [fineSumRows] = await conn.query(
-            'SELECT SUM(amount) as total_fines FROM FINE WHERE user_id = ? AND date_paid IS NULL AND waived_at IS NULL',
-            [userId]
-        );
-        userProfile.outstanding_fines = fineSumRows[0]?.total_fines || 0;
         
+        // (Note: outstanding_fines is already included in userProfile from STEP 1)
+        userProfile.outstanding_fines = userProfile.total_fines;
+
+
+        // --- STEP 3: Get Membership Status (NEW) ---
+        if (userProfile.requires_membership_fee) {
+            const membershipSql = "SELECT * FROM PATRON_MEMBERSHIP WHERE user_id = ?";
+            const [membershipRows] = await conn.query(membershipSql, [userId]);
+
+            if (membershipRows.length === 0) {
+                userProfile.membership_status = 'new';
+                userProfile.membership_details = null;
+            } else {
+                const membership = membershipRows[0];
+                const isExpired = new Date(membership.expires_at) < new Date();
+
+                if (isExpired) {
+                    userProfile.membership_status = 'expired';
+                } else if (membership.auto_renew === 0) {
+                    userProfile.membership_status = 'canceled';
+                } else {
+                    userProfile.membership_status = 'active';
+                }
+                
+                
+                userProfile.card_last_four = membership.card_last_four;
+                userProfile.expires_at = membership.expires_at;
+                userProfile.auto_renew = membership.auto_renew;
+                
+            }
+        } else {
+            userProfile.membership_status = null;
+            userProfile.membership_details = null;
+        }
+
         return userProfile;
 
     } catch (error) {
@@ -270,50 +320,80 @@ async function findFineHistoryForUser(userId) {
  */
 async function staffUpdateUser(userId, userData) {
     // Get data from controller
-    const { firstName, lastName, email, role } = userData;
+    // 💡 --- FIX 1: Add 'staffRole' to this list ---
+    const { firstName, lastName, email, role, staffRole } = userData;
 
     const conn = await db.getConnection();
     try {
         await conn.beginTransaction();
 
-        // 1. Get the role_id from the role_name (e.g., "Patron")
-        const [roleRows] = await conn.query('SELECT role_id FROM USER_ROLE WHERE role_name = ?', [role]);
-        if (roleRows.length === 0) {
-            throw new Error(`Invalid user role: ${role}`);
-        }
-        const role_id = roleRows[0].role_id;
-
-        // 2. Update the USER table.
-        // Your schema's "ON UPDATE CASCADE" for USER_CREDENTIAL
-        // means changing USER.email here will also update USER_CREDENTIAL.email.
-        const userSql = `
-            UPDATE USER 
-            SET firstName = ?, lastName = ?, email = ?, role_id = ?
-            WHERE user_id = ?
-        `;
-        await conn.query(userSql, [firstName, lastName, email, role_id, userId]);
-
-        // 3. Handle Staff role logic
-        if (role === 'Staff') {
-            // If user is now Staff, add them to STAFF table if not already present
-            const [staffRows] = await conn.query('SELECT * FROM STAFF WHERE user_id = ?', [userId]);
-            if (staffRows.length === 0) {
-                const defaultStaffRoleId = 3; // 'Clerk'
-                await conn.query('INSERT INTO STAFF (user_id, role_id) VALUES (?, ?)', [userId, defaultStaffRoleId]);
+        // --- FIX 2: Use the new logic we discussed ---
+        
+        // CASE 1: User is a Patron, Student, or Faculty
+        if (role === 'Patron' || role === 'Student' || role === 'Faculty') {
+            
+            // 1. Get the role_id from the USER_ROLE table
+            const [roleRows] = await conn.query('SELECT role_id FROM USER_ROLE WHERE role_name = ?', [role]);
+            if (roleRows.length === 0) {
+                throw new Error(`Invalid user role: ${role}`);
             }
+            const role_id = roleRows[0].role_id;
+
+            // 2. Update the USER table.
+            const userSql = `
+                UPDATE USER 
+                SET firstName = ?, lastName = ?, email = ?, role_id = ?
+                WHERE user_id = ?
+            `;
+            await conn.query(userSql, [firstName, lastName, email, role_id, userId]);
+            
+            // (No need to touch the STAFF table, as you wanted!)
+
+        } 
+        // CASE 2: User is a Staff member
+        else if (role === 'Staff' || role === 'Admin') { // Or whatever your staff roles are
+            
+            // 1. Update the USER table (name and email only)
+            // (Their main role_id for "Staff" doesn't change)
+            const userSql = `
+                UPDATE USER 
+                SET firstName = ?, lastName = ?, email = ?
+                WHERE user_id = ?
+            `;
+            await conn.query(userSql, [firstName, lastName, email, userId]);
+
+            // 2. Get the specific staff_role_id from STAFF_ROLES
+            const [staffRoleRows] = await conn.query(
+                'SELECT role_id FROM STAFF_ROLES WHERE role_name = ?',
+                [staffRole] // e.g., "Assistant Librarian"
+            );
+            if (staffRoleRows.length === 0) {
+                throw new Error(`Invalid staff role: ${staffRole}`);
+            }
+            const specificStaffRoleId = staffRoleRows[0].role_id;
+
+            // 3. Update the STAFF table with the new staff role id
+            const staffUpdateSql = `
+                UPDATE STAFF 
+                SET role_id = ?
+                WHERE user_id = ?
+            `;
+            await conn.query(staffUpdateSql, [specificStaffRoleId, userId]);
+
         } else {
-            // If user is no longer Staff, remove them from STAFF table
-            // ON DELETE CASCADE in schema handles this, but we'll be explicit
-            await conn.query('DELETE FROM STAFF WHERE user_id = ?', [userId]);
+            throw new Error("Invalid role specified for update.");
         }
+        // --- END OF FIX 2 ---
 
         await conn.commit();
         return { user_id: userId, ...userData }; // Return updated data
 
     } catch (error) {
         await conn.rollback();
+        
         // Handle duplicate email error
-        if (error.code === 'ER_DUP_ENTRY') {
+        // Be more specific on the unique key constraint name
+        if (error.code === 'ER_DUP_ENTRY' && error.sqlMessage.includes('USER.uq_user_email')) {
             throw new Error('Email address already exists.');
         }
         console.error("Error in staffUpdateUser transaction:", error);
