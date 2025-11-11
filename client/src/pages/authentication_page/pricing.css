@@ -1,0 +1,71 @@
+/* pricing.css */
+
+.pricing-table {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.tier-card {
+  flex: 1;
+  min-width: 220px;
+  border-radius: 8px;
+  background-color: #f0f0f0;
+  padding: 2rem 1rem;
+  text-align: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tier-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.tier-icon {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  color: #007bff;
+}
+
+.tier-name {
+  font-weight: bold;
+  font-size: 1.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.tier-price {
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.tier-limit {
+  margin-bottom: 1rem;
+  color: #555;
+}
+
+.tier-button {
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  border: none;
+  background-color: #007bff;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.tier-button:hover {
+  background-color: #0056b3;
+  transform: scale(1.03);
+}
+
+.tier-button:active {
+  transform: scale(0.97);
+}
+
+.pricing-table .tier-note {
+  font-size: 0.8rem !important;
+  color: var(--muted);
+  margin-top: 0.5rem;
+}

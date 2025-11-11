@@ -1,6 +1,5 @@
 import './navbar.css'
 import { IoSearch, IoPersonCircleOutline } from "react-icons/io5"
-import sampleData from '../../assets/sample_data.json'
 import { Link, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import Logo from "../../assets/logo-light.webp"
@@ -13,7 +12,6 @@ const Navbar = ({
     onNavigateDashboard = () => {}
   }) => {
     const navigate = useNavigate();
-    const filters = sampleData.item_filters;
     const [searchTerm, setSearchTerm] = useState('');
     const [searchType, setSearchType] = useState('Description');
 
@@ -80,7 +78,7 @@ const Navbar = ({
                 <ul className="nav-links">
                     <li><a href="/" className="logo"><img className="logo-image logo-image-small" src={Logo} alt="" />LBRY</a></li>
                     <li><a href="/search" className="logo">Browse</a></li>
-
+                    <li><a href="/pricing" className="logo">Pricing</a></li>
                     <li><Link to="/search?category=BOOK">Books</Link></li>
                     <li><Link to="/search?category=MOVIE">Movies</Link></li>
                     <li><Link to="/search?category=DEVICE">Devices</Link></li>

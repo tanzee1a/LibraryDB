@@ -53,7 +53,6 @@ function staffProtect(req, res, next) {
 
         req.userId = decoded.id; 
         req.userRole = decoded.role; // Optionally attach the role
-        
         next(); 
     } catch (error) {
         console.error("Token verification error:", error.message);

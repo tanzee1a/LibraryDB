@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import HomePage from './pages/home_page/homepage.jsx';
 import Login from './pages/authentication_page/login.jsx';
+import Pricing from './pages/authentication_page/pricing.jsx';
 import Register from './pages/authentication_page/register.jsx';
 import ItemDetails from './pages/catalog_page/item_details.jsx';
 import SearchResults from './pages/catalog_page/search_results.jsx';
@@ -77,6 +78,14 @@ function App() {
             isLoggedIn
               ? <Navigate to="/" replace /> // Redirect to home if already signed in
               : <Register setIsStaff={setIsStaff} setIsLoggedIn={setIsLoggedIn} />
+          }
+        />
+        <Route
+          path="/pricing"
+          element={
+            isLoggedIn
+              ? <Navigate to="/" replace /> // Redirect to home if already signed in
+              : <Pricing setIsStaff={setIsStaff} setIsLoggedIn={setIsLoggedIn} />
           }
         />
         <Route path="/notifications" element={<Notifications />} />

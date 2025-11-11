@@ -1,84 +1,186 @@
-/* This is the new container for the side-by-side layout */
-.reports-layout {
-    display: flex;
-    flex-wrap: wrap; /* Allow wrapping on small screens if needed */
-    gap: 24px; /* Space between the nav and the content */
+.reports-container {
+  padding: 2rem;
+  color: #0b1220;
+  background: #f9fafb;
+  min-height: 100vh;
 }
 
-/* 1. The new navigation sidebar */
+/* Report Tabs */
+.report-tabs {
+  display: flex;
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.tab-button {
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tab-button:hover {
+  background: #f3f4f6;
+}
+
+.tab-button.active {
+  background: #2563eb;
+  color: #fff;
+  border-color: #2563eb;
+}
+
+/* Filters */
+.report-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1rem;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  margin-bottom: 1.5rem;
+}
+
+.filter-group label {
+  margin-right: 0.5rem;
+  margin-left: 0.5rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.filter-group select,
+.filter-group input {
+  border: 1px solid #d1d5db;
+  padding: 0.45rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  background: #f9fafb;
+  transition: border 0.2s;
+}
+
+.filter-group select:focus,
+.filter-group input:focus {
+  outline: none;
+  border-color: #2563eb;
+  background: #fff;
+}
+
+/* Layout */
+.reports-layout {
+  display: grid;
+  grid-template-columns: 250px 1fr;
+  gap: 1.5rem;
+}
+
 .reports-nav {
-    display: flex;
-    flex-direction: column; /* Stack the buttons vertically */
-    gap: 10px; /* Space between the buttons */
-    
-    /* flex-basis: 280px; -> The "default" width of the sidebar
-      flex-shrink: 0;   -> Prevents the sidebar from shrinking 
-    */
-    flex: 0 0 280px; 
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .nav-button {
-    display: block;
-    width: 100%;
-    padding: 12px 18px;
-    
-    font-size: 1rem;
-    font-weight: 500;
-    text-align: left;
-    
-    color: #333;
-    background-color: #f8f9fa; /* Light grey background */
-    border: 1px solid #dee2e6; /* Subtle border */
-    border-radius: 6px;
-    
-    cursor: pointer;
-    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+  padding: 0.8rem 1rem;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
 }
 
 .nav-button:hover {
-    background-color: #e9ecef; /* Darker grey on hover */
-    border-color: #ced4da;
+  background: #f3f4f6;
 }
 
-/* This is the style for the *selected* report button */
 .nav-button.active {
-    background-color: #007bff; /* Primary blue (adjust to your theme) */
-    color: #ffffff;
-    border-color: #007bff;
-    font-weight: 600;
+  background: #2563eb;
+  color: #fff;
+  border-color: #2563eb;
 }
 
-/* 2. The main content area */
 .report-content {
-    /* flex-grow: 1; -> Allows this element to grow and take remaining space
-      flex-basis: 0;  -> Default width is 0, lets it grow from there
-      min-width: 300px; -> Ensures it doesn't get too squished
-    */
-    flex: 1 1 300px;
-    min-width: 300px; /* Or a value that fits your table */
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
-/* Optional: Your existing table styling */
+/* Table */
 .report-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 16px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.report-table th,
-.report-table td {
-    border: 1px solid #ddd;
-    padding: 12px;
-    text-align: left;
-    vertical-align: top;
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 1rem;
 }
 
 .report-table th {
-    background-color: #f4f4f4;
-    font-weight: 600;
+  background: #2563eb;
+  color: #fff;
+  cursor: pointer;
+  padding: 0.8rem;
+  text-align: left;
+  user-select: none;
 }
 
-.report-table tbody tr:nth-child(even) {
-    background-color: #f9f9f9;
+.report-table th:hover {
+  background: #1d4ed8;
+}
+
+.report-table td {
+  padding: 0.7rem;
+  border-bottom: 1px solid #e5e7eb;
+  color: #374151;
+}
+
+.report-table tr:nth-child(even) {
+  background: #f9fafb;
+}
+
+.report-table tr:hover {
+  background: #f3f4f6;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .reports-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .report-filters {
+    flex-direction: column;
+  }
+}
+
+.generate-btn {
+  padding: 0.6rem 1.2rem;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.generate-btn:hover {
+  background: #1d4ed8;
+}
+
+.clear-btn {
+  padding: 0.6rem 1.2rem;
+  background: #e5e7eb;
+  color: #111827;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.clear-btn:hover {
+  background: #d1d5db;
 }

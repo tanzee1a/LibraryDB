@@ -164,7 +164,7 @@ async function loginUser(req, res) {
       const token = jwt.sign(
         { id: user.user_id, email: user.email, role: user.role, staffRole: user.staffRole || null},
         SECRET,
-        { expiresIn: '1h' }
+        { expiresIn: '24h' }
       );
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
