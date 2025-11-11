@@ -32,6 +32,9 @@ function SearchResults({ isStaff }) {
     const [formatsLoading, setFormatsLoading] = useState(true);
     const [formatsError, setFormatsError] = useState('');
 
+    const [userProfile, setUserProfile] = useState({ is_suspended: false, total_fines: 0.00 });
+    const [userProfileLoading, setUserProfileLoading] = useState(true);
+
     const [filterOptions, setFilterOptions] = useState([
         // Initialize with the static 'Item Type' filter
         { 
@@ -69,7 +72,8 @@ function SearchResults({ isStaff }) {
     useEffect(() => {
         setLoading(true);
         setError('');
-
+    
+        // 1. Search Results Fetch (Existing Logic)
         const params = new URLSearchParams();
         if (query) {
             params.set('q', query);
@@ -80,23 +84,24 @@ function SearchResults({ isStaff }) {
             }
         });
         const queryString = params.toString();
-
-        fetch(`${API_BASE_URL}/api/search?${queryString}`) 
+    
+        fetch(`${API_BASE_URL}/api/search?${queryString}`)
             .then(r => { if (!r.ok) throw new Error('Network response failed'); return r.json(); })
             .then(data => { setResults(data || []); setLoading(false); })
             .catch(() => { setError(`Could not load results.`); setLoading(false); });
-
-        // --- ADDED: Fetch Languages ---
+    
+        // 2. Fetch Languages (Existing Logic)
         const fetchLanguages = async () => {
+            // ... (fetch languages logic) ...
             setLanguagesLoading(true);
             setLanguagesError('');
             try {
-                const response = await fetch(`${API_BASE_URL}/api/languages`); // Call your new endpoint
+                const response = await fetch(`${API_BASE_URL}/api/languages`); 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const data = await response.json();
-                setLanguages(data); // Store fetched languages
+                setLanguages(data); 
             } catch (e) {
                 console.error("Failed to fetch languages:", e);
                 setLanguagesError("Failed to load languages."); 
@@ -104,20 +109,20 @@ function SearchResults({ isStaff }) {
                 setLanguagesLoading(false); 
             }
         };
-
         fetchLanguages();
-
-        // --- ADDED: Fetch Movie Formats ---
+    
+        // 3. Fetch Movie Formats (Existing Logic)
         const fetchMovieFormats = async () => {
+            // ... (fetch movie formats logic) ...
             setFormatsLoading(true);
             setFormatsError('');
             try {
-                const response = await fetch(`${API_BASE_URL}/api/movie-formats`); // Call format endpoint
+                const response = await fetch(`${API_BASE_URL}/api/movie-formats`); 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const data = await response.json();
-                setMovieFormats(data); // Store fetched formats
+                setMovieFormats(data); 
             } catch (e) {
                 console.error("Failed to fetch movie formats:", e);
                 setFormatsError("Failed to load formats.");
@@ -125,23 +130,22 @@ function SearchResults({ isStaff }) {
                 setFormatsLoading(false);
             }
         };
-
-        fetchMovieFormats(); // Call fetch formats on mount
-
+        fetchMovieFormats();
+    
+        // 4. Fetch Tags (Existing Logic)
         const fetchTags = async () => {
+            // ... (fetch tags logic) ...
             setTagsLoading(true);
             try {
                 const response = await fetch(`${API_BASE_URL}/api/tags`);
                 if (!response.ok) throw new Error('Failed to fetch tags');
                 const data = await response.json();
                 
-                // Get just the tag names and sort them
                 const tagNames = data.map(tag => tag.tag_name).sort((a, b) => a.localeCompare(b));
                 
-                // Update the filterOptions state
                 setFilterOptions(prevOptions => [
-                    prevOptions[0], // Keep the 'Item Type' filter
-                    { // Add the new dynamic 'Tags' filter
+                    prevOptions[0], 
+                    { 
                         category: 'Tags',
                         param: 'tag',
                         options: tagNames 
@@ -149,15 +153,47 @@ function SearchResults({ isStaff }) {
                 ]);
             } catch (e) {
                 console.error("Failed to fetch tags:", e);
-                // You could set a tagsError state here
             } finally {
                 setTagsLoading(false);
             }
         };
-
-        fetchTags(); // Call fetch tags on mount
-
-    }, [query, searchParams]);
+        fetchTags();
+    
+        // --- 5. ADDED: Fetch User Profile for Suspension Status ---
+        const token = localStorage.getItem('authToken');
+        if (token && !isStaff) { // Only fetch if logged in and not staff view
+            const fetchUserProfile = async () => {
+                setUserProfileLoading(true);
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/my-profile`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+    
+                    if (response.ok) {
+                        const data = await response.json();
+                        setUserProfile({
+                            is_suspended: data.is_suspended,
+                            total_fines: parseFloat(data.outstanding_fines) || 0.00
+                        });
+                    } else {
+                        // Token is likely expired or invalid, reset profile status
+                        setUserProfile({ is_suspended: false, total_fines: 0.00 });
+                    }
+                } catch (error) {
+                    console.error("Error fetching user profile:", error);
+                } finally {
+                    setUserProfileLoading(false);
+                }
+            };
+    
+            fetchUserProfile();
+        } else {
+             // If no token or isStaff, set loading to false immediately
+            setUserProfileLoading(false);
+        }
+        // --- END ADDITION ---
+    
+    }, [query, searchParams, isStaff]); // Added isStaff to the dependency array
 
 
     const handleSearch = (event) => {
@@ -423,14 +459,30 @@ function SearchResults({ isStaff }) {
     const renderItemActionButtons = (item) => {
         if(isStaff) return;
 
-        // 1. If this item's ID is in our 'successful' set, show a message instead of buttons
-        // !! Assumes ID is item.item_id -> change if needed !!
+        // 1. Suspension Check
+        if (userProfileLoading) {
+             return <button className="action-button primary-button" disabled>Loading Status...</button>
+        }
+        
+        if (userProfile.is_suspended) {
+            return (
+                <div className="search-item-actions">
+                    <button className="action-button primary-button disabled-button" disabled>
+                        Account Suspended
+                    </button>
+                    <p className="action-message error">
+                        Fines exceed ${Number(userProfile.total_fines || 0).toFixed(2)}.
+                    </p>
+                </div>
+            );
+        }
+
+        // 2. If this item's ID is in our 'successful' set, show a message instead of buttons
         if (successfulRequestIds.has(item.item_id)) { 
             return <span className="action-message success">Request made!</span>;
         }
 
-        // 2. Is this *specific* item the one currently being submitted?
-        // !! Assumes ID is item.item_id -> change if needed !!
+        // 3. Is this *specific* item the one currently being submitted?
         const isSubmitting = submittingItemId === item.item_id;
 
         return (
@@ -438,27 +490,24 @@ function SearchResults({ isStaff }) {
                 {item.available > 0 ? (
                     <button 
                         className="action-button primary-button"
-                        // !! Assumes ID is item.item_id -> change if needed !!
                         onClick={() => handleLoanAction(item.item_id, 'request')}
-                        // Disable if this item is submitting, OR if *any* other item is submitting
-                        disabled={isSubmitting || submittingItemId !== null} 
+                        // Disable if submitting, OR if suspended (though checked above, good for safety)
+                        disabled={isSubmitting || submittingItemId !== null || userProfile.is_suspended} 
                     >
                         {isSubmitting ? 'Requesting...' : 'Request Pickup'}
                     </button>
                 ) : (
                     <button 
                         className="action-button secondary-button"
-                        // !! Assumes ID is item.item_id -> change if needed !!
                         onClick={() => handleLoanAction(item.item_id, 'waitlist')}
-                        // Disable if this item is submitting, OR if *any* other item is submitting
-                        disabled={isSubmitting || submittingItemId !== null} 
+                        // Disable if submitting, OR if suspended (though checked above, good for safety)
+                        disabled={isSubmitting || submittingItemId !== null || userProfile.is_suspended} 
                     >
                         {isSubmitting ? 'Joining...' : 'Join Waitlist'}
                     </button>
                 )}
 
-                {/* 3. Display an error/success message only if it belongs to *this* item */}
-                {/* !! Assumes ID is item.item_id -> change if needed !! */}
+                {/* 4. Display an error/success message only if it belongs to *this* item */}
                 {actionMessage.itemId === item.item_id && (
                     <p className={`action-message ${actionMessage.type}`}>
                         {actionMessage.text}

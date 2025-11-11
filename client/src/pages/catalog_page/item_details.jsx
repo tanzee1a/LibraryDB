@@ -18,6 +18,9 @@ function ItemDetails({ isStaff }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const [userProfile, setUserProfile] = useState({ is_suspended: false, total_fines: 0.00 });
+  const [userProfileLoading, setUserProfileLoading] = useState(true);
+
   // --- ADD NEW STATE ---
   // State for handling the loan request action (pickup or waitlist)
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -72,6 +75,42 @@ function ItemDetails({ isStaff }) {
         });
     }
   }, [itemId]);
+
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    // Only fetch if a user is logged in AND they are not staff
+    if (!token || isStaff) {
+      setUserProfileLoading(false);
+      return;
+    }
+
+    const fetchUserProfile = async () => {
+      setUserProfileLoading(true);
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/my-profile`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setUserProfile({
+            is_suspended: data.is_suspended,
+            // Convert to number here, using the Number() constructor for safety
+            total_fines: Number(data.outstanding_fines) || 0.00
+          });
+        } else {
+          // Failed to fetch profile (e.g., token expired)
+          setUserProfile({ is_suspended: false, total_fines: 0.00 });
+        }
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+      } finally {
+        setUserProfileLoading(false);
+      }
+    };
+
+    fetchUserProfile();
+  }, [isStaff]);
 
 
   // --- ADD: New handler for Wishlist ---
@@ -521,51 +560,68 @@ function ItemDetails({ isStaff }) {
             </div>
 
             {/* --- UPDATE THIS SECTION --- */}
+            {(userProfileLoading && !isStaff) && (
+                <p className={`action-message`}>Loading User Status...</p>
+            )}
 
-            {/* Display Success/Error Messages */}
+            {/* Check 2: Suspension Status (Highest Priority) */}
+            {(!userProfileLoading && !isStaff && userProfile.is_suspended) && (
+                <div className="search-item-actions" style={{marginTop: '10px'}}>
+                    <button className="action-button primary-button disabled-button" disabled>
+                        Account Suspended
+                    </button>
+                    <p className="action-message error">
+                        ⚠️ Borrowing is suspended due to outstanding fines ($${userProfile.total_fines.toFixed(2)}).
+                    </p>
+                </div>
+            )}
+
+            {/* Check 3: Display Success/Error Messages */}
             {actionMessage.text && (
-              <p className={`action-message ${actionMessage.type}`}>
-                {actionMessage.text}
-              </p>
+                <p className={`action-message ${actionMessage.type}`}>
+                    {actionMessage.text}
+                </p>
             )}
 
             {wishlistMessage.text && (
-              <p className={`action-message ${wishlistMessage.type}`}>
-                {wishlistMessage.text}
-              </p>
+                <p className={`action-message ${wishlistMessage.type}`}>
+                    {wishlistMessage.text}
+                </p>
             )}
 
-            {!isWishlisted && (
-              <button 
-                className="action-button secondary-button" 
-                style={{marginTop: '10px'}}
-                onClick={handleWishlistAction}
-                disabled={isWishlistSubmitting}
-              >
-                <IoHeartOutline style={{marginRight: '8px'}} />
-                {isWishlistSubmitting ? 'Saving...' : 'Save for Later'}
-              </button>
+            {/* Check 4: Wishlist Button (Always available unless suspended) */}
+            {/* Disable if suspended (or submitting) */}
+            {(!isWishlisted && !isStaff && !userProfile.is_suspended) && (
+                <button
+                    className="action-button secondary-button"
+                    style={{ marginTop: '10px' }}
+                    onClick={handleWishlistAction}
+                    disabled={isWishlistSubmitting}
+                >
+                    <IoHeartOutline style={{ marginRight: '8px' }} />
+                    {isWishlistSubmitting ? 'Saving...' : 'Save for Later'}
+                </button>
             )}
 
-            {/* Only show buttons if a request hasn't been successfully made */}
-            {!requestMade && (
-              item.available > 0 ? (
-                <button 
-                  className="action-button primary-button"
-                  onClick={() => handleLoanAction('request')}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? 'Requesting...' : 'Request Pickup'}
-                </button>
-              ) : (
-                <button 
-                  className="action-button secondary-button"
-                  onClick={() => handleLoanAction('waitlist')}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? 'Joining...' : 'Join Waitlist'}
-                </button>
-              )
+            {/* Check 5: Loan/Waitlist Buttons (Only available if NOT suspended and request hasn't been made) */}
+            {(!requestMade && !isStaff && !userProfile.is_suspended) && (
+                item.available > 0 ? (
+                    <button
+                        className="action-button primary-button"
+                        onClick={() => handleLoanAction('request')}
+                        disabled={isSubmitting}
+                    >
+                        {isSubmitting ? 'Requesting...' : 'Request Pickup'}
+                    </button>
+                ) : (
+                    <button
+                        className="action-button secondary-button"
+                        onClick={() => handleLoanAction('waitlist')}
+                        disabled={isSubmitting}
+                    >
+                        {isSubmitting ? 'Joining...' : 'Join Waitlist'}
+                    </button>
+                )
             )}
             {/* --- END UPDATE --- */}
           </div>
