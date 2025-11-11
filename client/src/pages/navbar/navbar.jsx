@@ -15,11 +15,12 @@ const Navbar = ({
     const navigate = useNavigate();
     const filters = sampleData.item_filters;
     const [searchTerm, setSearchTerm] = useState('');
+    const [searchType, setSearchType] = useState('Description');
 
     const handleSearch = (event) => {
         if (event.key === 'Enter' && searchTerm.trim()) {
-        event.preventDefault();
-        navigate(`/search?q=${encodeURIComponent(searchTerm.trim())}`);
+            event.preventDefault();
+            navigate(`/search?q=${encodeURIComponent(searchTerm.trim())}&searchType=${searchType}`);
         }
     };
 
@@ -31,14 +32,29 @@ const Navbar = ({
                         <div className="dropdown-menu-contents">
                             <div className="category-column">
                                     <IoSearch />
-                                <input
-                                    type="text"
-                                    className="search-input"
-                                    placeholder="Search the entire library..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    onKeyDown={handleSearch}
-                                />
+                                    <div className="nav-search-container">
+                                        <select
+                                            className="nav-search-type-dropdown"
+                                            value={searchType}
+                                            onChange={(e) => setSearchType(e.target.value)}
+                                        >
+                                            <option value="Description">Description</option>
+                                            <option value="Title">Title</option>
+                                            <option value="Manufacturer">Manufacturer</option>
+                                            <option value="Author">Author</option>
+                                            <option value="Director">Director</option>
+                                            <option value="Tag">Tag</option>
+                                        </select>
+                                        <input
+                                            type="text"
+                                            className="nav-search-input" 
+                                            placeholder="Search the entire library..."
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            onKeyDown={handleSearch}
+                                        />
+                                    </div>
+
                                 <p>Quick Links</p>
                                 <Link to="/search?category=BOOK">Books</Link>
                                 <Link to="/search?category=MOVIE">Movies</Link>
