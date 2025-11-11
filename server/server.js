@@ -19,6 +19,9 @@ const {
     payFine, userPayFine, waiveFine, getAllBorrows, getAllHolds, cancelHold, staffCheckoutItem, getAllFines, staffCreateFine, getAllStatus, cancelMyHold
 } = require('./controllers/loanController');
 
+const { 
+    getMyNotifications, getStaffNotifications, markNotificationAsRead 
+} = require('./controllers/notificationController');
 const { registerUser, loginUser } = require('./controllers/loginRegisterController');
 const { saveItem, unsaveItem, getMyWishlist } = require('./controllers/wishlistController');
 const { getMyProfile, getAllUsers, staffCreateUser, getUserProfile, getUserBorrowHistory, getUserHoldHistory, getUserFineHistory, staffUpdateUser, staffDeleteUser, changePassword} = require('./controllers/userController');
@@ -277,6 +280,21 @@ const server = http.createServer((req, res) => {
         }
         else if (req.url === '/api/membership/renew' && req.method === 'POST') {
             protect(req, res, () => renew(req, res));
+            return;
+        }
+        // --- Notification Routes ---
+        else if (req.url === '/api/my-notifications' && req.method === 'GET') {
+            protect(req, res, () => getMyNotifications(req, res));
+            return;
+        }
+        else if (req.url === '/api/staff-notifications' && req.method === 'GET') {
+            staffProtect(req, res, () => getStaffNotifications(req, res));
+            return;
+        }
+        else if (req.url.match(/^\/api\/notifications\/([0-9]+)\/read$/) && req.method === 'POST') {
+            const notificationId = req.url.split('/')[3];
+            // Use 'protect' - it works for both patrons and staff
+            protect(req, res, () => markNotificationAsRead(req, res, notificationId));
             return;
         }
     
