@@ -6,7 +6,8 @@ const pool = require('../config/db'); // Adjust this path to your db connection 
  * @access  Private (Patron)
  */
 const getMyNotifications = async (req, res) => {
-    const patronUserId = req.user.user_id; // From 'protect' middleware
+    // --- FIX: Use req.userId, consistent with your staffController.js
+    const patronUserId = req.userId; // From 'protect' middleware
 
     try {
         const [notifications] = await pool.query(
@@ -25,7 +26,7 @@ const getMyNotifications = async (req, res) => {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(notifications));
     } catch (error) {
-        console.error(error);
+        console.error("Error in getMyNotifications:", error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ message: 'Server error' }));
     }
@@ -37,8 +38,16 @@ const getMyNotifications = async (req, res) => {
  * @access  Private (Staff)
  */
 const getStaffNotifications = async (req, res) => {
-    const staffUserId = req.user.user_id; // From 'staffProtect' middleware
-    const staffRoleId = req.user.role_id; // From 'staffProtect' middleware
+    // --- FIX: Use req.userId, consistent with your staffController.js
+    console.log(`[DEBUG] getStaffNotifications: req.userId is: ${req.userId}`);
+    const staffUserId = req.userId; // From 'staffProtect' middleware
+
+    if (!staffUserId) {
+         console.error("--- NOTIFICATION CONTROLLER ERROR: staffUserId is missing from req.userId ---");
+         res.writeHead(401, { 'Content-Type': 'application/json' });
+         res.end(JSON.stringify({ message: 'Authentication error: User ID not found.' }));
+         return;
+    }
 
     try {
         const [notifications] = await pool.query(
@@ -49,15 +58,17 @@ const getStaffNotifications = async (req, res) => {
             FROM NOTIFICATION n
             LEFT JOIN NOTIFICATION_READ_STATUS r 
                 ON n.notification_id = r.notification_id AND r.user_id = ?
-            WHERE n.target_role_id = ?
+            -- Hard-code the 'Staff' User Role ID (4) and also check for personal user ID
+            WHERE n.target_role_id = 4 OR n.target_user_id = ?
             ORDER BY n.created_at DESC;
             `,
-            [staffUserId, staffRoleId]
+            // Pass the staffUserId for the JOIN and for the WHERE clause
+            [staffUserId, staffUserId]
         );
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(notifications));
     } catch (error) {
-        console.error(error);
+        console.error("Error in getStaffNotifications:", error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ message: 'Server error' }));
     }
@@ -69,7 +80,8 @@ const getStaffNotifications = async (req, res) => {
  * @access  Private (Patron or Staff)
  */
 const markNotificationAsRead = async (req, res, notificationId) => {
-    const userId = req.user.user_id; // From 'protect' middleware
+    // --- FIX: Use req.userId, consistent with your staffController.js
+    const userId = req.userId; // From 'protect' middleware
 
     if (!notificationId) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -77,9 +89,13 @@ const markNotificationAsRead = async (req, res, notificationId) => {
         return;
     }
 
+    if (!userId) {
+         res.writeHead(401, { 'Content-Type': 'application/json' });
+         res.end(JSON.stringify({ message: 'Authentication error: User ID not found.' }));
+         return;
+    }
+
     try {
-        // 'INSERT IGNORE' will silently fail if the row already exists, which is fine.
-        // Or use ON DUPLICATE KEY UPDATE
         await pool.query(
             `
             INSERT INTO NOTIFICATION_READ_STATUS (notification_id, user_id, read_at)
@@ -92,7 +108,7 @@ const markNotificationAsRead = async (req, res, notificationId) => {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ message: 'Notification marked as read' }));
     } catch (error) {
-        console.error(error);
+        console.error("Error in markNotificationAsRead:", error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ message: 'Server error' }));
     }

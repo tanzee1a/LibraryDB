@@ -7,28 +7,50 @@ function Notifications() {
   const [allNotifications, setAllNotifications] = useState([]);
 
   // Helper to get token (replace with your auth context/storage)
-  const getToken = () => localStorage.getItem('token');
+  const getToken = () => localStorage.getItem('authToken');
 
-  const fetchStaffNotifications = async () => {
-    try {
-      const token = getToken();
-      if (!token) return; // Don't fetch if not logged in
+const fetchStaffNotifications = async () => {
+        // --- DEBUG 1: Is this function even being called? ---
+        console.log("[DEBUG] fetchStaffNotifications: Function called.");
 
-      const res = await fetch(`${API_BASE_URL}/api/staff-notifications`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
+        try {
+        const token = getToken();
+        
+        // --- DEBUG 2: Are we getting the token? ---
+        console.log("[DEBUG] fetchStaffNotifications: Token is:", token);
+
+        if (!token) {
+            console.error("[ERROR] fetchStaffNotifications: No token found. Fetch aborted.");
+            return; // Don't fetch if not logged in
         }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setAllNotifications(data);
-      } else {
-        console.error("Failed to fetch staff notifications");
-      }
-    } catch (error) {
-      console.error("Error fetching staff notifications:", error);
-    }
-  };
+
+        // --- DEBUG 3: If we have a token, we are attempting to fetch ---
+        console.log(`[DEBUG] fetchStaffNotifications: Attempting to fetch from ${API_BASE_URL}/api/staff-notifications`);
+
+        const res = await fetch(`${API_BASE_URL}/api/staff-notifications`, {
+            headers: {
+            'Authorization': `Bearer ${token}`
+            }
+        });
+
+        // --- DEBUG 4: What was the response? ---
+        console.log(`[DEBUG] fetchStaffNotifications: Response status: ${res.status}`);
+
+        if (res.ok) {
+            const data = await res.json();
+            console.log("[DEBUG] fetchStaffNotifications: Data received:", data);
+            setAllNotifications(data);
+        } else {
+            console.error("Failed to fetch staff notifications. Status:", res.status);
+        }
+        } catch (error) {
+        console.error("Error fetching staff notifications:", error);
+        }
+    };
+
+    useEffect(() => {
+        fetchStaffNotifications();
+    }, []);
 
   useEffect(() => {
     fetchStaffNotifications();
