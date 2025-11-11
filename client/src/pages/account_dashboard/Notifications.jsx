@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { IoNotificationsOutline } from 'react-icons/io5';
 import { Link } from 'react-router-dom';
 
@@ -8,7 +9,7 @@ function Notifications() {
   const [allNotifications, setAllNotifications] = useState([]);
 
   // Helper to get token (replace with your auth context/storage)
-  const getToken = () => localStorage.getItem('token');
+  const getToken = () => localStorage.getItem('authToken');
 
   const fetchNotifications = async () => {
     try {
