@@ -1,7 +1,7 @@
 const pool = require('../config/db');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const SECRET = process.env.JWT_SECRET || 'default_secret_key';
+const SECRET = process.env.JWT_SECRET || 'super_secret_key';
 
 // Helper to generate a unique user_id
 function generateUserId() {
@@ -120,7 +120,7 @@ async function loginUser(req, res) {
   req.on('end', async () => {
     try {
       // SECRET needs to be defined in scope for jwt.sign
-      const SECRET = process.env.JWT_SECRET || 'your-super-secret-key'; 
+      const SECRET = process.env.JWT_SECRET || 'super_secret_key'; 
       const { email, password } = JSON.parse(body);
 
       const [rows] = await pool.query(

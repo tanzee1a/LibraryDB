@@ -1,6 +1,6 @@
 // authMiddleware.js (Corrected version)
 const jwt = require('jsonwebtoken');
-const SECRET = process.env.JWT_SECRET || 'your-super-secret-key';
+const SECRET = process.env.JWT_SECRET || 'super_secret_key';
 
 // Middleware to protect routes
 function protect(req, res, next) {
