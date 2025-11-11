@@ -25,9 +25,12 @@ function Register({ setIsStaff, setIsLoggedIn }) {
   const navigate = useNavigate();
 
   // Input validation
+// Replace your existing 'validate' function with this one
   const validate = () => {
     const e = {};
+    const { name, cardNumber, expDate, cvv, billingAddress } = membershipForm;
 
+    // --- User field validation ---
     if (!email.trim()) {
       e.email = "Email is required.";
     } else {
@@ -43,16 +46,80 @@ function Register({ setIsStaff, setIsLoggedIn }) {
       e.password = "Password must be 8–12 characters.";
     }
 
+    if (!firstName.trim()) e.firstName = "First name is required.";
+    if (!lastName.trim()) e.lastName = "Last name is required.";
+
+
+    // --- Membership field validation (if not signing up later) ---
     if (!signUpLater) {
-      if (!membershipForm.name.trim()) e.name = "Name on card is required.";
-      if (!membershipForm.cardNumber.trim()) e.cardNumber = "Card number is required.";
-      if (!membershipForm.expDate.trim()) e.expDate = "Expiration date is required.";
-      if (!membershipForm.cvv.trim()) e.cvv = "CVV is required.";
-      if (!membershipForm.billingAddress.trim()) e.billingAddress = "Billing address is required.";
+      if (!name.trim()) e.name = "Name on card is required.";
+      if (!billingAddress.trim()) e.billingAddress = "Billing address is required.";
+
+      // Card Number: 13-16 digits
+      if (cardNumber.length < 13 || cardNumber.length > 16) {
+        e.cardNumber = 'Card number must be 13-16 digits.';
+      }
+
+      // CVV: 3-4 digits
+      if (cvv.length < 3 || cvv.length > 4) {
+        e.cvv = 'CVV must be 3 or 4 digits.';
+      }
+
+      // Expiry Date: Check format and ensure it's not in the past
+      if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(expDate)) {
+        e.expDate = 'Must be in MM/YY format (e.g., 05/26).';
+      } else {
+        const [month, year] = expDate.split('/');
+        // Get the last day of the expiry month
+        const lastDayOfExpiryMonth = new Date(Number(`20${year}`), Number(month), 0);
+        const today = new Date();
+
+        if (lastDayOfExpiryMonth < today) {
+          e.expDate = 'Card is expired.';
+        }
+      }
     }
 
     setErrors(e);
     return Object.keys(e).length === 0;
+  };
+
+  // Add this function inside your Register component
+  const handleMembershipFormChange = (e) => {
+    const { name, value } = e.target;
+    let processedValue = value;
+
+    // 1. Card Number: Only allow digits, max 16
+    if (name === 'cardNumber') {
+      processedValue = value.replace(/\D/g, '').slice(0, 16);
+    }
+
+    // 2. CVV: Only allow digits, max 4 (for Amex)
+    if (name === 'cvv') {
+      processedValue = value.replace(/\D/g, '').slice(0, 4);
+    }
+
+    // 3. Expiry Date: Format as MM/YY
+    if (name === 'expDate') {
+      processedValue = value
+        .replace(/\D/g, '') // Remove non-digits
+        .replace(/(\d{2})(\d)/, '$1/$2') // Add slash after first 2 digits
+        .slice(0, 5); // Max 5 chars (MM/YY)
+    }
+
+    // Update the form state
+    setMembershipForm(prevForm => ({
+      ...prevForm,
+      [name]: processedValue
+    }));
+
+    // Clear the error for this field as the user types
+    if (errors[name]) {
+      setErrors(prevErrors => ({
+        ...prevErrors,
+        [name]: null
+      }));
+    }
   };
 
 const handleSubmit = async (e) => {
@@ -191,36 +258,40 @@ const handleSubmit = async (e) => {
                 type="text"
                 className="input-field"
                 placeholder="Name on Card"
+                name="name" // <-- ADD NAME
                 value={membershipForm.name}
-                onChange={(e) => setMembershipForm({ ...membershipForm, name: e.target.value })}
+                onChange={handleMembershipFormChange} // <-- USE NEW HANDLER
                 disabled={signUpLater}
               />
               {errors.name && <div className="error">{errors.name}</div>}
               <input
-                type="text"
+                type="text" // <-- CHANGE TO "text"
                 className="input-field"
                 placeholder="Card Number"
+                name="cardNumber" // <-- ADD NAME
                 value={membershipForm.cardNumber}
-                onChange={(e) => setMembershipForm({ ...membershipForm, cardNumber: e.target.value })}
+                onChange={handleMembershipFormChange} // <-- USE NEW HANDLER
                 disabled={signUpLater}
               />
               {errors.cardNumber && <div className="error">{errors.cardNumber}</div>}
               <div className="flex">
                 <input
                   className="input-field input-field-small"
-                  type="text"
+                  type="text" // <-- CHANGE TO "text"
                   placeholder="Exp Date (MM/YY)"
+                  name="expDate" // <-- ADD NAME
                   value={membershipForm.expDate}
-                  onChange={(e) => setMembershipForm({ ...membershipForm, expDate: e.target.value })}
+                  onChange={handleMembershipFormChange} // <-- USE NEW HANDLER
                   disabled={signUpLater}
                 />
                 {errors.expDate && <div className="error">{errors.expDate}</div>}
                 <input
                   className="input-field input-field-small"
-                  type="text"
+                  type="text" // <-- CHANGE TO "text"
                   placeholder="CVV"
+                  name="cvv" // <-- ADD NAME
                   value={membershipForm.cvv}
-                  onChange={(e) => setMembershipForm({ ...membershipForm, cvv: e.target.value })}
+                  onChange={handleMembershipFormChange} // <-- USE NEW HANDLER
                   disabled={signUpLater}
                 />
                 {errors.cvv && <div className="error">{errors.cvv}</div>}
@@ -229,11 +300,13 @@ const handleSubmit = async (e) => {
                 type="text"
                 className="input-field"
                 placeholder="Billing Address"
+                name="billingAddress" // <-- ADD NAME
                 value={membershipForm.billingAddress}
-                onChange={(e) => setMembershipForm({ ...membershipForm, billingAddress: e.target.value })}
+                onChange={handleMembershipFormChange} // <-- USE NEW HANDLER
                 disabled={signUpLater}
               />
               {errors.billingAddress && <div className="error">{errors.billingAddress}</div>}
+              
               <div>
                   <input
                     type="checkbox"
