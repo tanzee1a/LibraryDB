@@ -173,7 +173,9 @@ function SearchResults({ isStaff }) {
                         const data = await response.json();
                         setUserProfile({
                             is_suspended: data.is_suspended,
-                            total_fines: parseFloat(data.outstanding_fines) || 0.00
+                            total_fines: parseFloat(data.outstanding_fines) || 0.00,
+                            requires_membership: data.requires_membership_fee,
+                            membership_status: data.membership_status // 'active', 'expired', 'canceled', etc.
                         });
                     } else {
                         // Token is likely expired or invalid, reset profile status
@@ -463,15 +465,30 @@ function SearchResults({ isStaff }) {
         if (userProfileLoading) {
              return <button className="action-button primary-button" disabled>Loading Status...</button>
         }
+
+        const isSuspended = userProfile.is_suspended;
+        const membershipExpired = userProfile.requires_membership && userProfile.membership_status !== 'active';
+        const isDenied = isSuspended || membershipExpired;
         
-        if (userProfile.is_suspended) {
+        if (isDenied) {
+            let denialMessage = 'Account Suspended';
+            let subMessage = '';
+    
+            if (isSuspended) {
+                denialMessage = 'Account Suspended (Fines)';
+                subMessage = `Fines exceed $${Number(userProfile.total_fines || 0).toFixed(2)}.`;
+            } else if (membershipExpired) {
+                denialMessage = 'Membership Required';
+                subMessage = `Your membership is currently not active.`;
+            }
+    
             return (
                 <div className="search-item-actions">
                     <button className="action-button primary-button disabled-button" disabled>
-                        Account Suspended
+                        {denialMessage}
                     </button>
                     <p className="action-message error">
-                        Fines exceed ${Number(userProfile.total_fines || 0).toFixed(2)}.
+                        {subMessage}
                     </p>
                 </div>
             );

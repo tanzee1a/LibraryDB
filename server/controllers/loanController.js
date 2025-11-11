@@ -1,6 +1,40 @@
 const Loan = require('../models/loanModel');
 const { getPostData } = require('../utils');
 const url = require('url'); // <<< ADD THIS LINE
+const userModel = require('../models/userModel');
+
+
+async function checkBorrowingEligibility(userId) {
+    const userProfile = await userModel.findUserProfileById(userId);
+
+    if (!userProfile) {
+        throw new Error('User profile not found.');
+    }
+
+    // 1. Check for fine suspension (existing logic)
+    if (userProfile.is_suspended) {
+        throw new Error(`Borrowing suspended due to $${userProfile.total_fines.toFixed(2)} in outstanding fines.`);
+    }
+
+    // 2. Check for membership status (NEW MEMBERSHIP LOGIC)
+    if (userProfile.requires_membership_fee) {
+        // If they require a fee and are NOT 'active', deny the request
+        if (userProfile.membership_status !== 'active') {
+            
+            let reason;
+            if (userProfile.membership_status === 'expired') {
+                reason = 'Your membership has expired.';
+            } else if (userProfile.membership_status === 'canceled') {
+                 reason = 'Your membership is not set to auto-renew.';
+            } else {
+                reason = 'Membership is required for this user role.'; // Includes 'new' status
+            }
+
+            throw new Error(`Borrowing denied. ${reason} Please activate or renew your membership.`);
+        }
+    }
+    // If all checks pass, the function completes without throwing an error
+}
 
 // @desc User requests pickup for an available item
 // @route POST /api/request/:itemId
@@ -8,11 +42,13 @@ const url = require('url'); // <<< ADD THIS LINE
 async function requestPickup(req, res, itemId) {
     try {
         const userId = req.userId; // 🔑 Sourced from auth middleware
+        await checkBorrowingEligibility(userId);
         const result = await Loan.requestPickup(itemId, userId);
         res.writeHead(201, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify(result));
     } catch (error) {
         console.error("Error in requestPickup controller:", error);
+        const statusCode = error.message.includes('Borrowing denied') || error.message.includes('Borrowing suspended') ? 403 : 400;
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ message: 'Could not request pickup', error: error.message }));
     }
@@ -85,11 +121,13 @@ async function markFound(req, res, borrowId) {
 async function placeWaitlistHold(req, res, itemId) {
     try {
         const userId = req.userId; // 🔑 Sourced from auth middleware
+        await checkBorrowingEligibility(userId);
         const result = await Loan.placeWaitlistHold(itemId, userId);
         res.writeHead(201, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify(result));
     } catch (error) {
         console.error("Error in placeWaitlistHold controller:", error);
+        const statusCode = error.message.includes('Borrowing denied') || error.message.includes('Borrowing suspended') ? 403 : 400;
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ message: 'Could not place on waitlist', error: error.message }));
     }

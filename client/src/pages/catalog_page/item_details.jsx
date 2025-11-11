@@ -18,7 +18,13 @@ function ItemDetails({ isStaff }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const [userProfile, setUserProfile] = useState({ is_suspended: false, total_fines: 0.00 });
+  // --- State for User Profile/Suspension/Membership ---
+  const [userProfile, setUserProfile] = useState({ 
+    is_suspended: false, 
+    total_fines: 0.00, 
+    requires_membership: false, 
+    membership_status: null 
+  });
   const [userProfileLoading, setUserProfileLoading] = useState(true);
 
   // --- ADD NEW STATE ---
@@ -94,13 +100,21 @@ function ItemDetails({ isStaff }) {
         if (response.ok) {
           const data = await response.json();
           setUserProfile({
-            is_suspended: data.is_suspended,
-            // Convert to number here, using the Number() constructor for safety
-            total_fines: Number(data.outstanding_fines) || 0.00
+              is_suspended: data.is_suspended,
+              total_fines: Number(data.outstanding_fines) || 0.00,
+              // --- ADDED MEMBERSHIP FIELDS ---
+              requires_membership: data.requires_membership_fee,
+              membership_status: data.membership_status
+              // --- END ADDED ---
           });
-        } else {
-          // Failed to fetch profile (e.g., token expired)
-          setUserProfile({ is_suspended: false, total_fines: 0.00 });
+      } else {
+          // Ensure defaults are safe if fetch fails
+          setUserProfile({ 
+              is_suspended: false, 
+              total_fines: 0.00,
+              requires_membership: false,
+              membership_status: null 
+          }); 
         }
       } catch (error) {
         console.error("Error fetching user profile:", error);
@@ -564,17 +578,32 @@ function ItemDetails({ isStaff }) {
                 <p className={`action-message`}>Loading User Status...</p>
             )}
 
-            {/* Check 2: Suspension Status (Highest Priority) */}
-            {(!userProfileLoading && !isStaff && userProfile.is_suspended) && (
-                <div className="search-item-actions" style={{marginTop: '10px'}}>
-                    <button className="action-button primary-button disabled-button" disabled>
-                        Account Suspended
-                    </button>
-                    <p className="action-message error">
-                        ⚠️ Borrowing is suspended due to outstanding fines ($${userProfile.total_fines.toFixed(2)}).
-                    </p>
-                </div>
-            )}
+            {/* --- Eligibility Checks --- */}
+            {
+                !userProfileLoading && !isStaff && (() => {
+                    const isSuspended = userProfile.is_suspended;
+                    const membershipExpired = userProfile.requires_membership && userProfile.membership_status !== 'active';
+                    
+                    if (isSuspended || membershipExpired) {
+                        let denialMessage = isSuspended ? 'Account Suspended (Fines)' : 'Membership Required';
+                        let subMessage = isSuspended 
+                            ? `⚠️ Borrowing suspended due to outstanding fines ($${Number(userProfile.total_fines || 0).toFixed(2)}).`
+                            : `⚠️ Borrowing denied. Your membership is currently not active.`;
+
+                        return (
+                            <div className="search-item-actions" style={{ marginTop: '10px' }}>
+                                <button className="action-button primary-button disabled-button" disabled>
+                                    {denialMessage}
+                                </button>
+                                <p className="action-message error">{subMessage}</p>
+                            </div>
+                        );
+                    }
+                    
+                    // If eligible, return null to proceed to normal buttons
+                    return null;
+                })()
+            }
 
             {/* Check 3: Display Success/Error Messages */}
             {actionMessage.text && (
@@ -589,9 +618,9 @@ function ItemDetails({ isStaff }) {
                 </p>
             )}
 
-            {/* Check 4: Wishlist Button (Always available unless suspended) */}
-            {/* Disable if suspended (or submitting) */}
-            {(!isWishlisted && !isStaff && !userProfile.is_suspended) && (
+            {/* Check 4: Wishlist Button */}
+            {/* Only show the wishlist button if no denial message was rendered */}
+            {(!isWishlisted && !isStaff && !(userProfile.is_suspended || (userProfile.requires_membership && userProfile.membership_status !== 'active'))) && (
                 <button
                     className="action-button secondary-button"
                     style={{ marginTop: '10px' }}
@@ -603,8 +632,9 @@ function ItemDetails({ isStaff }) {
                 </button>
             )}
 
-            {/* Check 5: Loan/Waitlist Buttons (Only available if NOT suspended and request hasn't been made) */}
-            {(!requestMade && !isStaff && !userProfile.is_suspended) && (
+            {/* Check 5: Loan/Waitlist Buttons */}
+            {/* Only show the borrowing buttons if no denial message was rendered and request hasn't been made */}
+            {(!requestMade && !isStaff && !(userProfile.is_suspended || (userProfile.requires_membership && userProfile.membership_status !== 'active'))) && (
                 item.available > 0 ? (
                     <button
                         className="action-button primary-button"
