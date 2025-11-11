@@ -141,7 +141,7 @@ const Navbar = ({
                                 href="/account"
                                 onClick={(e) => {
                                     e.preventDefault();
-                                    handleNavToSection('wishlist'); // Navigate to the 'wishlist' section
+                                    handleNavToSection('holds'); // Navigate to the 'wishlist' section
                                 }}
                             >
                             Your Holds
