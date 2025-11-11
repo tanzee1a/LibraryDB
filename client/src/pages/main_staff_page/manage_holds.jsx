@@ -40,23 +40,26 @@ function ManageHolds() {
     const fetchHolds = () => {
         setLoading(true);
         setError('');
-        // TODO: Add filter params from selectedFilters to the fetch URL
-        const queryString = searchParams.toString(); // For now, just use existing URL params
+        const queryString = searchParams.toString(); 
 
         const token = localStorage.getItem('authToken'); 
+        
+        if (!token) {
+            setError('Authentication token missing. Please log in.');
+            setLoading(false); // <-- Fixed the typo here
+            return;
+        }
+
+        // --- Define the headers ---
         const authHeaders = {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}` 
         };
-        
-        if (!token) {
-            setError('Authentication token missing. Please log in.');
-            setLoadingStats(false);
-            setLoadingProfile(false);
-            return;
-        }
 
-        fetch(`${API_BASE_URL}/api/holds?${queryString}`) // Include query string
+        fetch(`${API_BASE_URL}/api/holds?${queryString}`, {
+        method: 'GET',
+        headers: authHeaders
+        })
             .then(r => { if (!r.ok) throw new Error('Network response failed'); return r.json(); })
             .then(data => { setHolds(data || []); setLoading(false); })
             .catch(err => { console.error("Fetch Holds Error:", err); setError('Could not load holds.'); setLoading(false); });
