@@ -365,7 +365,7 @@ async function staffCreateFine(req, res) {
 
         const body = await getPostData(req);
         // Expecting borrow_id, user_id, fee_type, amount, notes
-        const fineData = JSON.parse(body); 
+        const fineData = (typeof body === 'string') ? JSON.parse(body) : body; 
 
         const newFine = await Loan.staffCreateFine(fineData, staff_user_id);
         
