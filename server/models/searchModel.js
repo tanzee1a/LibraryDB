@@ -20,7 +20,10 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description')
     const fromItemJoin = `FROM ITEM i `;
 
     // --- 1. Build BOOK Query Part ---
-    if (categoryFilter.length === 0 || categoryFilter.includes('BOOK')) {
+    // Only search books if:
+    // 1. We are NOT searching by 'Director' or 'Manufacturer'
+    // 2. The category filter allows it (or is empty)
+    if (searchType !== 'Director' && searchType !== 'Manufacturer' && (categoryFilter.length === 0 || categoryFilter.includes('BOOK'))) {
         let bookParams = [];
         let bookWhereClauses = [];
         let bookJoins = [
@@ -93,7 +96,10 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description')
     }
 
     // --- 2. Build MOVIE Query Part ---
-     if (categoryFilter.length === 0 || categoryFilter.includes('MOVIE')) {
+    // Only search movies if:
+    // 1. We are NOT searching by 'Author' or 'Manufacturer'
+    // 2. The category filter allows it (or is empty)
+     if (searchType !== 'Author' && searchType !== 'Manufacturer' && (categoryFilter.length === 0 || categoryFilter.includes('MOVIE'))) {
         let movieParams = [];
         let movieWhereClauses = [];
         let movieJoins = [
@@ -164,7 +170,10 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description')
      }
 
     // --- 3. Build DEVICE Query Part ---
-     if (categoryFilter.length === 0 || categoryFilter.includes('DEVICE')) {
+    // Only search devices if:
+    // 1. We are NOT searching by 'Author' or 'Director'
+    // 2. The category filter allows it (or is empty)
+     if (searchType !== 'Author' && searchType !== 'Director' && (categoryFilter.length === 0 || categoryFilter.includes('DEVICE'))) {
         let deviceParams = [];
         let deviceWhereClauses = [];
         let deviceJoins = [
