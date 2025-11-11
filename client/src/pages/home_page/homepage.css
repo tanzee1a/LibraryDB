@@ -27,18 +27,54 @@
   margin: 0;
   margin-bottom: 2rem;
 }
-.search-bar {
-  width: 50rem;
-  padding: 1rem;
-  font-size: 1rem;
+
+.home-search-container {
+  display: flex; /* Aligns items horizontally */
+  width: 50rem; 
+  max-width: 90%;
+  margin: 0 auto; /* Centers the container */
   border: 1px solid var(--darker-tertiary-color);
-  border-radius: 50px;
+  border-radius: 50px; /* Applies to the whole container */
   background: white;
-  color: black;
+  /* Apply hover/focus shadow to the whole container */
+  transition: border-color 0.2s ease-out, box-shadow 0.2s ease-out;
 }
 
-.search-bar:hover, .search-bar:focus {
+.home-search-container:hover,
+.home-search-container:focus-within { /* focus-within highlights when a child is focused */
     border-color: var(--secondary-color);
     box-shadow: 0 0 8px var(--secondary-color);
-    transition: border-color 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+/* Style for the new dropdown */
+.home-search-type-dropdown {
+  padding: 0 1rem;
+  font-size: 1rem;
+  border: none;
+  border-radius: 50px 0 0 50px; /* Round left corners */
+  background: #f8f8f8; /* Slight background to differentiate */
+  color: black;
+  cursor: pointer;
+  flex-shrink: 0; /* Prevents dropdown from shrinking */
+  outline: none;
+  -webkit-appearance: none; /* Removes default OS styling */
+  -moz-appearance: none;
+  appearance: none;
+  padding-right: 2.5em; /* Make space for custom arrow */
+  background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23666%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.6-3.6%205.4-7.9%205.4-12.9%200-5-1.8-9.2-5.4-12.7z%22%2F%3E%3C%2Fsvg%3E');
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 0.65em auto;
+}
+
+.home-search-bar {
+  flex-grow: 1; /* Allows search bar to fill remaining space */
+  width: 100%;
+  padding: 1rem;
+  font-size: 1rem;
+  border: none; /* Border is now on the container */
+  border-radius: 0 50px 50px 0; /* Round right corners */
+  background: transparent; /* Show container's white background */
+  color: black;
+  outline: none; /* Remove focus outline */
 }

@@ -5,12 +5,13 @@ import Logo from "../../assets/logo-dark.webp"
 
 function Homepage() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchType, setSearchType] = useState('Description'); 
   const [userFirstName, setUserFirstName] = useState(null);
   const navigate = useNavigate();
 
   const handleSearch = (event) => {
-    if (event.key === 'Enter') {
-      navigate(`/search?q=${encodeURIComponent(searchTerm.trim())}`);
+    if (event.key === 'Enter' && searchTerm.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchTerm.trim())}&searchType=${searchType}`);
     }
   };
 
@@ -50,14 +51,30 @@ function Homepage() {
             <img className="logo-image-large fade-in" src={Logo} alt="LBRY Logo" />
           </div>
           {renderWelcomeMessage()}
-          <input
-            type="text"
-            placeholder="Curiosity starts here..."
-            className="search-bar fade-in-text-from-top"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            onKeyDown={handleSearch}
-          />
+          <div className="home-search-container fade-in-text-from-top">
+            <select 
+              className="home-search-type-dropdown" 
+              value={searchType} 
+              onChange={(e) => setSearchType(e.target.value)}
+            >
+              <option value="Description">Description</option>
+              <option value="Title">Title</option>
+              <option value="Manufacturer">Manufacturer</option>
+              <option value="Author">Author</option>
+              <option value="Director">Director</option>
+              <option value="Tag">Tag</option>
+            </select>
+            <input
+              type="text"
+              placeholder="Curiosity starts here..."
+              className="home-search-bar" 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={handleSearch}
+            />
+          </div>
+          {/* --- END MODIFIED --- */}
+          
         </div>
       </div>
     </div>
