@@ -5,19 +5,30 @@ const { getPostData } = require('../utils.js');
 // @route   POST /api/membership/signup
 // REQUIRES: protect middleware (sets req.userId)
 async function signup(req, res) {
+    let bodyString;
+    let userData;
     try {
-        const userId = req.userId;
-        const body = await getPostData(req);
+        bodyString = await getPostData(req);
         
-        // body should contain: { name, cardNumber, expDate, cvv, billingAddress }
-        // The model will only store the safe parts
-        const result = await Membership.create(userId, body);
+        // 🛑 CRITICAL FIX: Parse the body string into an object 🛑
+        try {
+            userData = JSON.parse(bodyString);
+        } catch (jsonError) {
+             res.writeHead(400, { 'Content-Type': 'application/json' });
+             return res.end(JSON.stringify({ message: 'Invalid JSON format in request body.' }));
+        }
+        
+        const userId = req.userId;
+        // userData is now an object: { name, cardNumber, expDate, cvv, billingAddress }
+        const result = await Membership.create(userId, userData);
 
         res.writeHead(201, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify(result));
     } catch (error) {
         console.error("Error signing up for membership:", error);
-        res.writeHead(400, { 'Content-Type': 'application/json' });
+        // Use 400 for input validation errors
+        const statusCode = error.message.includes('required') ? 400 : 500;
+        res.writeHead(statusCode, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ message: 'Could not sign up for membership', error: error.message }));
     }
 }
