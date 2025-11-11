@@ -10,9 +10,17 @@ function Homepage() {
   const navigate = useNavigate();
 
   const handleSearch = (event) => {
-    if (event.key === 'Enter' && searchTerm.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchTerm.trim())}&searchType=${searchType}`);
-    }
+     if (event.key === 'Enter') {
+            event.preventDefault(); // Prevent default form submission
+            const term = searchTerm.trim();
+            if (term) {
+                // If there is a term, search with it and the type
+                navigate(`/search?q=${encodeURIComponent(term)}&searchType=${searchType}`);
+            } else {
+                // If the bar is blank, just go to the search page
+                navigate(`/search`);
+            }
+        }
   };
 
   useEffect(() => {
