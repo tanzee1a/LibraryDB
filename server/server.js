@@ -24,7 +24,7 @@ const {
 } = require('./controllers/notificationController');
 const { registerUser, loginUser } = require('./controllers/loginRegisterController');
 const { saveItem, unsaveItem, getMyWishlist } = require('./controllers/wishlistController');
-const { getMyProfile, getAllUsers, staffCreateUser, getUserProfile, getUserBorrowHistory, getUserHoldHistory, getUserFineHistory, staffUpdateUser, staffDeleteUser, changePassword} = require('./controllers/userController');
+const { getMyProfile, getAllUsers, staffCreateUser, getUserProfile, getUserBorrowHistory, getUserHoldHistory, getUserFineHistory, staffUpdateUser, staffDeleteUser, changePassword, changeEmail} = require('./controllers/userController');
 const { signup, cancel, renew } = require('./controllers/membershipController');
 const { searchItems } = require('./controllers/searchController');
 const { getOverdueReport, getPopularityReport, getFineReport } = require('./controllers/reportController');
@@ -171,7 +171,10 @@ const server = http.createServer((req, res) => {
             protect(req, res, () => changePassword(req, res));
             return;
         }
-        
+        else if (req.url === '/api/my-profile/email' && req.method === 'POST') {
+            protect(req, res, () => changeEmail(req, res)); // <-- NEW ROUTE
+            return;
+        }
         else if (req.url === '/api/fines' && req.method === 'GET') { 
             staffProtect(req, res, () => getAllFines(req, res));
         }

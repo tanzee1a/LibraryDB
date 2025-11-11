@@ -16,20 +16,11 @@ function getPostData(req) {
                 body += chunk.toString()
             })
             req.on('end', () => {
-                // --- THIS IS THE FIX ---
-                if (!body) {
-                    resolve({}); // Resolve empty object if no body
-                    return;
-                }
-                try {
-                    resolve(JSON.parse(body)); // Parse the string into a JSON object
-                } catch (jsonError) {
-                    reject(new Error("Invalid JSON in request body"));
-                }
-                // ---------------------
+                // 🛑 KEY FIX: Only resolve the raw string, do not parse it here.
+                resolve(body) 
             })
         } catch (error) {
-            reject(error) // Corrected from 'err' to 'error'
+            reject(error)
         }
     })
 }

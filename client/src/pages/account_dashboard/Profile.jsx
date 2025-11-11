@@ -16,6 +16,12 @@ export default function UserProfile() {
   });
   const [passwordChangeMessage, setPasswordChangeMessage] = useState({ type: '', text: '' });
 
+  const [emailForm, setEmailForm] = useState({
+    newEmail: '',
+    confirmNewEmail: ''
+  });
+  const [emailChangeMessage, setEmailChangeMessage] = useState({ type: '', text: '' });
+
 
 // const membershipSample = { ... } // <-- REMOVE THIS
 /*
@@ -187,6 +193,111 @@ function getStatusFromData(data) {
           </>
       );
     }
+
+    function handleEmailChange(e) {
+      e.preventDefault();
+      setEmailChangeMessage({ type: '', text: '' });
+  
+      const { newEmail, confirmNewEmail } = emailForm;
+  
+      if (newEmail !== confirmNewEmail) {
+          setEmailChangeMessage({ type: 'error', text: 'New email and confirmation do not match.' });
+          return;
+      }
+      if (!newEmail || newEmail.length < 5 || !newEmail.includes('@')) {
+          setEmailChangeMessage({ type: 'error', text: 'Please enter a valid email address.' });
+          return;
+      }
+  
+      const token = getToken();
+      if (!token) return;
+      
+      const headers = {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+      };
+  
+      const body = JSON.stringify({ newEmail });
+  
+      fetch(`${API_BASE_URL}/api/my-profile/email`, { // <-- NEW ENDPOINT
+          method: 'POST',
+          headers,
+          body,
+      })
+      .then(async res => {
+          const data = await res.json();
+          if (!res.ok) {
+              // Backend sends 400 for duplicate/invalid email or 500
+              throw new Error(data.message || 'Failed to change email.');
+          }
+          return data;
+      })
+      .then(data => {
+          // Success: Clear form, show message, and recommend logging back in
+          setEmailChangeMessage({ 
+              type: 'success', 
+              text: data.message || 'Email updated successfully. Please log out and log back in with your new email.' 
+          });
+          setEmailForm({ newEmail: '', confirmNewEmail: '' });
+          // Optionally: localStorage.removeItem('authToken'); navigate('/login'); for immediate logout
+      })
+      .catch(err => {
+          console.error("Email change error:", err);
+          setEmailChangeMessage({ type: 'error', text: err.message || 'An unexpected error occurred.' });
+      }); 
+  }
+
+  // UserProfile.jsx (after renderPasswordChangeSection)
+
+function renderEmailChangeSection() {
+  // Prevent staff from using this form, as their email might be tied to internal systems.
+  if (user?.role === 'Staff' || user?.role === 'Admin') {
+      return <p className='small-spacing'>Staff email updates are handled by administration.</p>;
+  }
+
+  if (user?.role === 'Student' || user?.role === 'Faculty') {
+    return (
+        <div className='email-denied-message'>
+            <p className='small-spacing' style={{ color: '#c0392b', fontWeight: 'bold' }}>
+                Email changes are restricted for your '{user.role}' account type.
+            </p>
+            <p className='small-spacing'>
+                Please contact your Assistant Librarian to modify your primary email address.
+            </p>
+        </div>
+    );
+}
+
+  return (
+      <>
+          <p className='small-spacing'>Update your account email below.</p>
+          <form className="info-form" onSubmit={handleEmailChange}>
+              <input
+                  className="input-field"
+                  type="email"
+                  placeholder="New Email Address"
+                  value={emailForm.newEmail}
+                  onChange={e => setEmailForm({...emailForm, newEmail: e.target.value})}
+                  required
+              />
+              <input
+                  className="input-field"
+                  type="email"
+                  placeholder="Confirm New Email"
+                  value={emailForm.confirmNewEmail}
+                  onChange={e => setEmailForm({...emailForm, confirmNewEmail: e.target.value})}
+                  required
+              />
+              {emailChangeMessage.text && (
+                  <p style={{ color: emailChangeMessage.type === 'error' ? 'red' : 'green' }}>
+                      {emailChangeMessage.text}
+                  </p>
+              )}
+              <button type="submit" className="btn secondary-button">Update Email</button>
+          </form>
+      </>
+  );
+}
 
   function handleMembershipSignup(e) {
     e.preventDefault();
@@ -389,14 +500,20 @@ function getStatusFromData(data) {
     <div>
       <div className="item-title">{user.firstName} {user.lastName}</div>
       <div className="profile-meta">User ID: {user.user_id} · {user.email}</div>
-      <div className='membership-info'>
-        <h3>Membership</h3>
-        {renderMembershipSection()}
-      </div>
+      {user.role !== 'Student' && user.role !== 'Faculty' && (
+        <div className='membership-info'>
+          <h3>Membership</h3>
+          {renderMembershipSection()}
+        </div>
+      )}
       <div className='membership-info'>
           <h3>Password</h3>
           {renderPasswordChangeSection()}
-        </div>
+      </div>
+      <div className='membership-info'>
+        <h3>Email</h3>
+        {renderEmailChangeSection()}
+      </div>
     </div>
   );
 }

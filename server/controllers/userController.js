@@ -55,11 +55,20 @@ async function getAllUsers(req, res) {
 // @route POST /api/users
 async function staffCreateUser(req, res) {
     try {
-        // TODO: Add Auth check - Staff only
-        const userData = await getPostData(req);
-        // Expecting firstName, lastName, email, role, temporaryPassword, user_id
-        // const userData = JSON.parse(body); 
+        const body = await getPostData(req); // Get the raw JSON string
 
+        let userData;
+        
+        // 🛑 FIX: Safely parse the body string into an object
+        try {
+            userData = JSON.parse(body);
+        } catch (jsonError) {
+             res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+             return res.end(JSON.stringify({ message: 'Invalid JSON format in request body.' }));
+        }
+
+        // Expecting firstName, lastName, email, role, temporaryPassword, user_id
+        
         // Generate user_id if not provided (optional)
         if (!userData.user_id) {
              // Simple ID generation - consider a more robust method if needed
@@ -72,9 +81,8 @@ async function staffCreateUser(req, res) {
         return res.end(JSON.stringify(newUser));
 
     } catch (error) {
-        console.error("Error in staffCreateUser controller:", error);
-        // Send 400 if it's a known error (like duplicate entry), 500 otherwise
-        const statusCode = error.message.includes('already exists') ? 400 : 500;
+        // ... (existing error handling) ...
+        const statusCode = error.message.includes('already exists') || error.message.includes('Missing required fields') ? 400 : 500;
         res.writeHead(statusCode, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }); 
         res.end(JSON.stringify({ 
             message: 'Could not create user', 
@@ -82,7 +90,6 @@ async function staffCreateUser(req, res) {
         }));
     }
 }
-
 // --- ADDED: Get Specific User Profile (for Staff) ---
 // @desc Get detailed profile for a specific user ID
 // @route GET /api/users/:userId
@@ -236,6 +243,80 @@ async function changePassword(req, res) {
     }
 }
 
+async function changeEmail(req, res) {
+    try {
+        const userId = req.userId;
+        const body = await getPostData(req); // Now safely returns a raw JSON string or empty string
+        
+        let parsedData;
+        
+        if (!body) {
+            res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+            return res.end(JSON.stringify({ message: 'Request body is empty.' }));
+        }
+        
+        try {
+            // ✅ Parse the string here, in the controller
+            parsedData = JSON.parse(body); 
+        } catch (jsonError) {
+             res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+             return res.end(JSON.stringify({ message: 'Invalid JSON format in request body.' }));
+        }
+        
+        // Use the safely parsed data
+        const { newEmail } = parsedData;
+
+        if (!userId) {
+            res.writeHead(401, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+            return res.end(JSON.stringify({ message: 'User not authenticated' }));
+        }
+
+        const userProfile = await User.findUserProfileById(userId);
+
+        if (!userProfile) {
+             res.writeHead(404, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+             return res.end(JSON.stringify({ message: 'User profile not found' }));
+        }
+
+        // 🛑 STEP 2: Enforce the rule for Student and Faculty
+        const userRole = userProfile.role;
+        if (userRole === 'Student' || userRole === 'Faculty') {
+            console.warn(`Denied email change for ${userRole}: ${userProfile.email}`);
+            res.writeHead(403, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+            return res.end(JSON.stringify({ 
+                message: `Access Denied: ${userRole} accounts are not permitted to change their email. Please contact support.` 
+            }));
+        }
+        
+        // Basic email validation
+        if (!newEmail || typeof newEmail !== 'string' || !newEmail.includes('@') || newEmail.length < 5) { 
+            res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+            return res.end(JSON.stringify({ message: 'Invalid new email provided' }));
+        }
+
+        // Call the model function to handle the email update logic
+        const updateSuccessful = await User.changeUserEmail(userId, newEmail);
+
+        if (!updateSuccessful) {
+            // Model returned false, likely user not found (though protected)
+            res.writeHead(404, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+            return res.end(JSON.stringify({ message: 'User not found or email could not be updated.' }));
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        return res.end(JSON.stringify({ 
+            message: 'Email updated successfully. You will be logged out and must log in with your new email.' 
+        }));
+
+    } catch (error) {
+        console.error("Error in changeEmail:", error);
+        // Catch known unique constraint violation from model (400 Bad Request)
+        const statusCode = error.message.includes('already exists') || error.message.includes('New email is the same') ? 400 : 500;
+        res.writeHead(statusCode, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ message: 'Could not change email', error: error.message }));
+    }
+}
+
 
 
 // Update exports
@@ -249,5 +330,6 @@ module.exports = {
     getUserFineHistory,    // <-- Add this
     staffUpdateUser,
     staffDeleteUser,
-    changePassword
+    changePassword,
+    changeEmail
 };

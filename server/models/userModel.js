@@ -464,6 +464,59 @@ async function changeUserPassword(userId, currentPassword, newPassword) {
     return result.affectedRows > 0;
 }
 
+async function changeUserEmail(userId, newEmail) {
+    const conn = await db.getConnection();
+    await conn.beginTransaction();
+    
+    try {
+        // 1. Get current email to verify user exists and to check for self-update
+        const [userRows] = await conn.query(
+            'SELECT email FROM USER WHERE user_id = ?', 
+            [userId]
+        );
+        
+        if (userRows.length === 0) {
+            await conn.rollback();
+            return false; // User not found
+        }
+        
+        const currentEmail = userRows[0].email;
+        
+        if (currentEmail === newEmail) {
+            await conn.rollback();
+            throw new Error('New email is the same as the current email.');
+        }
+
+        const userUpdateSql = `
+            UPDATE USER
+            SET email = ?
+            WHERE user_id = ?
+        `;
+        const [userResult] = await conn.query(userUpdateSql, [newEmail, userId]);
+        
+        if (userResult.affectedRows === 0) {
+             await conn.rollback();
+             return false; 
+        }
+                
+        await conn.commit();
+        return true;
+
+    } catch (error) {
+        await conn.rollback();
+        
+        // Handle unique constraint violation on USER.email (if new email already exists)
+        if (error.code === 'ER_DUP_ENTRY' || error.sqlMessage?.includes('USER.uq_user_email')) {
+            throw new Error('Email address already exists for another user.');
+        }
+        
+        console.error("Error in changeUserEmail transaction:", error);
+        throw error;
+    } finally {
+        conn.release();
+    }
+}
+
 module.exports = {
     findById,
     findAllUsers,
@@ -474,5 +527,6 @@ module.exports = {
     findHoldHistoryForUser,
     staffUpdateUser,
     staffDeleteUser,
-    changeUserPassword
+    changeUserPassword,
+    changeUserEmail
 };
