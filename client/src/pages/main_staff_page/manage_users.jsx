@@ -8,6 +8,8 @@ function ManageUsers() {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [isLibrarian, setIsLibrarian] = useState(false);
+    const [isAssistantLibrarian, setIsAssistantLibrarian] = useState(false);
 
     // --- Add User Sheet state/handlers ---
     const [showAddUserSheet, setShowAddUserSheet] = useState(false);
@@ -86,7 +88,35 @@ function ManageUsers() {
     };
 
     useEffect(() => {
-        fetchUsers(); // Fetch on mount
+        const token = localStorage.getItem('authToken'); 
+        if (!token) return;
+
+        // Fetch User List
+        fetchUsers();
+
+        // Fetch Logged-in Staff Profile to determine permission level
+        fetch(`${API_BASE_URL}/api/staff/my-profile`, { headers: { 'Authorization': `Bearer ${token}` } })
+            .then(res => res.ok ? res.json() : Promise.reject('Failed to fetch staff profile'))
+            .then(data => {
+                // Determine logged-in staff role based on backend data
+                const roleName = data.role_name;
+                if (roleName === 'Librarian') {
+                    setIsLibrarian(true);
+                } else if (roleName === 'Assistant Librarian') {
+                    setIsAssistantLibrarian(true);
+                }
+                // Initialize newUser role based on access level
+                // Set default role to 'Staff' if Librarian, otherwise 'Patron'
+                setNewUser(prev => ({
+                    ...prev,
+                    role: (roleName === 'Librarian' || roleName === 'Assistant Librarian') ? 'Patron' : 'Clerk'
+                }));
+            })
+            .catch(err => {
+                console.error("Fetch Staff Profile Error:", err);
+                // Handle profile load error if necessary
+            });
+
     }, []);
     // --- End Fetch ---
 
@@ -147,6 +177,19 @@ function ManageUsers() {
     }
 }
     // --- END MODIFIED ---
+
+    // --- HELPER FUNCTION: Get available roles based on staff permissions ---
+    const getAvailableUserRoles = () => {
+        let roles = ['Patron', 'Student', 'Faculty']; // Base roles available to Assistant Librarian
+        
+        if (isLibrarian) {
+            // Librarian can add anyone, including staff (Clerk/Assistant Librarian)
+            roles.push('Staff');
+        } 
+        // If not Librarian, they can't add 'Staff' accounts
+
+        return roles;
+    }
 
     return (
         <div>
@@ -250,35 +293,35 @@ function ManageUsers() {
             </div>
         </div>
         {/* --- MODIFIED Add User Sheet Form --- */}
-        {showAddUserSheet && (
+        {showAddUserSheet && (isLibrarian || isAssistantLibrarian) && (
             <div className="sheet-overlay" onClick={() => !isSubmitting && setShowAddUserSheet(false)}>
                 <div className="sheet-container" onClick={(e) => e.stopPropagation()}>
                 <h2>Add New User</h2>
                 {submitError && <p style={{color: 'red'}}>{submitError}</p>}
                 <form onSubmit={handleAddUserSubmit}>
-                     {/* Added User ID input */}
                     <label> User ID (Optional - auto-generates if blank): <input type="text" className="edit-input" name="user_id" value={newUser.user_id} onChange={handleInputChange} maxLength="13" /> </label>
                     <label> First Name: <input type="text" className="edit-input" name="firstName" value={newUser.firstName} onChange={handleInputChange} required /> </label>
                     <label> Last Name: <input type="text" className="edit-input" name="lastName" value={newUser.lastName} onChange={handleInputChange} required /> </label>
                     <label> Email: <input type="email" className="edit-input" name="email" value={newUser.email} onChange={handleInputChange} required /> </label>
-                    {/* Added Password input */}
                     <label> Temporary Password: <input type="password" className="edit-input" name="temporaryPassword" value={newUser.temporaryPassword} onChange={handleInputChange} required /> </label>
+                    
+                    {/* 💡 MODIFIED: Role Selection Dropdown */}
                     <label> Role:
                         <select name="role" className="edit-input" value={newUser.role} onChange={handleInputChange} required>
-                            <option value="Patron">Patron</option>
-                            <option value="Student">Student</option> {/* --- ADDED --- */}
-                            <option value="Faculty">Faculty</option> {/* --- ADDED --- */}
-                            <option value="Staff">Staff</option>
+                            {getAvailableUserRoles().map(role => (
+                                <option key={role} value={role}>{role}</option>
+                            ))}
                         </select>
                     </label>
-                    {/* --- ADDED: Conditional Staff Role Dropdown --- */}
-                    {newUser.role === 'Staff' && (
+                    
+                    {/* --- STAFF Role Dropdown: Only shown if 'Staff' is selected, and only available to Librarians --- */}
+                    {newUser.role === 'Staff' && isLibrarian && (
                         <label> Staff Role:
                             <select name="staffRole" className="edit-input" value={newUser.staffRole} onChange={handleInputChange} required>
                                 {/* These values MUST match the 'role_name' in your STAFF_ROLES table */}
                                 <option value="Clerk">Clerk</option>
                                 <option value="Assistant Librarian">Assistant Librarian</option>
-                                {/* Add 'Admin' or 'Head Librarian' here if they are in your STAFF_ROLES table */}
+                                <option value="Librarian">Librarian</option> {/* Added for Librarian-only creation */}
                             </select>
                         </label>
                     )}
