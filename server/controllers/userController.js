@@ -164,16 +164,24 @@ async function getUserFineHistory(req, res, userId) {
 // @desc Staff updates a user's profile
 // @route PUT /api/users/:userId
 async function staffUpdateUser(req, res, userId) {
+    let body;
+    let userData;
     try {
-        // TODO: Add Auth check - Staff only
-        const userData = await getPostData(req);
-        // Gets { firstName, lastName, email, role } from frontend
-        // const userData = JSON.parse(body); 
+        // 1. Get the raw request body string
+        body = await getPostData(req); 
+
+        try {
+            userData = JSON.parse(body);
+        } catch (jsonError) {
+             res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+             return res.end(JSON.stringify({ message: 'Invalid JSON format in request body for user update.' }));
+        }
 
         const updatedUser = await User.staffUpdateUser(userId, userData);
         
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-        return res.end(JSON.stringify(updatedUser));
+        // Return the updated data structure
+        return res.end(JSON.stringify(updatedUser)); 
 
     } catch (error) {
         console.error(`Error updating user ${userId}:`, error);
@@ -300,12 +308,12 @@ async function changeEmail(req, res) {
         if (!updateSuccessful) {
             // Model returned false, likely user not found (though protected)
             res.writeHead(404, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-            return res.end(JSON.stringify({ message: 'User not found or email could not be updated.' }));
+            return res.end(JSON.stringify({ message: 'User not found or email could not be updated.' }));ç
         }
 
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         return res.end(JSON.stringify({ 
-            message: 'Email updated successfully. You will be logged out and must log in with your new email.' 
+            message: 'Email updated successfully.' 
         }));
 
     } catch (error) {

@@ -319,80 +319,115 @@ async function findFineHistoryForUser(userId) {
  * Staff updates a user's details.
  */
 async function staffUpdateUser(userId, userData) {
-    // Get data from controller
-    // 💡 --- FIX 1: Add 'staffRole' to this list ---
-    const { firstName, lastName, email, role, staffRole } = userData;
+    const { role: incomingRole, staffRole } = userData;
+
+    let role = incomingRole; 
+    let currentEmail = null; 
 
     const conn = await db.getConnection();
+
     try {
         await conn.beginTransaction();
-
-        // --- FIX 2: Use the new logic we discussed ---
         
-        // CASE 1: User is a Patron, Student, or Faculty
-        if (role === 'Patron' || role === 'Student' || role === 'Faculty') {
+        // STEP 1: Fetch Current Role AND Email for necessary checks
+        if (!role || (userData.email !== undefined)) {
+             const [userRow] = await conn.query(`
+                SELECT ur.role_name AS role, u.email
+                FROM USER u
+                JOIN USER_ROLE ur ON u.role_id = ur.role_id
+                WHERE u.user_id = ?
+            `, [userId]);
+
+            if (userRow.length === 0) {
+                 throw new Error('User to update not found.');
+            }
+            role = role || userRow[0].role; // Use existing role if not provided
+            currentEmail = userRow[0].email; // Store current email
+        }
+        
+        // STEP 2: Email Duplication Check (Prevents foreign key errors)
+        if (userData.email !== undefined && userData.email !== currentEmail) {
+            const [duplicateCheck] = await conn.query(
+                'SELECT user_id FROM USER WHERE email = ? AND user_id != ?',
+                [userData.email, userId]
+            );
+            if (duplicateCheck.length > 0) {
+                throw new Error('Email address already exists.');
+            }
+        }
+        
+        // Define all valid roles 
+        const USER_ROLES_PRIMARY = ['Patron', 'Student', 'Faculty'];
+        const STAFF_ROLES_ALL = ['Staff', 'Librarian', 'Assistant Librarian', 'Clerk', 'Admin'];
+
+        // STEP 3: Build the dynamic update map for the USER table
+        const userUpdateMap = {};
+        const allowedUserFields = ['firstName', 'lastName', 'email'];
+        
+        // Populate map ONLY with defined values from the payload
+        for (const field of allowedUserFields) {
+            if (userData[field] !== undefined) { 
+                userUpdateMap[field] = userData[field];
+            }
+        }
+        
+        // --- Core Logic ---
+
+        if (USER_ROLES_PRIMARY.includes(role)) {
             
-            // 1. Get the role_id from the USER_ROLE table
             const [roleRows] = await conn.query('SELECT role_id FROM USER_ROLE WHERE role_name = ?', [role]);
             if (roleRows.length === 0) {
                 throw new Error(`Invalid user role: ${role}`);
             }
             const role_id = roleRows[0].role_id;
+            userUpdateMap.role_id = role_id; 
 
-            // 2. Update the USER table.
-            const userSql = `
-                UPDATE USER 
-                SET firstName = ?, lastName = ?, email = ?, role_id = ?
-                WHERE user_id = ?
-            `;
-            await conn.query(userSql, [firstName, lastName, email, role_id, userId]);
+            const setClauses = Object.keys(userUpdateMap).map(key => `${key} = ?`).join(', ');
+            const values = Object.values(userUpdateMap);
             
-            // (No need to touch the STAFF table, as you wanted!)
+            if (values.length > 0) {
+                const userSql = `UPDATE USER SET ${setClauses} WHERE user_id = ?`;
+                await conn.query(userSql, [...values, userId]);
+            }
 
         } 
-        // CASE 2: User is a Staff member
-        else if (role === 'Staff' || role === 'Admin') { // Or whatever your staff roles are
+        else if (STAFF_ROLES_ALL.includes(role)) { 
             
-            // 1. Update the USER table (name and email only)
-            // (Their main role_id for "Staff" doesn't change)
-            const userSql = `
-                UPDATE USER 
-                SET firstName = ?, lastName = ?, email = ?
-                WHERE user_id = ?
-            `;
-            await conn.query(userSql, [firstName, lastName, email, userId]);
+            const setClauses = Object.keys(userUpdateMap).map(key => `${key} = ?`).join(', ');
+            const values = Object.values(userUpdateMap);
 
-            // 2. Get the specific staff_role_id from STAFF_ROLES
-            const [staffRoleRows] = await conn.query(
-                'SELECT role_id FROM STAFF_ROLES WHERE role_name = ?',
-                [staffRole] // e.g., "Assistant Librarian"
-            );
-            if (staffRoleRows.length === 0) {
-                throw new Error(`Invalid staff role: ${staffRole}`);
+            if (values.length > 0) {
+                const userSql = `UPDATE USER SET ${setClauses} WHERE user_id = ?`;
+                await conn.query(userSql, [...values, userId]);
             }
-            const specificStaffRoleId = staffRoleRows[0].role_id;
 
-            // 3. Update the STAFF table with the new staff role id
-            const staffUpdateSql = `
-                UPDATE STAFF 
-                SET role_id = ?
-                WHERE user_id = ?
-            `;
-            await conn.query(staffUpdateSql, [specificStaffRoleId, userId]);
+            if (staffRole) {
+                const [staffRoleRows] = await conn.query(
+                    'SELECT role_id FROM STAFF_ROLES WHERE role_name = ?',
+                    [staffRole]
+                );
+                if (staffRoleRows.length === 0) {
+                    throw new Error(`Invalid staff role: ${staffRole}`);
+                }
+                const specificStaffRoleId = staffRoleRows[0].role_id;
 
-        } else {
-            throw new Error("Invalid role specified for update.");
+                const staffUpdateSql = `
+                    UPDATE STAFF 
+                    SET role_id = ?
+                    WHERE user_id = ?
+                `;
+                await conn.query(staffUpdateSql, [specificStaffRoleId, userId]);
+            }
+        } 
+        else {
+            throw new Error(`Invalid role specified for update. Role received: ${role}`);
         }
-        // --- END OF FIX 2 ---
 
         await conn.commit();
-        return { user_id: userId, ...userData }; // Return updated data
+        return { user_id: userId, ...userData }; 
 
     } catch (error) {
         await conn.rollback();
-        
-        // Handle duplicate email error
-        // Be more specific on the unique key constraint name
         if (error.code === 'ER_DUP_ENTRY' && error.sqlMessage.includes('USER.uq_user_email')) {
             throw new Error('Email address already exists.');
         }
@@ -402,7 +437,6 @@ async function staffUpdateUser(userId, userData) {
         conn.release();
     }
 }
-
 /**
  * Staff deletes a user. (HARD DELETE)
  */
@@ -469,7 +503,7 @@ async function changeUserEmail(userId, newEmail) {
     await conn.beginTransaction();
     
     try {
-        // 1. Get current email to verify user exists and to check for self-update
+        // 1. Get current email
         const [userRows] = await conn.query(
             'SELECT email FROM USER WHERE user_id = ?', 
             [userId]
@@ -482,11 +516,24 @@ async function changeUserEmail(userId, newEmail) {
         
         const currentEmail = userRows[0].email;
         
+        // Check 1: Is the email the same?
         if (currentEmail === newEmail) {
             await conn.rollback();
             throw new Error('New email is the same as the current email.');
         }
 
+        // Check 2: CRITICAL PRE-CHECK - Is the new email already used by someone else?
+        const [duplicateCheck] = await conn.query(
+            'SELECT user_id FROM USER WHERE email = ? AND user_id != ?',
+            [newEmail, userId]
+        );
+
+        if (duplicateCheck.length > 0) {
+            await conn.rollback();
+            throw new Error('Email address already exists for another user.');
+        }
+
+        // 3. Update the parent table (USER). Cascade handles USER_CREDENTIAL.
         const userUpdateSql = `
             UPDATE USER
             SET email = ?
@@ -494,10 +541,7 @@ async function changeUserEmail(userId, newEmail) {
         `;
         const [userResult] = await conn.query(userUpdateSql, [newEmail, userId]);
         
-        if (userResult.affectedRows === 0) {
-             await conn.rollback();
-             return false; 
-        }
+        // FIX: The commit is now reached if no error was thrown.
                 
         await conn.commit();
         return true;
@@ -505,8 +549,8 @@ async function changeUserEmail(userId, newEmail) {
     } catch (error) {
         await conn.rollback();
         
-        // Handle unique constraint violation on USER.email (if new email already exists)
-        if (error.code === 'ER_DUP_ENTRY' || error.sqlMessage?.includes('USER.uq_user_email')) {
+        // Handle all possible errors (including the misleading foreign key error)
+        if (error.code === 'ER_DUP_ENTRY' || error.sqlMessage?.includes('USER.uq_user_email') || error.sqlMessage?.includes('FOREIGN KEY')) {
             throw new Error('Email address already exists for another user.');
         }
         
