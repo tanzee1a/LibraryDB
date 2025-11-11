@@ -48,9 +48,26 @@ async function requestPickup(req, res, itemId) {
         return res.end(JSON.stringify(result));
     } catch (error) {
         console.error("Error in requestPickup controller:", error);
-        const statusCode = error.message.includes('Borrowing denied') || error.message.includes('Borrowing suspended') ? 403 : 400;
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ message: 'Could not request pickup', error: error.message }));
+        // --- START FIX ---
+
+        // Determine status code based on the error message
+        // This gives you more specific HTTP responses
+        let statusCode = 400; // Default to 400 Bad Request
+
+        if (error.message.includes('Borrowing denied') || error.message.includes('Borrowing suspended')) {
+            statusCode = 403; // 403 Forbidden
+        } else if (error.message.includes('already have an active hold')) {
+            statusCode = 409; // 409 Conflict (perfect for duplicates)
+        } else if (error.message.includes('not found')) {
+            statusCode = 404; // 404 Not Found
+        }
+        // 'Borrow limit' or 'not available' can stay as 400
+
+        // Use the 'statusCode' variable you calculated
+        res.writeHead(statusCode, { 'Content-Type': 'application/json' });
+
+        // Send the SPECIFIC error.message from the model as the primary message
+        res.end(JSON.stringify({ message: error.message }));
     }
 }
 

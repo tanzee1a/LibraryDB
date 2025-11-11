@@ -64,7 +64,7 @@ async function checkBorrowLimit(conn, userId) {
 
     // 4. Check total against limit
     if ((borrowCount + holdCount) >= limit) {
-        throw new Error(`Borrow limit reached (${limit} items). User currently has ${borrowCount} borrows and ${holdCount} active holds.`);
+        throw new Error(`Borrow limit reached (${limit} items). You currently have ${borrowCount} borrows and ${holdCount} active holds.`);
     }
     // If we're here, the user is clear to borrow/hold one more item.
     return true; 
