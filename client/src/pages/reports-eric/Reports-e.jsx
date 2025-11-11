@@ -115,7 +115,7 @@ function Reports() {
                 <table className='report-table'>
                     <thead>
                         <tr>
-                            {headers.map(header => <th key={header}>{header.replace(/_/g, ' ').toUpperCase()}</th>)}
+                            {headers.map((header, index) => <th key={header} className={index}>{header.replace(/_/g, ' ').toUpperCase()} {index}</th>)}
                         </tr>
                     </thead>
                     <tbody>
