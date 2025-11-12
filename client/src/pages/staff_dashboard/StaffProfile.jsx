@@ -186,7 +186,7 @@ export default function StaffProfile() {
     <div style={{ marginTop: '80px', padding: '20px' }}> 
       <div className="item-title">Staff Profile: {user.firstName} {user.lastName}</div>
       <div className="profile-meta">
-        User ID: {user.user_id} · Email: {user.email}
+        Email: {user.email}
       </div>
       <hr/>
 

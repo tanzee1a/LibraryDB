@@ -79,7 +79,7 @@ function Notifications() {
               <div>
                 {/* Wrap title in Link if notif.link exists */}
                 {notif.link ? (
-                  <Link to={notif.link} className="item-title-link">
+                  <Link to={notif.link} className="result-link">
                     <div className="item-title">{notif.title}</div>
                   </Link>
                 ) : (
@@ -111,7 +111,7 @@ function Notifications() {
                 <div>
                   {/* Wrap title in Link if notif.link exists */}
                   {notif.link ? (
-                    <Link to={notif.link} className="item-title-link">
+                    <Link to={notif.link} className="result-link">
                       <div className="item-title">{notif.title}</div>
                     </Link>
                   ) : (

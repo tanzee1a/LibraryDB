@@ -254,7 +254,7 @@ const handleSubmit = async (e) => {
 
               <div>
                 <label className="login-header">Membership Payment Info</label>
-                <p className="login-subheader">Sign up today!</p>
+                <p className="login-subheader">Student or faculty? Ask our staff for exclusive benefits!</p>
               </div>
               <input
                 type="text"

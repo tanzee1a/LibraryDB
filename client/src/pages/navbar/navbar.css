@@ -130,8 +130,7 @@
   display: flex; /* Aligns dropdown and input */
   width: 50vw; /* Takes the width of the old input */
   margin-bottom: 1rem; /* Takes the margin of the old input */
-  border: 1px solid var(--darker-tertiary-color, #ccc); /* Add a visible border */
-  border-radius: 5px;
+  border-bottom: 1px solid var(--darker-tertiary-color, #ccc); /* Add a visible border */
   overflow: hidden; /* Ensures child rounded corners look right */
 }
 
@@ -144,7 +143,6 @@
   cursor: pointer;
   outline: none;
   flex-shrink: 0; /* Prevents it from shrinking */
-  border-right: 1px solid var(--darker-tertiary-color, #ccc); /* Separator line */
 }
 
 .nav-search-input {

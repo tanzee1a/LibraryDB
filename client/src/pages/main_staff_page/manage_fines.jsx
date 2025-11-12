@@ -276,7 +276,7 @@ function ManageFines() {
                                         <div className="result-description">
                                             <div className="result-details">
                                                 <p><small><strong>Borrow ID:</strong> {fine.borrow_id}</small></p>
-                                                <p><small><strong>User:</strong> <Link to={`/user/${fine.user_id}`} className="result-link">{fine.firstName} {fine.lastName}</Link> ({fine.user_id})</small></p>
+                                                <p><small><strong>User:</strong> <Link to={`/user/${fine.user_id}`} className="result-link">{fine.firstName} {fine.lastName}</Link></small></p>
                                                 <p><small><strong>Item:</strong> {fine.item_title || '(Item details unavailable)'}</small></p>
                                                 <p><strong>Amount:</strong> {currencyFormatter.format(fine.amount)}</p>
                                                 <p><small><strong>Issued:</strong> {new Date(fine.date_issued).toLocaleString()}</small></p>
@@ -308,7 +308,7 @@ function ManageFines() {
                 <h2>Add New Fine (Manual)</h2>
                 {submitError && <p style={{color: 'red'}}>{submitError}</p>}
                 <form onSubmit={handleAddFineSubmit}>
-                    <label> User ID: <input type="text" className="edit-input" name="user_id" value={newFine.user_id} onChange={handleInputChange} required /> </label>
+                    <label> User Email: <input type="text" className="edit-input" name="user_email" value={newFine.user_email} onChange={handleInputChange} required /> </label>
                     <label> Borrow ID: <input type="text" className="edit-input" name="borrow_id" value={newFine.borrow_id} onChange={handleInputChange} required /> </label>
                     <label> Fee Type:
                         <select name="fee_type" className="edit-input" value={newFine.fee_type} onChange={handleInputChange} required>
