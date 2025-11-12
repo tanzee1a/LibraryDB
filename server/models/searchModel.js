@@ -10,6 +10,8 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description')
 
     const categoryFilter = filters.category ? filters.category.split(',') : [];
     const tagFilter = filters.tag ? filters.tag.split(',') : []; //
+    const formatFilter = filters.format ? filters.format.split(',') : [];
+
 
     const selectClause =
     `   SELECT
@@ -140,6 +142,16 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description')
             movieWhereClauses.push(`i.category IN (?)`);
             movieParams.push(categoryFilter);
         }
+
+        // Movie Format filter logic
+        if (formatFilter.length > 0) {
+            // Add the JOIN for movie formats
+            movieJoins.push(`JOIN MOVIE_FORMAT mf ON m.format_id = mf.format_id`);
+            // Add the WHERE clause
+            movieWhereClauses.push(`mf.format_name IN (?)`);
+            movieParams.push(formatFilter);
+        }
+
         // Tag filter logic
         if (tagFilter.length > 0 || (searchType === 'Tag' && searchTerm.trim())) {
             movieJoins.push(

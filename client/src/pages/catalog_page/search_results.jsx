@@ -22,7 +22,7 @@ function SearchResults({ isStaff }) {
     const query = searchParams.get('q') || '';
     const [localSearchTerm, setLocalSearchTerm] = useState(query);
 
-    const [searchType, setSearchType] = useState(searchParams.get('searchType') || 'Description');
+    const [searchType, setSearchType] = useState(searchParams.get('searchType') || 'Title');
 
     const [languages, setLanguages] = useState([]);
     const [languagesLoading, setLanguagesLoading] = useState(true);
@@ -47,14 +47,12 @@ function SearchResults({ isStaff }) {
     const [tagsLoading, setTagsLoading] = useState(true);
 
 
-    // --- ADD NEW STATE ---
     // This tracks the ID of the *specific* item being submitted
     const [submittingItemId, setSubmittingItemId] = useState(null); 
     // This will hold any error/success message, and which item it belongs to
     const [actionMessage, setActionMessage] = useState({ type: '', text: '', itemId: null });
     // This keeps track of items successfully requested, so we can hide the buttons
     const [successfulRequestIds, setSuccessfulRequestIds] = useState(new Set());
-    // --- END NEW STATE ---
 
     // This function now just reads from searchParams
     const initialFilters = () => { //
@@ -78,6 +76,10 @@ function SearchResults({ isStaff }) {
         if (query) {
             params.set('q', query);
         }
+        if (searchType) {
+            params.set('searchType', searchType);
+        }
+
         Object.entries(selectedFilters).forEach(([key, values]) => {
             if (values.length > 0) {
                 params.set(key, values.join(','));
@@ -145,11 +147,11 @@ function SearchResults({ isStaff }) {
                 
                 setFilterOptions(prevOptions => [
                     prevOptions[0], 
-                    { 
-                        category: 'Tags',
-                        param: 'tag',
-                        options: tagNames 
-                    }
+                        { 
+                            category: 'Tags',
+                            param: 'tag',
+                            options: tagNames 
+                        }
                 ]);
             } catch (e) {
                 console.error("Failed to fetch tags:", e);
@@ -190,10 +192,8 @@ function SearchResults({ isStaff }) {
     
             fetchUserProfile();
         } else {
-             // If no token or isStaff, set loading to false immediately
             setUserProfileLoading(false);
         }
-        // --- END ADDITION ---
     
     }, [query, searchParams, isStaff]); // Added isStaff to the dependency array
 
@@ -204,14 +204,18 @@ function SearchResults({ isStaff }) {
             const currentParams = Object.fromEntries(searchParams.entries());
             const term = localSearchTerm.trim();
             
+            const newParams = { ...currentParams };
             if (term) {
-                setSearchParams({ ...currentParams, q: term, searchType: searchType }); 
+                newParams.q = term;
             } else {
-                delete currentParams.q; 
-                delete currentParams.searchType;
-                setSearchParams(currentParams);
+                delete newParams.q;
             }
+            // Always set searchType
+            newParams.searchType = searchType; 
+            
+            setSearchParams(newParams);
         }
+
     };
 
     const handleSortChange = (sortType) => {
@@ -300,7 +304,6 @@ function SearchResults({ isStaff }) {
         setSubmittingItemId(null); // Clear 'submitting' status
         }
     };
-// --- END NEW HANDLER FUNCTION ---
 
     const [showAddItemSheet, setShowAddItemSheet] = useState(false);
     const initialNewItemState = {
@@ -457,7 +460,6 @@ function SearchResults({ isStaff }) {
         return null;
     };
 
-        // --- UPDATE YOUR RENDER FUNCTION ---
     const renderItemActionButtons = (item) => {
         if(isStaff) return;
 
@@ -558,16 +560,14 @@ function SearchResults({ isStaff }) {
                         onChange={(e) => setLocalSearchTerm(e.target.value)}
                         onKeyDown={handleSearch}
                     />
-                     {/* Optional: Add a button that calls handleSearch onClick */}
-                    {/* <button onClick={handleSearch}>Search</button> */}
                     
                     <select 
                         className="search-type-dropdown" 
                         value={searchType} 
                         onChange={(e) => setSearchType(e.target.value)}
                     >
-                        <option value="Description">Description</option>
                         <option value="Title">Title</option>
+                        <option value="Description">Description</option>
                         <option value="Manufacturer">Manufacturer</option>
                         <option value="Author">Author</option>
                         <option value="Director">Director</option>
@@ -589,8 +589,6 @@ function SearchResults({ isStaff }) {
                             <option value="" disabled></option>
                             <option value="title_asc">Title (A–Z)</option>
                             <option value="title_desc">Title (Z–A)</option>
-                            <option value="newest">Newest First</option>
-                            <option value="oldest">Oldest First</option>
                         </select>
                     </div>
                     {filterOptions.map((filterGroup) => (
@@ -601,20 +599,20 @@ function SearchResults({ isStaff }) {
                             {filterGroup.param === 'tag' && tagsLoading ? (
                                 <p>Loading tags...</p>
                             ) : (
-                                <ul>
-                                    {filterGroup.options.map((option) => (
-                                        <li key={option}>
-                                            <label>
-                                                <input 
-                                                    type="checkbox" 
-                                                    value={option}
-                                                    checked={selectedFilters[filterGroup.param]?.includes(option) || false}
-                                                    onChange={() => handleFilterChange(filterGroup.param, option)}
-                                                /> {option}
-                                            </label>
-                                        </li>
-                                    ))}
-                                </ul>
+                            <ul>
+                                {filterGroup.options.map((option) => (
+                                    <li key={option}>
+                                        <label>
+                                            <input 
+                                                type="checkbox" 
+                                                value={option}
+                                                checked={selectedFilters[filterGroup.param]?.includes(option) || false}
+                                                onChange={() => handleFilterChange(filterGroup.param, option)}
+                                            /> {option}
+                                        </label>
+                                    </li>
+                                ))}
+                            </ul>
                             )}
                         </div>
                     ))}

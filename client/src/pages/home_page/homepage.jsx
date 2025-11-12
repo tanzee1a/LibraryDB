@@ -5,7 +5,7 @@ import Logo from "../../assets/logo-dark.webp"
 
 function Homepage() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchType, setSearchType] = useState('Description'); 
+  const [searchType, setSearchType] = useState('Title'); 
   const [userFirstName, setUserFirstName] = useState(null);
   const navigate = useNavigate();
 
@@ -65,8 +65,8 @@ function Homepage() {
               value={searchType} 
               onChange={(e) => setSearchType(e.target.value)}
             >
-              <option value="Description">Description</option>
               <option value="Title">Title</option>
+              <option value="Description">Description</option>
               <option value="Manufacturer">Manufacturer</option>
               <option value="Author">Author</option>
               <option value="Director">Director</option>

@@ -15,7 +15,7 @@ const Navbar = ({
     const navigate = useNavigate();
     const filters = sampleData.item_filters;
     const [searchTerm, setSearchTerm] = useState('');
-    const [searchType, setSearchType] = useState('Description');
+    const [searchType, setSearchType] = useState('Title');
 
     const handleSearch = (event) => {
         if (event.key === 'Enter') {
