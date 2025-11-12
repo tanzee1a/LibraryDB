@@ -123,7 +123,12 @@ const Navbar = ({
                 <li><Link to="/search?category=BOOK">Books</Link></li>
                 <li><Link to="/search?category=MOVIE">Movies</Link></li>
                 <li><Link to="/search?category=DEVICE">Devices</Link></li>
-
+                <li className="notification-icon">
+                    <Link to="/account/?section=notifications">
+                        <FaBell />
+                        {unreadCount > 0 && <span className="badge">{unreadCount}</span>}
+                    </Link>
+                </li>
                 {renderSearchDropdown()}
                 <li className="dropdown">
                 <button className="nav-icon">
