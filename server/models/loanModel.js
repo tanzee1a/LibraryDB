@@ -761,21 +761,48 @@ async function findAllFines(filters = {}) {
     return rows;
 }
 
+// This is the function in your Loan model/service
 async function staffCreateFine(fineData, staffUserId) {
-    const { borrow_id, user_id, fee_type, amount, notes } = fineData;
+    // 1. Destructure 'email' instead of 'user_id'
+    const { borrow_id, email, fee_type, amount, notes } = fineData;
 
-    if (!borrow_id || !user_id || !fee_type || !amount) {
-        throw new Error('Missing required fields (borrow_id, user_id, fee_type, amount).');
+    // 2. Update validation to check for 'email'
+    if (!borrow_id || !email || !fee_type || !amount) {
+        // 3. Update the error message
+        throw new Error('Missing required fields (borrow_id, email, fee_type, amount).');
     }
     const validFeeTypes = ['LATE', 'LOST', 'DAMAGED'];
     if (!validFeeTypes.includes(fee_type.toUpperCase())) {
         throw new Error(`Invalid fee_type. Must be one of: ${validFeeTypes.join(', ')}`);
     }
 
+    // 4. NEW STEP: Find the user_id from the email
+    let user_id; // Declare user_id
+    try {
+        // Assuming your users table is named 'USER'
+        const userSql = `SELECT user_id FROM USER WHERE email = ?`; 
+        const [users] = await db.query(userSql, [email]);
+        
+        if (!users || users.length === 0) {
+            throw new Error('No user found with the provided email.');
+        }
+        // Get the user_id from the lookup
+        user_id = users[0].user_id; 
+    
+    } catch (lookupError) {
+        console.error("Error looking up user by email:", lookupError);
+        // Pass a clearer error message back
+        throw new Error(lookupError.message || 'Could not find user by email.');
+    }
+
+    // 5. The INSERT query now uses the 'user_id' variable we just found.
+    //    No changes are needed to the SQL string itself.
     const sql = `
         INSERT INTO FINE (borrow_id, user_id, fee_type, amount, notes, date_issued)
         VALUES (?, ?, ?, ?, ?, NOW()) 
     `;
+    
+    // This 'user_id' is now the one we looked up
     const [result] = await db.query(sql, [borrow_id, user_id, fee_type.toUpperCase(), amount, notes]);
 
     return { fine_id: result.insertId, message: 'Fine created successfully.' };

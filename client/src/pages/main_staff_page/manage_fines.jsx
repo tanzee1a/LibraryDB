@@ -14,7 +14,7 @@ function ManageFines() {
 
     const [showAddFineSheet, setShowAddFineSheet] = useState(false);
     const initialFineState = {
-        user_id: '',
+        email: '',
         borrow_id: '',
         fee_type: 'DAMAGED',
         amount: '',
@@ -173,7 +173,7 @@ function ManageFines() {
                 },
                 body: JSON.stringify({
                     borrow_id: newFine.borrow_id,
-                    user_id: newFine.user_id,
+                    email: newFine.email,
                     fee_type: newFine.fee_type,
                     amount: parseFloat(newFine.amount),
                     notes: newFine.notes
@@ -308,7 +308,7 @@ function ManageFines() {
                 <h2>Add New Fine (Manual)</h2>
                 {submitError && <p style={{color: 'red'}}>{submitError}</p>}
                 <form onSubmit={handleAddFineSubmit}>
-                    <label> User Email: <input type="text" className="edit-input" name="user_email" value={newFine.user_email} onChange={handleInputChange} required /> </label>
+                    <label> User Email: <input type="text" className="edit-input" name="email" value={newFine.email} onChange={handleInputChange} required /> </label>
                     <label> Borrow ID: <input type="text" className="edit-input" name="borrow_id" value={newFine.borrow_id} onChange={handleInputChange} required /> </label>
                     <label> Fee Type:
                         <select name="fee_type" className="edit-input" value={newFine.fee_type} onChange={handleInputChange} required>
