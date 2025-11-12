@@ -74,23 +74,23 @@ async function requestPickup(req, res, itemId) {
 // @desc Staff checks out a pending hold
 // @route POST /api/holds/:holdId/pickup
 async function pickupHold(req, res, holdId) {
-  try {
-    const staff_user_id = 'U176124397339'; // TODO: replace with real staff auth
-    const result = await Loan.pickupHold(Number(holdId), staff_user_id);
-    res.writeHead(201, { 'Content-Type': 'application/json' });
-    return res.end(JSON.stringify(result));
-  } catch (error) {
-    console.error("Error in pickupHold controller:", error);
-    res.writeHead(400, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ message: 'Could not pickup hold', error: error.message }));
-  }
+    try {
+        const staff_user_id = req.userId; // 🔑 Use authenticated staff ID
+        const result = await Loan.pickupHold(Number(holdId), staff_user_id);
+        res.writeHead(201, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify(result));
+    } catch (error) {
+        console.error("Error in pickupHold controller:", error);
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ message: 'Could not pickup hold', error: error.message }));
+    }
 }
 
 // @desc Staff returns an item (scans borrow ID?)
 // @route POST /api/return/:borrowId 
 async function returnItem(req, res, borrowId) {
     try {
-        const staff_user_id = 'U176124397339'; // TODO: replace with real staff auth
+        const staff_user_id = req.userId; // 🔑 Use authenticated staff ID
         const result = await Loan.returnItem(borrowId, staff_user_id);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify(result));
@@ -101,36 +101,35 @@ async function returnItem(req, res, borrowId) {
     }
 }
 
-
 // @desc Staff marks a loan as lost
 // @route POST /api/borrows/:borrowId/lost
 async function markLost(req, res, borrowId) {
-  try {
-    const staff_user_id = 'U176124397339'; // TODO: replace with staff auth
-    const result = await Loan.markLost(borrowId, staff_user_id);
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    return res.end(JSON.stringify(result));
-  } catch (error) {
-    console.error("Error in markLost controller:", error);
-    res.writeHead(400, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ message: 'Could not mark lost', error: error.message }));
+    try {
+      const staff_user_id = req.userId; // 🔑 Use authenticated staff ID
+      const result = await Loan.markLost(borrowId, staff_user_id);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify(result));
+    } catch (error) {
+      console.error("Error in markLost controller:", error);
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ message: 'Could not mark lost', error: error.message }));
+    }
   }
-}
 
 // @desc Staff marks a lost loan as found
 // @route POST /api/borrows/:borrowId/found
 async function markFound(req, res, borrowId) {
-  try {
-    const staff_user_id = 'U176124397339'; // TODO: replace with real staff auth
-    const result = await Loan.markFound(borrowId, staff_user_id);
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    return res.end(JSON.stringify(result));
-  } catch (error) {
-    console.error("Error in markFound controller:", error);
-    res.writeHead(400, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ message: 'Could not mark found', error: error.message }));
+    try {
+      const staff_user_id = req.userId; // 🔑 Use authenticated staff ID
+      const result = await Loan.markFound(borrowId, staff_user_id);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify(result));
+    } catch (error) {
+      console.error("Error in markFound controller:", error);
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ message: 'Could not mark found', error: error.message }));
+    }
   }
-}
 
 // @desc User places a hold on an UNAVAILABLE item (Waitlist)
 // @route POST /api/waitlist/:itemId
@@ -237,7 +236,7 @@ async function getMyFines(req, res) {
 // @route POST /api/fines/:fineId/pay
 async function payFine(req, res, fineId) {
     try {
-        const staff_user_id = 'U176124397339'; // TODO: replace with staff auth
+        const staff_user_id = req.userId; // 🔑 Use authenticated staff ID
         const result = await Loan.payFine(Number(fineId), staff_user_id);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify(result));
@@ -271,7 +270,7 @@ async function userPayFine(req, res, fineId) {
 // @route POST /api/fines/:fineId/waive
 async function waiveFine(req, res, fineId) {
     try {
-        const staff_user_id = 'U176124397339'; // TODO: replace with staff auth
+        const staff_user_id = req.userId; // 🔑 Use authenticated staff ID
         
         // Reason must be sent in the request body
         const body = await getPostData(req);
@@ -353,7 +352,7 @@ async function getAllHolds(req, res) {
 async function cancelHold(req, res, holdId) {
     try {
         // TODO: Add Auth check - Staff only
-        const staff_user_id = 'STAFF_ID_PLACEHOLDER'; // Replace with real staff auth later
+        const staff_user_id = req.userId; // 🔑 Use authenticated staff ID
         const result = await Loan.cancelHold(Number(holdId), staff_user_id);
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         return res.end(JSON.stringify(result));
@@ -369,7 +368,7 @@ async function cancelHold(req, res, holdId) {
 async function staffCheckoutItem(req, res) {
     try {
         // TODO: Add Auth check - Staff only
-        const staff_user_id = 'STAFF_ID_PLACEHOLDER'; // Replace with real staff auth later
+        const staff_user_id = req.userId; // 🔑 Use authenticated staff ID
 
         const body = await getPostData(req);
         const { userEmail, itemId } = JSON.parse(body); // Get IDs from request body
@@ -416,11 +415,11 @@ async function getAllFines(req, res) {
 async function staffCreateFine(req, res) {
     try {
         // TODO: Add Auth check - Staff only
-        const staff_user_id = 'STAFF_ID_PLACEHOLDER'; // Auth placeholder
+        const staff_user_id = req.userId; // 🔑 Use authenticated staff ID
 
         const body = await getPostData(req);
         // Expecting borrow_id, user_id, fee_type, amount, notes
-        const fineData = (typeof body === 'string') ? JSON.parse(body) : body; 
+        const fineData = JSON.parse(body); 
 
         const newFine = await Loan.staffCreateFine(fineData, staff_user_id);
         
