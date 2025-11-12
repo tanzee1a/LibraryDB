@@ -459,11 +459,6 @@ function UserProfile() {
                     <hr className="thin-divider" />
                     <div className="user-history-section">
                         <div className="search-result-header">
-                            {/* TODO: Add history search */}
-                            <div className="search-result-search-bar-container">
-                                <input type="text" placeholder="Search user history..." className="search-result-search-bar" />
-                            </div>
-                            {/* Tab Buttons */}
                             <div className="search-result-buttons">
                                 <button className={`action-button ${activeSection === 'borrows' ? 'primary-button' : 'secondary-button'}`} onClick={() => setActiveSection('borrows')}> Borrows </button>
                                 <button className={`action-button ${activeSection === 'holds' ? 'primary-button' : 'secondary-button'}`} onClick={() => setActiveSection('holds')}> Holds </button>
