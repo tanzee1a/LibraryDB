@@ -1,14 +1,21 @@
 // pages/reports/Reports.jsx
 import React, { useState, useEffect } from 'react';
-import './Reports.css'; // Make sure this CSS file is imported
-import { IoBookOutline, IoPeopleOutline, IoSwapHorizontalOutline, IoHourglassOutline, IoWalletOutline, IoDocumentTextOutline, IoPersonCircleOutline, IoNotificationsOutline } from 'react-icons/io5';
+import './Reports.css';
+
+import { IoInformationCircleOutline } from 'react-icons/io5';
+import { Pie } from 'react-chartjs-2';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
 const reportTypeOptions = [
-  { key: 'genres', label: 'Popular Genres', endpoint: '/api/reports/popular-genres' },
-  { key: 'items', label: 'Popular Items', endpoint: '/api/reports/popular-items' },
-  { key: 'overdues', label: 'Overdue Items', endpoint: '/api/reports/overdue-items' },
-  { key: 'fines', label: 'Outstanding Fines', endpoint: '/api/reports/outstanding-fines' }
+  { key: 'genres', label: 'Popular Genres', endpoint: '/api/reports/popular-genres', description: 'Shows the most popular genres based on borrow counts. Note: An item can have multiple genres. Hence, borrow counts may overlap.' },
+  { key: 'items', label: 'Popular Items', endpoint: '/api/reports/popular-items', description: 'List the most borrowed items.' },
+  { key: 'overdues', label: 'Overdue Items', endpoint: '/api/reports/overdue-items', description: 'List of items that are currently overdue along with borrower details.' },
+  { key: 'fines', label: 'Outstanding Fines', endpoint: '/api/reports/outstanding-fines', description: 'Summarizes outstanding fines owed by users. Our goal is to minimize this list as much as we can by reaching out to them to encourage timely payment.' },
+  { key: 'active_users', label: 'Active Users', endpoint: '/api/reports/active-users', description: 'We measure how active users are using how many times they borrow within a specified period.' },
+  { key: 'memberships', label: 'Memberships', endpoint: '/api/reports/memberships', description: 'Provide an overview of patron memberships. Used to active/expired memberships.' },
+  { key: 'revenue', label: 'Revenue', endpoint: '/api/reports/revenue', description: 'Breakdown of revenue generated from fines and memberships.' },
 ];
 
 function Reports() {
@@ -20,10 +27,9 @@ function Reports() {
     const [dateRange, setDateRange] = useState({ from: '', to: '' });
     const [monthRange, setMonthRange] = useState({ from: '1', to: '12' });
     const [yearRange, setYearRange] = useState({ from: '2023', to: '2024' });
-    const [borrowStatus, setBorrowStatus] = useState('');
     const [category, setCategory] = useState('');
-    const [fineStatus, setFineStatus] = useState('');
     const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
+    const [searchQuery, setSearchQuery] = useState('');
 
     // Fetch data when selectedReportKey changes (NO CHANGES NEEDED HERE)
     useEffect(() => {
@@ -75,20 +81,6 @@ function Reports() {
 
         var specificFilters = [];
         switch (selectedType) {
-            case 'borrows':
-                specificFilters.push(
-                    <div className="filter-group" key="borrow-status-filter">
-                        <label>Status:</label>
-                        <select value={borrowStatus} onChange={e => setBorrowStatus(e.target.value)}>
-                            <option value="">All</option>
-                            <option>Loaned Out</option>
-                            <option>Lost</option>
-                            <option>Pending</option>
-                            <option>Returned</option>
-                        </select>
-                    </div>
-                );
-                break;
             case 'genres':
             case 'items':
                 specificFilters.push(
@@ -96,40 +88,54 @@ function Reports() {
                         <label>Category:</label>
                         <select value={category} onChange={e => setCategory(e.target.value)}>
                             <option value="">ALL</option>
-                            <option>BOOK</option>
-                            <option>MOVIE</option>
-                            <option>DEVICE</option>
+                            <option value="BOOK">Book</option>
+                            <option value="MOVIE">Movie</option>
+                            <option value="DEVICE">Device</option>
                         </select>
                     </div>
                 );
                 break;
-            case 'fines':
+            case 'active_users':
                 specificFilters.push(
-                    <div className="filter-group" key="fine-status-filter">
-                        <label>Fine Status:</label>
-                        <select value={fineStatus} onChange={e => setFineStatus(e.target.value)}>
+                    <div className="filter-group" key="category-filter">
+                        <label>User Role:</label>
+                        <select value={category} onChange={e => setCategory(e.target.value)}>
                             <option value="">All</option>
-                            <option>Paid</option>
-                            <option>Unpaid</option>
-                            <option>Waived</option>
+                            <option value="1">Student</option>
+                            <option value="2">Patron</option>
+                            <option value="3">Faculty</option>
                         </select>
                     </div>
                 );
+                break;
+            case 'memberships':
+                specificFilters.push(
+                    <div className="filter-group" key="category-filter">
+                        <label>Status:</label>
+                        <select value={category || "ACTIVE"} onChange={e => setCategory(e.target.value)}>
+                            <option value="">All</option>
+                            <option value="ACTIVE">Active</option>
+                            <option value="EXPIRED">Expired</option>
+                        </select>
+                    </div>
+                );
+                break;
+            default:
                 break;
         }
 
         return (
             <div className="report-filters">
                 <div className="filter-group">
-                <label>Filter by:</label>
-                <select value={dateFilterType} onChange={e => setDateFilterType(e.target.value)}>
-                    <option value="date">Date</option>
-                    <option value="month">Month</option>
-                    <option value="year">Year</option>
-                </select>
+                    <label>Filter by:</label>
+                    <select value={dateFilterType} onChange={e => setDateFilterType(e.target.value)}>
+                        <option value="date">Date</option>
+                        <option value="month">Month</option>
+                        <option value="year">Year</option>
+                    </select>
+                    {dateFilter}
+                    {specificFilters}
                 </div>
-                {dateFilter}
-                {specificFilters}
                 <div className="filter-group">
                     <button className="action-button primary-button" onClick={fetchReportData}>
                         Generate Report
@@ -140,9 +146,7 @@ function Reports() {
                         setDateRange({ from: '', to: '' });
                         setMonthRange({ from: '1', to: '12' });
                         setYearRange({ from: '2023', to: '2024' });
-                        setBorrowStatus('');
                         setCategory('');
-                        setFineStatus('');
                         }}
                     >
                         Clear Filters
@@ -181,11 +185,11 @@ function Reports() {
                 case 'items':
                     if (category) params.append('category', category);
                     break;
-                case 'borrows':
-                    if (borrowStatus) params.append('status', borrowStatus);
+                case 'active_users':
+                    if (category) params.append('role', category);
                     break;
-                case 'fines':
-                    if (fineStatus) params.append('status', fineStatus);
+                case 'memberships':
+                    if (category) params.append('status', category);
                     break;
                 default:
                     break;
@@ -225,12 +229,19 @@ function Reports() {
         return value;
     };
 
-    // Sort handling
+    // Sort and filter handling
     const sortedReportData = React.useMemo(() => {
         if (!reportData || reportData.length === 0) return [];
-        if (!sortConfig.key) return reportData;
 
-        const sorted = [...reportData].sort((a, b) => {
+        const filteredData = reportData.filter(row =>
+            Object.entries(row).some(([key, value]) =>
+                formatCell(value, key).toString().toLowerCase().includes(searchQuery.toLowerCase())
+            )
+        );
+
+        if (!sortConfig.key) return filteredData;
+
+        const sorted = [...filteredData].sort((a, b) => {
             const aVal = a[sortConfig.key];
             const bVal = b[sortConfig.key];
 
@@ -250,7 +261,192 @@ function Reports() {
         });
 
         return sorted;
-    }, [reportData, sortConfig]);
+    }, [reportData, sortConfig, searchQuery]);
+
+    const revenueSummary = React.useMemo(() => {
+        if (selectedType !== 'revenue' || !reportData.length) return null;
+
+        const totals = reportData.reduce((acc, row) => {
+            acc[row.type] = (acc[row.type] || 0) + Number(row.amount || 0);
+            return acc;
+        }, {});
+
+        const totalRevenue = Object.values(totals).reduce((a, b) => a + b, 0);
+
+        return { totals, totalRevenue };
+    }, [reportData, selectedType]);
+
+    // User summary for active_users report
+    const userSummary = React.useMemo(() => {
+        if (selectedType !== 'active_users' || !reportData.length) return null;
+        const totals = reportData.reduce((acc, row) => {
+            const label = row.role_name || 'Unknown';
+            acc[label] = (acc[label] || 0) + 1;
+            return acc;
+        }, {});
+        const totalUsers = Object.values(totals).reduce((a, b) => a + b, 0);
+        return { totals, totalUsers };
+    }, [reportData, selectedType]);
+
+    // Membership summary for memberships report
+    const membershipSummary = React.useMemo(() => {
+        if (selectedType !== 'memberships' || !reportData.length) return null;
+        const totals = reportData.reduce((acc, row) => {
+            const label = row.membership_status || 'Unknown';
+            acc[label] = (acc[label] || 0) + 1;
+            return acc;
+        }, {});
+        const totalMemberships = Object.values(totals).reduce((a, b) => a + b, 0);
+        return { totals, totalMemberships };
+    }, [reportData, selectedType]);
+
+    const renderPieChart = () => {
+        switch (selectedType) {
+            case 'revenue':
+                if (!revenueSummary) return null;
+                return (
+                    <div className="revenue-summary">
+                        <h3>Total Revenue: ${revenueSummary.totalRevenue.toFixed(2)}</h3>
+                        <Pie
+                            data={{
+                                labels: Object.keys(revenueSummary.totals),
+                                datasets: [
+                                    {
+                                        data: Object.values(revenueSummary.totals),
+                                        backgroundColor: ['#4CAF50', '#2196F3'], // green for fines, blue for membership
+                                        hoverOffset: 10,
+                                    },
+                                ],
+                            }}
+                            options={{
+                                plugins: {
+                                    legend: { position: 'bottom' },
+                                    tooltip: {
+                                        callbacks: {
+                                            label: (context) => {
+                                                const type = context.label;
+                                                const val = context.raw;
+                                                const pct = ((val / revenueSummary.totalRevenue) * 100).toFixed(1);
+                                                return `${type}: $${val.toFixed(2)} (${pct}%)`;
+                                            },
+                                        },
+                                    },
+                                },
+                            }}
+                        />
+                    </div>
+                );
+            case 'active_users':
+                if (!userSummary) return null;
+                return (
+                    <div className="revenue-summary">
+                        <h3>Total Active Users: {userSummary.totalUsers}</h3>
+                        <Pie
+                            data={{
+                                labels: Object.keys(userSummary.totals),
+                                datasets: [
+                                    {
+                                        data: Object.values(userSummary.totals),
+                                        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'], // colors for roles
+                                        hoverOffset: 10,
+                                    },
+                                ],
+                            }}
+                            options={{
+                                plugins: {
+                                    legend: { position: 'bottom' },
+                                    tooltip: {
+                                        callbacks: {
+                                            label: (context) => {
+                                                const type = context.label;
+                                                const val = context.raw;
+                                                const pct = ((val / userSummary.totalUsers) * 100).toFixed(1);
+                                                return `${type}: ${val} (${pct}%)`;
+                                            },
+                                        },
+                                    },
+                                },
+                            }}
+                        />
+                    </div>
+                );
+            case 'memberships':
+                if (!membershipSummary) return null;
+                return (
+                    <div className="revenue-summary">
+                        <h3>Total Memberships: {membershipSummary.totalMemberships}</h3>
+                        <Pie
+                            data={{
+                                labels: Object.keys(membershipSummary.totals),
+                                datasets: [
+                                    {
+                                        data: Object.values(membershipSummary.totals),
+                                        backgroundColor: ['#4CAF50', '#FF9800'], // green for active, orange for expired
+                                        hoverOffset: 10,
+                                    },
+                                ],
+                            }}
+                            options={{
+                                plugins: {
+                                    legend: { position: 'bottom' },
+                                    tooltip: {
+                                        callbacks: {
+                                            label: (context) => {
+                                                const type = context.label;
+                                                const val = context.raw;
+                                                const pct = ((val / membershipSummary.totalMemberships) * 100).toFixed(1);
+                                                return `${type}: ${val} (${pct}%)`;
+                                            },
+                                        },
+                                    },
+                                },
+                            }}
+                        />
+                    </div>
+                );
+            case 'fines': {
+                if (!reportData.length) return null;
+                const fineTotals = reportData.reduce((acc, row) => {
+                    const email = row.email || 'Unknown';
+                    acc[email] = (acc[email] || 0) + Number(row.total_amount_due || 0);
+                    return acc;
+                }, {});
+                const totalFines = Object.values(fineTotals).reduce((a, b) => a + b, 0);
+                return (
+                    <div className="revenue-summary">
+                        <h3>Total Outstanding Fines: ${totalFines.toFixed(2)}</h3>
+                        <Pie
+                            data={{
+                                labels: Object.keys(fineTotals),
+                                datasets: [{
+                                    data: Object.values(fineTotals),
+                                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'],
+                                    hoverOffset: 10,
+                                }],
+                            }}
+                            options={{
+                                plugins: {
+                                    legend: { display: false },
+                                    tooltip: {
+                                        callbacks: {
+                                            label: (context) => {
+                                                const label = context.label;
+                                                const val = context.raw;
+                                                const pct = ((val / totalFines) * 100).toFixed(1);
+                                                return `${label}: $${val.toFixed(2)} (${pct}%)`;
+                                            },
+                                        },
+                                    },
+                                },
+                            }}
+                        />
+                    </div>
+                );
+            }
+            default:
+                return null;
+        }
+    }
 
     // Render table
     const renderReportTable = () => {
@@ -269,50 +465,68 @@ function Reports() {
         };
 
         return (
-            <table className="report-table">
-                <thead>
-                    <tr>
-                        {headers.map(header => (
-                            <th key={header} onClick={() => handleSort(header)}>
-                                {header.replace(/_/g, ' ').toUpperCase()}
-                                {sortConfig.key === header ? (sortConfig.direction === 'ascending' ? ' ▲' : ' ▼') : ''}
-                            </th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody>
-                    {sortedReportData.map((row, index) => (
-                        <tr key={index}>
-                            {headers.map(header => <td key={header}>{formatCell(row[header], header)}</td>)}
+            <>
+                <table className="report-table">
+                    <thead>
+                        <tr>
+                            {headers.map(header => (
+                                <th key={header} onClick={() => handleSort(header)}>
+                                    {header.replace(/_/g, ' ').toUpperCase()}
+                                    {sortConfig.key === header ? (sortConfig.direction === 'ascending' ? ' ▲' : ' ▼') : ''}
+                                </th>
+                            ))}
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {sortedReportData.map((row, index) => (
+                            <tr key={index}>
+                                {headers.map(header => <td key={header}>{formatCell(row[header], header)}</td>)}
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </>
         );
     };
 
     // --- UPDATED RETURN BLOCK ---
     return (
-        <div className="page-container reports-container">
-            <h1>Library Reports</h1>
+        <div className="page-container">
+            <div className='reports-container'>
+                <h1>Library Reports</h1>
+                <div className="report-tabs">
+                {reportTypeOptions.map(type => (
+                    <button
+                    key={type.key}
+                    className={`tab-button ${selectedType === type.key ? 'active' : ''}`}
+                    onClick={() => setSelectedType(type.key)}
+                    >
+                    {type.label}
+                    </button>
+                ))}
+                </div>
 
-            <div className="report-tabs">
-              {reportTypeOptions.map(type => (
-                <button
-                  key={type.key}
-                  className={`tab-button ${selectedType === type.key ? 'active' : ''}`}
-                  onClick={() => setSelectedType(type.key)}
-                >
-                  {type.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Filter Section */}
-            {renderFilterOptions()}
-            <div className="report-content">
-                <h2>Result</h2>
-                {renderReportTable()}
+                <div className="report-description">
+                    <h3><IoInformationCircleOutline /></h3>
+                    <p>{reportTypeOptions.find(t => t.key === selectedType)?.description}</p>
+                </div>
+                {/* Filter Section */}
+                {renderFilterOptions()}
+                {renderPieChart()}
+                
+                <div className="report-content">
+                    <div className="report-search">
+                        <input
+                            type="text"
+                            placeholder="Search..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="search-input"
+                        />
+                    </div>
+                    <h2>Found {sortedReportData.length} result(s)</h2>
+                    {renderReportTable()}
+                </div>
             </div>
         </div>
     );

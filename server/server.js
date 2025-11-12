@@ -27,7 +27,7 @@ const { saveItem, unsaveItem, getMyWishlist } = require('./controllers/wishlistC
 const { getMyProfile, getAllUsers, staffCreateUser, getUserProfile, getUserBorrowHistory, getUserHoldHistory, getUserFineHistory, staffUpdateUser, staffDeleteUser, changePassword, changeEmail} = require('./controllers/userController');
 const { signup, cancel, renew } = require('./controllers/membershipController');
 const { searchItems } = require('./controllers/searchController');
-const { getPopularGenresReport, getPopularItemsReport, getOverdueItemsReport, getOutstandingFines } = require('./controllers/reportController');
+const { getPopularGenresReport, getPopularItemsReport, getOverdueItemsReport, getOutstandingFines, getActiveUsersReport, getMembershipReport, getRevenueReport } = require('./controllers/reportController');
 const { protect } = require('./middleware/authMiddleware'); // <--- ADD THIS IMPORT
 const { getDashboardStats, getMyStaffProfile } = require('./controllers/staffController');
 const { staffProtect} = require('./middleware/authMiddleware');
@@ -262,10 +262,6 @@ const server = http.createServer((req, res) => {
         }
 
         // reports routes
-        else if (req.url === '/api/reports/popular' && req.method === 'GET') {
-            staffProtect(req, res, () => getPopularityReport(req, res));
-            return;
-        }
         else if (req.url.startsWith('/api/reports/popular-genres') && req.method === 'GET') {
             staffProtect(req, res, () => getPopularGenresReport(req, res));
             return;
@@ -282,8 +278,16 @@ const server = http.createServer((req, res) => {
             staffProtect(req, res, () => getOutstandingFines(req, res));
             return;
         }
-        else if (req.url.startsWith('/api/reports/fines-summary') && req.method === 'GET') {
-            staffProtect(req, res, () => getOutstandingFines(req, res));
+        else if (req.url.startsWith('/api/reports/active-users') && req.method === 'GET') {
+            staffProtect(req, res, () => getActiveUsersReport(req, res));
+            return;
+        }
+        else if (req.url.startsWith('/api/reports/membership') && req.method === 'GET') {
+            staffProtect(req, res, () => getMembershipReport(req, res));
+            return;
+        }
+        else if (req.url.startsWith('/api/reports/revenue') && req.method === 'GET') {
+            staffProtect(req, res, () => getRevenueReport(req, res));
             return;
         }
 
