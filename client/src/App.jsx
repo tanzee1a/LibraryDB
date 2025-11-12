@@ -25,10 +25,13 @@ import StaffProfile from './pages/staff_dashboard/StaffProfile.jsx'; // 👈 NEW
 import { useState, useEffect } from 'react';
 import './App.css';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const getToken = () => localStorage.getItem('authToken');
 function App() {
   const [loading, setLoading] = useState(true); // Start loading
   const [isStaff, setIsStaff] = useState(false); 
   const [isLoggedIn, setIsLoggedIn] = useState(false); 
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     // Read localStorage to set initial state
@@ -43,6 +46,48 @@ function App() {
     // CRITICAL: Set loading to false ONLY after state is set
     setLoading(false); 
   }, []); 
+
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      const token = getToken();
+
+      // Don't fetch if not logged in
+      if (!isLoggedIn || !token) {
+        setUnreadCount(0);
+        return;
+      }
+
+      // Determine the correct endpoint based on user type
+      const endpoint = isStaff
+        ? `${API_BASE_URL}/api/staff-notifications/count`
+        : `${API_BASE_URL}/api/my-notifications/count`; // (Assuming you create this endpoint for patrons)
+
+      try {
+        const res = await fetch(endpoint, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setUnreadCount(data.unreadCount);
+        } else {
+          // Don't spam console if it fails, just set to 0
+          setUnreadCount(0);
+        }
+      } catch (error) {
+        console.error("Error fetching unread count:", error);
+        setUnreadCount(0);
+      }
+    };
+
+    fetchUnreadCount(); // Fetch on initial load/auth change
+    
+    // Optional: Poll for new notifications every 2 minutes
+    const intervalId = setInterval(fetchUnreadCount, 120000); 
+    
+    // Clean up interval on component unmount or state change
+    return () => clearInterval(intervalId);
+
+  }, [isLoggedIn, isStaff]);
 
   // Block rendering until state is initialized
   if (loading) {
@@ -59,6 +104,7 @@ function App() {
         setIsStaff={setIsStaff}
         isLoggedIn={isLoggedIn}
         setIsLoggedIn={setIsLoggedIn}
+        unreadCount={unreadCount}
       />
 
       <Routes>
@@ -88,7 +134,7 @@ function App() {
               : <Pricing setIsStaff={setIsStaff} setIsLoggedIn={setIsLoggedIn} />
           }
         />
-        <Route path="/notifications" element={<Notifications />} />
+        <Route path="/notifications" element={<Notifications setUnreadCount={setUnreadCount} />} />
         <Route path="/search" element={<SearchResults isStaff={isStaff} />} />
         <Route path="/item/:itemId" element={<ItemDetails isStaff={isStaff} />} />
         <Route path="/account" element={ <AccountDashboard
@@ -96,6 +142,7 @@ function App() {
           setIsLoggedIn={setIsLoggedIn}
           isStaff={isStaff}
           setIsStaff={setIsStaff}
+          setUnreadCount={setUnreadCount}
         />
   } />
   <Route path="/access-denied" element={

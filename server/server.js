@@ -20,7 +20,7 @@ const {
 } = require('./controllers/loanController');
 
 const { 
-    getMyNotifications, getStaffNotifications, markNotificationAsRead 
+    getMyNotifications, getStaffNotifications, markNotificationAsRead, getStaffUnreadCount 
 } = require('./controllers/notificationController');
 const { registerUser, loginUser } = require('./controllers/loginRegisterController');
 const { saveItem, unsaveItem, getMyWishlist } = require('./controllers/wishlistController');
@@ -313,6 +313,18 @@ const server = http.createServer((req, res) => {
             const notificationId = req.url.split('/')[3];
             // Use 'protect' - it works for both patrons and staff
             protect(req, res, () => markNotificationAsRead(req, res, notificationId));
+            return;
+        }
+        else if (req.method === 'GET' && req.url === '/api/staff-notifications/count') {
+        staffProtect(req, res, () => {
+            getStaffUnreadCount(req, res);
+        });
+        return;
+        }
+        else if (req.method === 'GET' && req.url === '/api/my-notifications/count') {
+            protect(req, res, () => {
+                getPatronUnreadCount(req, res);
+            });
             return;
         }
     

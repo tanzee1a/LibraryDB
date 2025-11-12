@@ -10,12 +10,13 @@ const Navbar = ({
     setIsStaff = () => {}, 
     isLoggedIn = false, 
     setIsLoggedIn = () => {},
-    onNavigateDashboard = () => {}
+    onNavigateDashboard = () => {},
+    unreadCount = 0
   }) => {
     const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState('');
     const [searchType, setSearchType] = useState('Title');
-    const [unreadCount, setUnreadCount] = useState(1);
+    // const [unreadCount, setUnreadCount] = useState(1);
 
     const handleSearch = (event) => {
         if (event.key === 'Enter') {

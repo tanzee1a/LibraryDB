@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
-function Notifications() {
+function Notifications({ setUnreadCount }) {
   const [allNotifications, setAllNotifications] = useState([]);
+  // const { setUnreadCount } = useOutletContext();
 
   // Helper to get token (replace with your auth context/storage)
   const getToken = () => localStorage.getItem('authToken');
@@ -40,6 +41,8 @@ const fetchStaffNotifications = async () => {
             const data = await res.json();
             console.log("[DEBUG] fetchStaffNotifications: Data received:", data);
             setAllNotifications(data);
+            const count = data.filter(n => n.is_read === 0).length;
+            setUnreadCount(count);
         } else {
             console.error("Failed to fetch staff notifications. Status:", res.status);
         }
@@ -75,6 +78,9 @@ const fetchStaffNotifications = async () => {
               : notif
           )
         );
+
+        setUnreadCount(prevCount => Math.max(0, prevCount - 1));
+
       } else {
         console.error("Failed to mark as read");
       }
