@@ -1,7 +1,7 @@
 import './manage_users.css';
 import React, { useState, useEffect } from 'react';
 import { FaPlus } from "react-icons/fa";
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
 
 function ManageUsers() {
@@ -10,6 +10,10 @@ function ManageUsers() {
     const [error, setError] = useState('');
     const [isLibrarian, setIsLibrarian] = useState(false);
     const [isAssistantLibrarian, setIsAssistantLibrarian] = useState(false);
+
+    const [searchParams, setSearchParams] = useSearchParams();
+    const query = searchParams.get('q') || '';
+    const [localSearchTerm, setLocalSearchTerm] = useState(query);
 
     // --- Add User Sheet state/handlers ---
     const [showAddUserSheet, setShowAddUserSheet] = useState(false);
@@ -52,27 +56,24 @@ function ManageUsers() {
 
         const token = localStorage.getItem('authToken'); 
         const authHeaders = {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}` 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` 
         };
         
         if (!token) {
             setError('Authentication token missing. Please log in.');
-            setLoadingStats(false);
-            setLoadingProfile(false);
+            setLoading(false); // Corrected from setLoadingStats
             return;
         }
 
-        fetch(`${API_BASE_URL}/api/users`, {
+        // Get the full query string from state
+        const queryString = searchParams.toString();
+
+        fetch(`${API_BASE_URL}/api/users?${queryString}`, { // <-- Pass the query string
             method: 'GET',
-            // 2. Add the Authorization header
-            headers: {
-                'Authorization': `Bearer ${token}`, // CRITICAL: Send the token
-                'Content-Type': 'application/json'
-            }
-        }) // Fetch from backend
+            headers: authHeaders
+        })
             .then(res => {
-                // Check for explicit 401/403 errors and provide better messaging
                 if (res.status === 401 || res.status === 403) {
                     return Promise.reject('Unauthorized access or insufficient privileges.');
                 }
@@ -81,7 +82,6 @@ function ManageUsers() {
             .then(data => { setUsers(data || []); setLoading(false); })
             .catch(err => { 
                 console.error("Fetch Users Error:", err); 
-                // Update error message to be more informative
                 setError(`Could not load users. (${err instanceof Error ? err.message : err})`); 
                 setLoading(false); 
             });
@@ -91,22 +91,19 @@ function ManageUsers() {
         const token = localStorage.getItem('authToken'); 
         if (!token) return;
 
-        // Fetch User List
+        // Fetch User List (will use searchParams)
         fetchUsers();
 
-        // Fetch Logged-in Staff Profile to determine permission level
+        // ... (Fetch Logged-in Staff Profile logic remains the same) ...
         fetch(`${API_BASE_URL}/api/staff/my-profile`, { headers: { 'Authorization': `Bearer ${token}` } })
             .then(res => res.ok ? res.json() : Promise.reject('Failed to fetch staff profile'))
             .then(data => {
-                // Determine logged-in staff role based on backend data
                 const roleName = data.role_name;
                 if (roleName === 'Librarian') {
                     setIsLibrarian(true);
                 } else if (roleName === 'Assistant Librarian') {
                     setIsAssistantLibrarian(true);
                 }
-                // Initialize newUser role based on access level
-                // Set default role to 'Staff' if Librarian, otherwise 'Patron'
                 setNewUser(prev => ({
                     ...prev,
                     role: (roleName === 'Librarian' || roleName === 'Assistant Librarian') ? 'Patron' : 'Clerk'
@@ -114,10 +111,10 @@ function ManageUsers() {
             })
             .catch(err => {
                 console.error("Fetch Staff Profile Error:", err);
-                // Handle profile load error if necessary
             });
+    // --- Re-run this effect if the search parameters in the URL change ---
+    }, [searchParams]);
 
-    }, []);
     // --- End Fetch ---
 
     // --- handleInputChange (remains the same) ---
@@ -191,6 +188,25 @@ function ManageUsers() {
         return roles;
     }
 
+    const handleSearch = (event) => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            const term = localSearchTerm.trim();
+            
+            // Get current filters to preserve them
+            const currentParams = Object.fromEntries(searchParams.entries());
+
+            if (term) {
+                // Set the 'q' param, keeping other filters
+                setSearchParams({ ...currentParams, q: term });
+            } else {
+                // If search is cleared, remove 'q' but keep other filters
+                delete currentParams.q;
+                setSearchParams(currentParams);
+            }
+        }
+    };
+
     return (
         <div>
         <div className="page-container">
@@ -205,7 +221,14 @@ function ManageUsers() {
                             <FaPlus />
                         </button>
                         {/* TODO: Implement user search */}
-                        <input type="text" placeholder="Search users (by name or email)..." className="search-result-search-bar" />
+                        <input 
+                            type="text" 
+                            placeholder="Search users (by name or email)..." 
+                            className="search-result-search-bar"
+                            value={localSearchTerm}
+                            onChange={(e) => setLocalSearchTerm(e.target.value)}
+                            onKeyDown={handleSearch}
+                        />
                     </div>
                 </div>
                 <div className="search-results-contents">

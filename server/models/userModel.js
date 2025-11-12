@@ -25,25 +25,33 @@ async function findById(userId) {
 }
 
 // --- MODIFIED: Find ALL Users (Patrons and Staff) ---
-async function findAllUsers() {
-    // --- MODIFIED: JOIN to get role_name and check role_name ---
-    const sql = `
+async function findAllUsers(searchTerm) {
+
+    let sql = `
         SELECT 
             u.user_id, 
             u.email, 
-            ur.role_name AS role, -- Get the name from USER_ROLE
+            ur.role_name AS role,
             u.firstName, 
             u.lastName,
             sr.role_name AS staff_role 
         FROM USER u
-        JOIN USER_ROLE ur ON u.role_id = ur.role_id -- Join to get the role
-        -- Check role_name from the new table
+        JOIN USER_ROLE ur ON u.role_id = ur.role_id
         LEFT JOIN STAFF s ON u.user_id = s.user_id AND ur.role_name = 'Staff'
         LEFT JOIN STAFF_ROLES sr ON s.role_id = sr.role_id
-        ORDER BY u.lastName, u.firstName;
-    `;
-    // --- END MODIFICATION ---
-    const [rows] = await db.query(sql);
+    `; // Base SQL
+    
+    let params = []; // Array for parameters
+    
+    if (searchTerm && searchTerm.trim()) {
+        const queryTerm = `%${searchTerm}%`;
+        sql += ` WHERE (u.firstName LIKE ? OR u.lastName LIKE ? OR u.email LIKE ?)`;
+        params.push(queryTerm, queryTerm, queryTerm);
+    }
+
+    sql += ` ORDER BY u.lastName, u.firstName;`;
+    
+    const [rows] = await db.query(sql, params); // <-- MODIFIED: Pass params
     return rows;
 }
 

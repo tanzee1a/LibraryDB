@@ -235,7 +235,7 @@ const server = http.createServer((req, res) => {
             staffProtect(req, res, () => getMyStaffProfile(req, res));
             return;
         }
-        else if (req.url === '/api/users' && req.method === 'GET') { 
+        else if (req.url.startsWith('/api/users') && req.method === 'GET') { 
             staffProtect(req, res, () => getAllUsers(req, res)); 
         }
         else if (req.url === '/api/users' && req.method === 'POST') { 
