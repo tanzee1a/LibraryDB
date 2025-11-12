@@ -1,7 +1,7 @@
 import './manage_users.css';
 import React, { useState, useEffect } from 'react';
 import { FaPlus } from "react-icons/fa";
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
 
 function ManageUsers() {
@@ -10,6 +10,12 @@ function ManageUsers() {
     const [error, setError] = useState('');
     const [isLibrarian, setIsLibrarian] = useState(false);
     const [isAssistantLibrarian, setIsAssistantLibrarian] = useState(false);
+
+    const [searchParams, setSearchParams] = useSearchParams();
+    const query = searchParams.get('q') || '';
+    const [localSearchTerm, setLocalSearchTerm] = useState(query);
+
+    const [sort, setSort] = useState(searchParams.get('sort') || '');
 
     // --- Add User Sheet state/handlers ---
     const [showAddUserSheet, setShowAddUserSheet] = useState(false);
@@ -30,20 +36,15 @@ function ManageUsers() {
     // --- Currency Formatter (keep as is) ---
     const currencyFormatter = new Intl.NumberFormat('en-US', { /* ... */ });
 
-    const userFilterOptions = () => {
-        // Get the user's role from localStorage
-        const userRole = localStorage.getItem('userRole');
-        let roleOptions = ['Patron', 'Student', 'Faculty', 'Staff', 'Admin'];
-        // If the role is 'Staff', filter out 'Admin'
-        if (userRole === 'Staff') {
-            roleOptions = roleOptions.filter(opt => opt !== 'Admin');
-        }
-        return [{
+    // This is now just a static definition of what filters are available.
+    // We could make this dynamic later by fetching from USER_ROLE table.
+    const userFilterOptions = [
+        {
             category: 'Role',
             param: 'role', // URL parameter
-            options: roleOptions
-        }];
-    };
+            options: ['Patron', 'Student', 'Faculty', 'Staff']
+        }
+    ];
 
     // --- Fetch Users Logic ---
     const fetchUsers = () => {
@@ -52,27 +53,24 @@ function ManageUsers() {
 
         const token = localStorage.getItem('authToken'); 
         const authHeaders = {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}` 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` 
         };
         
         if (!token) {
             setError('Authentication token missing. Please log in.');
-            setLoadingStats(false);
-            setLoadingProfile(false);
+            setLoading(false); // Corrected from setLoadingStats
             return;
         }
 
-        fetch(`${API_BASE_URL}/api/users`, {
+        // Get the full query string from state
+        const queryString = searchParams.toString();
+
+        fetch(`${API_BASE_URL}/api/users?${queryString}`, { // <-- Pass the query string
             method: 'GET',
-            // 2. Add the Authorization header
-            headers: {
-                'Authorization': `Bearer ${token}`, // CRITICAL: Send the token
-                'Content-Type': 'application/json'
-            }
-        }) // Fetch from backend
+            headers: authHeaders
+        })
             .then(res => {
-                // Check for explicit 401/403 errors and provide better messaging
                 if (res.status === 401 || res.status === 403) {
                     return Promise.reject('Unauthorized access or insufficient privileges.');
                 }
@@ -81,7 +79,6 @@ function ManageUsers() {
             .then(data => { setUsers(data || []); setLoading(false); })
             .catch(err => { 
                 console.error("Fetch Users Error:", err); 
-                // Update error message to be more informative
                 setError(`Could not load users. (${err instanceof Error ? err.message : err})`); 
                 setLoading(false); 
             });
@@ -91,22 +88,19 @@ function ManageUsers() {
         const token = localStorage.getItem('authToken'); 
         if (!token) return;
 
-        // Fetch User List
+        // Fetch User List (will use searchParams)
         fetchUsers();
 
-        // Fetch Logged-in Staff Profile to determine permission level
+        // ... (Fetch Logged-in Staff Profile logic remains the same) ...
         fetch(`${API_BASE_URL}/api/staff/my-profile`, { headers: { 'Authorization': `Bearer ${token}` } })
             .then(res => res.ok ? res.json() : Promise.reject('Failed to fetch staff profile'))
             .then(data => {
-                // Determine logged-in staff role based on backend data
                 const roleName = data.role_name;
                 if (roleName === 'Librarian') {
                     setIsLibrarian(true);
                 } else if (roleName === 'Assistant Librarian') {
                     setIsAssistantLibrarian(true);
                 }
-                // Initialize newUser role based on access level
-                // Set default role to 'Staff' if Librarian, otherwise 'Patron'
                 setNewUser(prev => ({
                     ...prev,
                     role: (roleName === 'Librarian' || roleName === 'Assistant Librarian') ? 'Patron' : 'Clerk'
@@ -114,10 +108,9 @@ function ManageUsers() {
             })
             .catch(err => {
                 console.error("Fetch Staff Profile Error:", err);
-                // Handle profile load error if necessary
             });
-
-    }, []);
+    // --- Re-run this effect if the search parameters in the URL change ---
+    }, [searchParams]);
     // --- End Fetch ---
 
     // --- handleInputChange (remains the same) ---
@@ -191,6 +184,67 @@ function ManageUsers() {
         return roles;
     }
 
+    const handleSearch = (event) => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            const term = localSearchTerm.trim();
+            
+            // Get current filters to preserve them
+            const currentParams = Object.fromEntries(searchParams.entries());
+
+            if (term) {
+                // Set the 'q' param, keeping other filters
+                setSearchParams({ ...currentParams, q: term });
+            } else {
+                // If search is cleared, remove 'q' but keep other filters
+                delete currentParams.q;
+                setSearchParams(currentParams);
+            }
+        }
+    };
+
+    const handleFilterChange = (param, option) => {
+        const currentValues = (searchParams.get(param) || '')
+            .split(',')
+            .filter(Boolean); // filter(Boolean) removes empty strings
+
+        let newValues;
+        if (currentValues.includes(option)) {
+            // Remove option if already selected
+            newValues = currentValues.filter(v => v !== option);
+        } else {
+            // Add option if not selected
+            newValues = [...currentValues, option];
+        }
+
+        // Push new filter state back to URL, which triggers useEffect to refetch
+        const next = new URLSearchParams(searchParams);
+        if (newValues.length) {
+            next.set(param, newValues.join(','));
+        } else {
+            next.delete(param);
+        }
+        setSearchParams(next);
+    };
+
+    const handleSortChange = (event) => {
+        const sortType = event.target.value;
+        setSort(sortType); // Update local state for the dropdown
+
+        // Get current params to preserve filters/search
+        const currentParams = Object.fromEntries(searchParams.entries());
+        const next = new URLSearchParams(currentParams);
+
+        if (sortType) {
+            next.set('sort', sortType);
+        } else {
+            next.delete('sort'); // Fallback, though dropdown has no empty option
+        }
+        
+        // Set the new URL, which triggers useEffect to refetch
+        setSearchParams(next);
+    };
+
     return (
         <div>
         <div className="page-container">
@@ -204,8 +258,14 @@ function ManageUsers() {
                             >
                             <FaPlus />
                         </button>
-                        {/* TODO: Implement user search */}
-                        <input type="text" placeholder="Search users (by name or email)..." className="search-result-search-bar" />
+                        <input 
+                            type="text" 
+                            placeholder="Search users (by name or email)..." 
+                            className="search-result-search-bar"
+                            value={localSearchTerm}
+                            onChange={(e) => setLocalSearchTerm(e.target.value)}
+                            onKeyDown={handleSearch}
+                        />
                     </div>
                 </div>
                 <div className="search-results-contents">
@@ -214,36 +274,43 @@ function ManageUsers() {
                             Sort by:
                             <select
                                 className="sort-select"
-                                onChange={(e) => handleSortChange(e.target.value)}
-                                defaultValue=""
+                                value={sort} // Use state to control the value
+                                onChange={handleSortChange} // Use the new handler
                             >
                                 <option value="" disabled></option>
-                                <option value="title_asc">Title (A–Z)</option>
-                                <option value="title_desc">Title (Z–A)</option>
-                                <option value="newest">Newest First</option>
-                                <option value="oldest">Oldest First</option>
+                                <option value="Fname_asc">First Name (A–Z)</option>
+                                <option value="Lname_asc">Last Name (A–Z)</option>
+                                <option value="Fname_desc">First Name (Z–A)</option>
+                                <option value="Lname_desc">Last Name (Z–A)</option>
                             </select>
                         </div>
-                        {userFilterOptions().map((filterGroup) => (
+                        {userFilterOptions.map((filterGroup) => (
                             <div key={filterGroup.param} className="filter-category">
                                 <h3>{filterGroup.category}</h3>
                                 <hr className='thin-divider divider--tight' />
                                 <ul>
                                     {filterGroup.options.map((option) => {
-                                        return ( // Start returning the list item
+                                        // Check if this filter option is in the URL searchParams
+                                        const isChecked = (searchParams.get(filterGroup.param) || '')
+                                                            .split(',')
+                                                            .includes(option);
+                                        return (
                                             <li key={option}>
                                                 <label>
                                                     <input 
                                                         type="checkbox" 
                                                         value={option}
+                                                        // Wire up the checkbox
+                                                        checked={isChecked}
+                                                        onChange={() => handleFilterChange(filterGroup.param, option)}
                                                     /> {option}
                                                 </label>
                                             </li>
-                                        ); // End returning list item
-                                    })} {/* End options.map */}
+                                        );
+                                    })}
                                 </ul>
                             </div>
-                        ))} {/* End filterOptions.map */}
+                        ))}
                     </div>
                     {/* --- MODIFIED User List --- */}
                     <div className="search-results-list" style={{width: '100%'}}> {/* Make list full width if no filter */}

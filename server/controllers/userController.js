@@ -1,6 +1,7 @@
 // controllers/userController.js
 const User = require('../models/userModel');
 const { getPostData } = require('../utils');
+const url = require('url');
 
 // @desc Get profile details for the "logged in" user
 // @route GET /api/my-profile
@@ -39,8 +40,18 @@ async function getMyProfile(req, res) {
 // @route GET /api/users
 async function getAllUsers(req, res) {
     try {
-        // TODO: Add Auth check - Staff only
-        const users = await User.findAllUsers();
+        const parsedUrl = url.parse(req.url, true);
+        const searchTerm = parsedUrl.query.q || '';
+        const sort = parsedUrl.query.sort || ''; //
+        
+        // Get ALL query params as filters
+        const filters = parsedUrl.query;
+        delete filters.q; // Remove search term from filters
+        delete filters.sort;
+
+        // Pass both searchTerm and filters object
+        const users = await User.findAllUsers(searchTerm, filters, sort); 
+        
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         return res.end(JSON.stringify(users));
     } catch (error) {

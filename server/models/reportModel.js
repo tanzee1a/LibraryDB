@@ -48,16 +48,27 @@ async function popularGenresReport({ filterType = 'date', start = null, end = nu
     const [rows] = await db.query(sql, params);
     return rows;
 }
+
 async function popularItemReport({ filterType = 'date', start = null, end = null, category = null } = {}) {
     let sql = `
         SELECT 
-        i.item_id,
-        i.category,
-        COALESCE(bk.title, m.title, d.device_name) AS item_name,
-        COUNT(b.borrow_id) AS total_borrows
+            i.item_id,
+            i.category,
+            COALESCE(bk.title, m.title, d.device_name) AS item_name,
+            i.available,
+            i.on_hold,
+            i.loaned_out,
+            i.quantity,
+            COUNT(DISTINCT b.borrow_id) AS total_borrows,
+            COUNT(DISTINCT CASE WHEN b.return_date IS NULL THEN b.borrow_id END) AS total_returns,
+            COUNT(DISTINCT w.user_id) AS total_wishlist
         FROM ITEM i
-        LEFT JOIN BORROW b 
-        ON i.item_id = b.item_id
+        LEFT JOIN BOOK bk ON i.item_id = bk.item_id AND i.category = 'BOOK'
+        LEFT JOIN MOVIE m ON i.item_id = m.item_id AND i.category = 'MOVIE'
+        LEFT JOIN DEVICE d ON i.item_id = d.item_id AND i.category = 'DEVICE'
+        LEFT JOIN BORROW b ON i.item_id = b.item_id
+        LEFT JOIN WISHLIST w ON i.item_id = w.item_id
+        WHERE 1=1
     `;
 
     const params = [];
@@ -88,10 +99,7 @@ async function popularItemReport({ filterType = 'date', start = null, end = null
     }
 
     sql += `
-        LEFT JOIN BOOK bk ON i.item_id = bk.item_id AND i.category = 'BOOK'
-        LEFT JOIN MOVIE m ON i.item_id = m.item_id AND i.category = 'MOVIE'
-        LEFT JOIN DEVICE d ON i.item_id = d.item_id AND i.category = 'DEVICE'
-        GROUP BY i.item_id, i.category, item_name
+        GROUP BY i.item_id, i.category, item_name, i.available, i.on_hold, i.loaned_out, i.quantity
         ORDER BY total_borrows DESC;
     `;
 
@@ -107,10 +115,9 @@ async function overdueItemsReport({ filterType = 'date', start = null, end = nul
             b.item_id,
             i.category,
             COALESCE(bk.title, m.title, d.device_name) AS item_title,
-            b.user_id,
+            u.email,
             u.firstName,
             u.lastName,
-            u.email,
             b.borrow_date,
             b.due_date,
             DATEDIFF(CURDATE(), b.due_date) AS days_overdue -- Calculate days overdue
@@ -165,10 +172,9 @@ async function overdueItemsReport({ filterType = 'date', start = null, end = nul
 async function outstandingFinesReport({ filterType = 'date', start = null, end = null } = {}) {
     let sql = `
         SELECT 
-            f.user_id,
+            u.email,
             u.firstName,
             u.lastName,
-            u.email,
             COUNT(f.fine_id) AS number_of_fines,
             SUM(f.amount) AS total_amount_due
         FROM FINE f
@@ -210,9 +216,223 @@ async function outstandingFinesReport({ filterType = 'date', start = null, end =
     return rows;
 }
 
+async function activeUsersReport({ filterType = 'date', start = null, end = null, role = null } = {}) {
+    let sql = `
+        SELECT 
+            u.email,
+            u.firstName,
+            u.lastName,
+            r.role_name,
+            COUNT(b.borrow_id) AS total_borrows
+        FROM USER u
+        JOIN BORROW b ON u.user_id = b.user_id
+        JOIN USER_ROLE r ON u.role_id = r.role_id
+        WHERE 1=1
+        AND u.role_id != 4
+    `;
+
+    const params = [];
+
+    if (filterType === 'date') {
+        if (start && end) sql += ' AND b.borrow_date BETWEEN ? AND ?';
+        else if (start) sql += ' AND b.borrow_date >= ?';
+        else if (end) sql += ' AND b.borrow_date <= ?';
+    } 
+    else if (filterType === 'month') {
+        if (start && end) sql += ' AND MONTH(b.borrow_date) BETWEEN ? AND ?';
+        else if (start) sql += ' AND MONTH(b.borrow_date) >= ?';
+        else if (end) sql += ' AND MONTH(b.borrow_date) <= ?';
+    } 
+    else if (filterType === 'year') {
+        if (start && end) sql += ' AND YEAR(b.borrow_date) BETWEEN ? AND ?';
+        else if (start) sql += ' AND YEAR(b.borrow_date) >= ?';
+        else if (end) sql += ' AND YEAR(b.borrow_date) <= ?';
+    }
+
+    if (start && end) params.push(start, end);
+    else if (start) params.push(start);
+    else if (end) params.push(end);
+
+    if (role) {
+        sql += ' AND u.role_id = ?';
+        params.push(role);
+    }
+
+    sql += `
+        GROUP BY u.user_id, u.email, u.firstName, u.lastName, r.role_name
+        ORDER BY total_borrows DESC;
+    `;
+
+    const [rows] = await db.query(sql, params);
+    return rows;
+}
+
+async function membershipReport({ filterType = 'date', start = null, end = null, status = null } = {}) {
+    let sql = `
+        SELECT 
+            u.email,
+            u.firstName,
+            u.lastName,
+            p.membership_status,
+            p.auto_renew,
+            p.signup_date,
+            p.expires_at AS expires_on
+        FROM PATRON_MEMBERSHIP p
+        JOIN USER u ON p.user_id = u.user_id
+        WHERE 1=1
+    `;
+
+    const params = [];
+
+    if (filterType === 'date') {
+        if (start && end) sql += ' AND p.signup_date BETWEEN ? AND ?';
+        else if (start) sql += ' AND p.signup_date >= ?';
+        else if (end) sql += ' AND p.signup_date <= ?';
+    } 
+    else if (filterType === 'month') {
+        if (start && end) sql += ' AND MONTH(p.signup_date) BETWEEN ? AND ?';
+        else if (start) sql += ' AND MONTH(p.signup_date) >= ?';
+        else if (end) sql += ' AND MONTH(p.signup_date) <= ?';
+    } 
+    else if (filterType === 'year') {
+        if (start && end) sql += ' AND YEAR(p.signup_date) BETWEEN ? AND ?';
+        else if (start) sql += ' AND YEAR(p.signup_date) >= ?';
+        else if (end) sql += ' AND YEAR(p.signup_date) <= ?';
+    }
+
+    if (start && end) params.push(start, end);
+    else if (start) params.push(start);
+    else if (end) params.push(end);
+
+    if (status) {
+        sql += ' AND p.membership_status = ?';
+        params.push(status);
+    }
+
+    sql += `
+        ORDER BY p.signup_date DESC;
+    `;
+
+    const [rows] = await db.query(sql, params);
+
+    // Format expires_at as MM/DD/YYYY
+    const formattedRows = rows.map(row => ({
+    ...row,
+    expires_on: row.expires_on
+        ? new Date(row.expires_on).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        })
+        : null,
+    signup_date: row.signup_date
+        ? new Date(row.signup_date).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        })
+        : null
+    }));
+
+    return formattedRows;
+}
+
+async function revenueReport({ filterType = 'date', start = null, end = null, type = null } = {}) {
+    let sql = `
+        SELECT 'Fine' AS type, u.email AS user_email, f.amount, f.date_paid
+        FROM FINE f
+        JOIN USER u ON f.user_id = u.user_id
+        WHERE f.date_paid IS NOT NULL
+    `;
+
+    const params = [];
+
+    if (filterType === 'date') {
+        if (start && end) {
+            sql += ' AND f.date_paid BETWEEN ? AND ?';
+        } else if (start) {
+            sql += ' AND f.date_paid >= ?';
+        } else if (end) {
+            sql += ' AND f.date_paid <= ?';
+        }
+    } else if (filterType === 'month') {
+        if (start && end) {
+            sql += ' AND MONTH(f.date_paid) BETWEEN ? AND ?';
+        } else if (start) {
+            sql += ' AND MONTH(f.date_paid) >= ?';
+        } else if (end) {
+            sql += ' AND MONTH(f.date_paid) <= ?';
+        }
+    } else if (filterType === 'year') {
+        if (start && end) {
+            sql += ' AND YEAR(f.date_paid) BETWEEN ? AND ?';
+        } else if (start) {
+            sql += ' AND YEAR(f.date_paid) >= ?';
+        } else if (end) {
+            sql += ' AND YEAR(f.date_paid) <= ?';
+        }
+    }
+
+    if (start && end) {
+        params.push(start, end);
+    } else if (start) {
+        params.push(start);
+    } else if (end) {
+        params.push(end);
+    }
+
+    sql += `
+        UNION ALL
+        SELECT 'Membership' AS type, u.email AS user_email, m.amount, m.payment_date AS date_paid
+        FROM MEMBERSHIP_PAYMENT m
+        JOIN USER u ON m.user_id = u.user_id
+        WHERE m.payment_date IS NOT NULL
+    `;
+
+    if (filterType === 'date') {
+        if (start && end) {
+            sql += ' AND m.payment_date BETWEEN ? AND ?';
+        } else if (start) {
+            sql += ' AND m.payment_date >= ?';
+        } else if (end) {
+            sql += ' AND m.payment_date <= ?';
+        }
+    } else if (filterType === 'month') {
+        if (start && end) {
+            sql += ' AND MONTH(m.payment_date) BETWEEN ? AND ?';
+        } else if (start) {
+            sql += ' AND MONTH(m.payment_date) >= ?';
+        } else if (end) {
+            sql += ' AND MONTH(m.payment_date) <= ?';
+        }
+    } else if (filterType === 'year') {
+        if (start && end) {
+            sql += ' AND YEAR(m.payment_date) BETWEEN ? AND ?';
+        } else if (start) {
+            sql += ' AND YEAR(m.payment_date) >= ?';
+        } else if (end) {
+            sql += ' AND YEAR(m.payment_date) <= ?';
+        }
+    }
+
+    if (start && end) {
+        params.push(start, end);
+    } else if (start) {
+        params.push(start);
+    } else if (end) {
+        params.push(end);
+    }
+
+    const [rows] = await db.query(sql, params);
+    return rows;
+}
+
 module.exports = {
     popularGenresReport,
     popularItemReport,
     overdueItemsReport,
-    outstandingFinesReport
+    outstandingFinesReport,
+    activeUsersReport,
+    membershipReport,
+    revenueReport
 };

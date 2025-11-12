@@ -214,7 +214,7 @@ const handleSubmit = async (e) => {
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
               />
-              {errors.firstName && <div className="error">{errors.firstName}</div>}
+              {errors.firstName && <p className="error">{errors.firstName}</p>}
 
               <input
                 id="lastName"
@@ -225,7 +225,7 @@ const handleSubmit = async (e) => {
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
               />
-              {errors.lastName && <div className="error">{errors.lastName}</div>}
+              {errors.lastName && <p className="error">{errors.lastName}</p>}
 
               <input
                 id="email"
@@ -234,10 +234,18 @@ const handleSubmit = async (e) => {
                 placeholder="Email"
                 maxLength={100}
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setEmail(val);
+                  if (val.toLowerCase().includes("@lbry")) {
+                    setErrors(prev => ({ ...prev, email: "Emails with @lbry domains are not allowed. Contact our support team." }));
+                  } else {
+                    setErrors(prev => ({ ...prev, email: null }));
+                  }
+                }}
                 required
               />
-              {errors.email && <div className="error">{errors.email}</div>}
+              {errors.email && <p className="error">{errors.email}</p>}
 
               <input
                 id="password"
@@ -250,7 +258,7 @@ const handleSubmit = async (e) => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
-              {errors.password && <div className="error">{errors.password}</div>}
+              {errors.password && <p className="error">{errors.password}</p>}
 
               <div>
                 <label className="login-header">Membership Payment Info</label>
@@ -265,7 +273,7 @@ const handleSubmit = async (e) => {
                 onChange={handleMembershipFormChange} // <-- USE NEW HANDLER
                 disabled={signUpLater}
               />
-              {errors.name && <div className="error">{errors.name}</div>}
+              {errors.name && <p className="error">{errors.name}</p>}
               <input
                 type="text" // <-- CHANGE TO "text"
                 className="input-field"
@@ -275,7 +283,7 @@ const handleSubmit = async (e) => {
                 onChange={handleMembershipFormChange} // <-- USE NEW HANDLER
                 disabled={signUpLater}
               />
-              {errors.cardNumber && <div className="error">{errors.cardNumber}</div>}
+              {errors.cardNumber && <p className="error">{errors.cardNumber}</p>}
               <div className="flex">
                 <input
                   className="input-field input-field-small"
@@ -286,7 +294,7 @@ const handleSubmit = async (e) => {
                   onChange={handleMembershipFormChange} // <-- USE NEW HANDLER
                   disabled={signUpLater}
                 />
-                {errors.expDate && <div className="error">{errors.expDate}</div>}
+                {errors.expDate && <p className="error">{errors.expDate}</p>}
                 <input
                   className="input-field input-field-small"
                   type="text" // <-- CHANGE TO "text"
@@ -296,7 +304,7 @@ const handleSubmit = async (e) => {
                   onChange={handleMembershipFormChange} // <-- USE NEW HANDLER
                   disabled={signUpLater}
                 />
-                {errors.cvv && <div className="error">{errors.cvv}</div>}
+                {errors.cvv && <p className="error">{errors.cvv}</p>}
               </div>
               <input
                 type="text"
@@ -307,7 +315,7 @@ const handleSubmit = async (e) => {
                 onChange={handleMembershipFormChange} // <-- USE NEW HANDLER
                 disabled={signUpLater}
               />
-              {errors.billingAddress && <div className="error">{errors.billingAddress}</div>}
+              {errors.billingAddress && <p className="error">{errors.billingAddress}</p>}
               
               <div>
                   <input
