@@ -1,5 +1,6 @@
 import './navbar.css'
 import { IoSearch, IoPersonCircleOutline } from "react-icons/io5"
+import { FaBell } from "react-icons/fa6"
 import { Link, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import Logo from "../../assets/logo-light.webp"
@@ -14,6 +15,7 @@ const Navbar = ({
     const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState('');
     const [searchType, setSearchType] = useState('Description');
+    const [unreadCount, setUnreadCount] = useState(1);
 
     const handleSearch = (event) => {
         if (event.key === 'Enter') {
@@ -118,7 +120,6 @@ const Navbar = ({
                 <ul className="nav-links">
                 <li><a href="/" className="logo"><img className="logo-image logo-image-small" src={Logo} alt="" />LBRY</a></li>
                 <li><a href="/search" className="logo">Browse</a></li>
-                
                 <li><Link to="/search?category=BOOK">Books</Link></li>
                 <li><Link to="/search?category=MOVIE">Movies</Link></li>
                 <li><Link to="/search?category=DEVICE">Devices</Link></li>
@@ -206,6 +207,12 @@ const Navbar = ({
                 {isLibrarianRole && <li><a href="/manage-fines">Fines</a></li>}
 
                 {renderSearchDropdown()}
+                <li className="notification-icon">
+                    <Link to="/notifications">
+                        <FaBell />
+                        {unreadCount > 0 && <span className="badge">{unreadCount}</span>}
+                    </Link>
+                </li>
                 <li className="dropdown">
                 <button className="nav-icon">
                     <IoPersonCircleOutline />
@@ -234,7 +241,7 @@ const Navbar = ({
                                 <a href="/staff_page">Dashboard</a>
                             </div>
                         </div>
-                    </div>
+                </div>
                 </li>
                 </ul>
             </nav>
