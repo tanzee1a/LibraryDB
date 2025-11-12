@@ -33,8 +33,6 @@
 
 /* Filters */
 .report-filters {
-  display: flex;
-  flex-wrap: wrap;
   gap: 1rem;
   padding: 1rem;
   background: #fff;
@@ -42,12 +40,16 @@
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
   margin-bottom: 1.5rem;
 }
+.filter-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
 
 .filter-group label {
-  margin-right: 0.5rem;
-  margin-left: 0.5rem;
   font-weight: 500;
   color: #374151;
+  align-self: center;
 }
 
 .filter-group select,
@@ -65,6 +67,11 @@
   outline: none;
   border-color: #2563eb;
   background: #fff;
+}
+
+.filter-group button {
+  max-width: 12rem;
+  margin: 1rem 1rem 0 0;
 }
 
 /* Layout */
@@ -106,6 +113,7 @@
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
   overflow-x: scroll;
+  min-height: 100vh;
 }
 
 /* Table */
@@ -184,4 +192,87 @@
 
 .clear-btn:hover {
   background: #d1d5db;
+}
+
+/* Add this to Reports.css */
+
+.revenue-summary {
+  text-align: center;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  max-width: 100%; /* keeps layout clean on larger screens */
+}
+
+.report-description {
+  margin: 1rem auto;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  max-width: 100%; /* keeps layout clean on larger screens */
+  display: flex;
+  gap: 0.5rem;
+}
+.report-description p {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--muted);
+  align-self: center;
+  transform: translateY(-3px);
+}
+
+.report-description h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #2563eb;
+}
+
+.revenue-summary h3 {
+  margin-bottom: 1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.revenue-summary canvas {
+  width: 260px !important;
+  height: 260px !important;
+  margin: 0 auto;
+  display: block;
+}
+
+@media (max-width: 600px) {
+  .revenue-summary {
+    max-width: 90%;
+    padding: 1rem;
+  }
+
+  .revenue-summary canvas {
+    width: 200px !important;
+    height: 200px !important;
+  }
+}
+
+.report-search {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.search-input {
+  padding: 0.85rem;
+  width: 50vw;
+  border: 1px solid #ccc;
+  border-radius: 25px;
+  outline: none;
+  transition: all 0.2s ease-in-out;
+  font-size: 1rem;
+  color: #333;
+  background-color: #fff;
+}
+
+.search-input:focus {
+  border-color: #2196f3;
+  box-shadow: 0 0 8px rgba(33, 150, 243, 0.5);
 }

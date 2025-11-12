@@ -133,3 +133,22 @@
   font-size: 0.9rem;
   color: #4f4c4c;
 }
+/* Error text styling */
+.error {
+  color: #ff4d4d;           /* Light red for readability */
+  font-size: 0.8rem;        /* Small, subtle size */
+  font-weight: 400;
+  margin-top: 4px;          /* Adds a little spacing below input */
+  margin-left: 2px;
+  letter-spacing: 0.2px;
+}
+
+/* Optional: soft fade-in when error appears */
+.error {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-2px); }
+  to { opacity: 1; transform: translateY(0); }
+}

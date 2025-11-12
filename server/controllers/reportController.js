@@ -2,21 +2,6 @@
 const Report = require('../models/reportModel');
 const url = require('url');
 
-// @desc Get User Fine Summary Report
-// @route GET /api/reports/fines
-async function getFineReport(req, res) {
-    try {
-        // TODO: Add Auth check - Staff only
-        const data = await Report.findUsersWithOutstandingFines();
-        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-        return res.end(JSON.stringify(data));
-    } catch (error) {
-        console.error("Error getting Fine Report:", error);
-        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-        res.end(JSON.stringify({ message: 'Could not fetch report', error: error.message }));
-    }
-}
-
 // @desc Get Borrows Report
 // @route GET /api/reports/borrows
 async function getPopularGenresReport(req, res) {
@@ -89,10 +74,60 @@ async function getOutstandingFines(req, res) {
     }
 }
 
+// @desc Get Active Users Report
+// @route GET /api/reports/active-users
+async function getActiveUsersReport(req, res) {
+    try {
+        const parsedUrl = url.parse(req.url, true);
+        const query = parsedUrl.query;
+        const data = await Report.activeUsersReport(query);
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        return res.end(JSON.stringify(data));
+    } catch (error) {
+        console.error("Error getting Active Users Report:", error);
+        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ message: 'Could not fetch report', error: error.message }));
+    }
+}
+
+// @desc Get Membership Report
+// @route GET /api/reports/membership
+async function getMembershipReport(req, res) {
+    try {
+        const parsedUrl = url.parse(req.url, true);
+        const query = parsedUrl.query;
+        const data = await Report.membershipReport(query);
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        return res.end(JSON.stringify(data));
+    } catch (error) {
+        console.error("Error getting Membership Report:", error);
+        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ message: 'Could not fetch report', error: error.message }));
+    }
+}
+
+// @desc Get Revenue Report
+// @route GET /api/reports/revenue
+async function getRevenueReport(req, res) {
+    try {
+        const parsedUrl = url.parse(req.url, true);
+        const query = parsedUrl.query;
+        const data = await Report.revenueReport(query);
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        return res.end(JSON.stringify(data));
+    } catch (error) {
+        console.error("Error getting Revenue Report:", error);
+        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ message: 'Could not fetch report', error: error.message }));
+    }
+}
+
 module.exports = {
-    getFineReport,
     getPopularGenresReport,
     getPopularItemsReport,
     getOverdueItemsReport,
-    getOutstandingFines
+    getOutstandingFines,
+    getActiveUsersReport,
+    getMembershipReport,
+    getRevenueReport
 };
