@@ -319,11 +319,13 @@ const server = http.createServer((req, res) => {
         staffProtect(req, res, () => {
             getStaffUnreadCount(req, res);
         });
+        return;
         }
         else if (req.method === 'GET' && req.url === '/api/my-notifications/count') {
             protect(req, res, () => {
                 getPatronUnreadCount(req, res);
             });
+            return;
         }
     
         // --- Not Found ---

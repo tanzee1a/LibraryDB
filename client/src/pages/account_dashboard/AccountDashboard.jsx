@@ -25,7 +25,7 @@ const SECTIONS = [
   { key: 'profile', label: 'Profile', icon: <IoPersonCircleOutline className="nav-icon" /> },
 ];
 
-export default function AccountDashboard({ isLoggedIn, setIsLoggedIn, isStaff, setIsStaff }) {
+export default function AccountDashboard({ isLoggedIn, setIsLoggedIn, isStaff, setIsStaff, setUnreadCount }) {
   
     const location = useLocation();
     const params = new URLSearchParams(location.search);
@@ -103,7 +103,7 @@ export default function AccountDashboard({ isLoggedIn, setIsLoggedIn, isStaff, s
             {active === 'notifications' && (
               <section className="card">
                 <div className="section-header"><IoNotificationsOutline className="icon" /><h2 className="section-title">Notifications</h2></div>
-                <Notifications />
+                <Notifications setUnreadCount={setUnreadCount} />
               </section>
             )}
             {active === 'loans' && (
