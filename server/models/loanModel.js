@@ -627,6 +627,7 @@ async function findAllBorrows(filters = {}) {
             bs.status_name, 
             u.firstName, 
             u.lastName,
+            u.email,
             COALESCE(bk.title, m.title, d.device_name) AS item_title,
             i.thumbnail_url,
             i.category
@@ -664,6 +665,7 @@ async function findAllHolds(filters = {}) {
             END AS hold_status, 
             u.firstName,
             u.lastName,
+            u.email,
             COALESCE(bk.title, m.title, d.device_name) AS item_title,
             i.thumbnail_url,
             i.category,
@@ -739,6 +741,7 @@ async function findAllFines(filters = {}) {
             f.user_id,
             u.firstName,
             u.lastName,
+            u.email,
             f.fee_type,
             f.amount,
             f.date_issued,

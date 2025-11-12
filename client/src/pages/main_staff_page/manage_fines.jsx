@@ -276,7 +276,7 @@ function ManageFines() {
                                         <div className="result-description">
                                             <div className="result-details">
                                                 <p><small><strong>Borrow ID:</strong> {fine.borrow_id}</small></p>
-                                                <p><small><strong>User:</strong> <Link to={`/user/${fine.user_id}`} className="result-link">{fine.firstName} {fine.lastName} ({/*ADD EMAIL HERE*/})</Link></small></p>
+                                                <p><small><strong>User:</strong> <Link to={`/user/${fine.user_id}`} className="result-link">{fine.firstName} {fine.lastName} ({fine.email})</Link></small></p>
                                                 <p><small><strong>Item:</strong> {fine.item_title || '(Item details unavailable)'}</small></p>
                                                 <p><strong>Amount:</strong> {currencyFormatter.format(fine.amount)}</p>
                                                 <p><small><strong>Issued:</strong> {new Date(fine.date_issued).toLocaleString()}</small></p>

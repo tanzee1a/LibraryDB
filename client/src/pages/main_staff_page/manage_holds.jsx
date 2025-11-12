@@ -298,7 +298,7 @@ function ManageHolds() {
                                                 {/* Use Link and data from API */}
                                                 <p><Link to={`/item/${hold.item_id}`} className="result-link">{hold.item_title || 'Unknown Item'}</Link></p>
                                                 {/* TODO: Add link to user profile page if available */}
-                                                <p><small><strong>User:</strong> {hold.firstName} {hold.lastName} ({/*ADD EMAIL HERE*/})</small></p>
+                                                <p><small><strong>User:</strong> {hold.firstName} {hold.lastName} ({hold.email})</small></p>
                                                 <p><small><strong>Item ID:</strong> {hold.item_id}</small></p>
                                                 <p><small><strong>Requested:</strong> {hold.created_at ? new Date(hold.created_at).toLocaleString() : '-'}</small></p>
                                                 <p><small><strong>Expires:</strong> {hold.expires_at ? new Date(hold.expires_at).toLocaleString() : '-'}</small></p>
