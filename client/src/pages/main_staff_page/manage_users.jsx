@@ -319,7 +319,6 @@ function ManageUsers() {
                                 {/* These values MUST match the 'role_name' in your STAFF_ROLES table */}
                                 <option value="Clerk">Clerk</option>
                                 <option value="Assistant Librarian">Assistant Librarian</option>
-                                <option value="Librarian">Librarian</option> {/* Added for Librarian-only creation */}
                             </select>
                         </label>
                     )}
