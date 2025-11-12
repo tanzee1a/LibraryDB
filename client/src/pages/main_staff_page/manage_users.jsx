@@ -15,6 +15,8 @@ function ManageUsers() {
     const query = searchParams.get('q') || '';
     const [localSearchTerm, setLocalSearchTerm] = useState(query);
 
+    const [sort, setSort] = useState(searchParams.get('sort') || '');
+
     // --- Add User Sheet state/handlers ---
     const [showAddUserSheet, setShowAddUserSheet] = useState(false);
     const initialUserState = {
@@ -34,20 +36,15 @@ function ManageUsers() {
     // --- Currency Formatter (keep as is) ---
     const currencyFormatter = new Intl.NumberFormat('en-US', { /* ... */ });
 
-    const userFilterOptions = () => {
-        // Get the user's role from localStorage
-        const userRole = localStorage.getItem('userRole');
-        let roleOptions = ['Patron', 'Student', 'Faculty', 'Staff', 'Admin'];
-        // If the role is 'Staff', filter out 'Admin'
-        if (userRole === 'Staff') {
-            roleOptions = roleOptions.filter(opt => opt !== 'Admin');
-        }
-        return [{
+    // This is now just a static definition of what filters are available.
+    // We could make this dynamic later by fetching from USER_ROLE table.
+    const userFilterOptions = [
+        {
             category: 'Role',
             param: 'role', // URL parameter
-            options: roleOptions
-        }];
-    };
+            options: ['Patron', 'Student', 'Faculty', 'Staff']
+        }
+    ];
 
     // --- Fetch Users Logic ---
     const fetchUsers = () => {
@@ -114,7 +111,6 @@ function ManageUsers() {
             });
     // --- Re-run this effect if the search parameters in the URL change ---
     }, [searchParams]);
-
     // --- End Fetch ---
 
     // --- handleInputChange (remains the same) ---
@@ -207,6 +203,48 @@ function ManageUsers() {
         }
     };
 
+    const handleFilterChange = (param, option) => {
+        const currentValues = (searchParams.get(param) || '')
+            .split(',')
+            .filter(Boolean); // filter(Boolean) removes empty strings
+
+        let newValues;
+        if (currentValues.includes(option)) {
+            // Remove option if already selected
+            newValues = currentValues.filter(v => v !== option);
+        } else {
+            // Add option if not selected
+            newValues = [...currentValues, option];
+        }
+
+        // Push new filter state back to URL, which triggers useEffect to refetch
+        const next = new URLSearchParams(searchParams);
+        if (newValues.length) {
+            next.set(param, newValues.join(','));
+        } else {
+            next.delete(param);
+        }
+        setSearchParams(next);
+    };
+
+    const handleSortChange = (event) => {
+        const sortType = event.target.value;
+        setSort(sortType); // Update local state for the dropdown
+
+        // Get current params to preserve filters/search
+        const currentParams = Object.fromEntries(searchParams.entries());
+        const next = new URLSearchParams(currentParams);
+
+        if (sortType) {
+            next.set('sort', sortType);
+        } else {
+            next.delete('sort'); // Fallback, though dropdown has no empty option
+        }
+        
+        // Set the new URL, which triggers useEffect to refetch
+        setSearchParams(next);
+    };
+
     return (
         <div>
         <div className="page-container">
@@ -237,36 +275,43 @@ function ManageUsers() {
                             Sort by:
                             <select
                                 className="sort-select"
-                                onChange={(e) => handleSortChange(e.target.value)}
-                                defaultValue=""
+                                value={sort} // Use state to control the value
+                                onChange={handleSortChange} // Use the new handler
                             >
                                 <option value="" disabled></option>
-                                <option value="title_asc">Title (A–Z)</option>
-                                <option value="title_desc">Title (Z–A)</option>
-                                <option value="newest">Newest First</option>
-                                <option value="oldest">Oldest First</option>
+                                <option value="Fname_asc">First Name (A–Z)</option>
+                                <option value="Lname_asc">Last Name (A–Z)</option>
+                                <option value="Fname_desc">First Name (Z–A)</option>
+                                <option value="Lname_desc">Last Name (Z–A)</option>
                             </select>
                         </div>
-                        {userFilterOptions().map((filterGroup) => (
+                        {userFilterOptions.map((filterGroup) => (
                             <div key={filterGroup.param} className="filter-category">
                                 <h3>{filterGroup.category}</h3>
                                 <hr className='thin-divider divider--tight' />
                                 <ul>
                                     {filterGroup.options.map((option) => {
-                                        return ( // Start returning the list item
+                                        // Check if this filter option is in the URL searchParams
+                                        const isChecked = (searchParams.get(filterGroup.param) || '')
+                                                            .split(',')
+                                                            .includes(option);
+                                        return (
                                             <li key={option}>
                                                 <label>
                                                     <input 
                                                         type="checkbox" 
                                                         value={option}
+                                                        // Wire up the checkbox
+                                                        checked={isChecked}
+                                                        onChange={() => handleFilterChange(filterGroup.param, option)}
                                                     /> {option}
                                                 </label>
                                             </li>
-                                        ); // End returning list item
-                                    })} {/* End options.map */}
+                                        );
+                                    })}
                                 </ul>
                             </div>
-                        ))} {/* End filterOptions.map */}
+                        ))}
                     </div>
                     {/* --- MODIFIED User List --- */}
                     <div className="search-results-list" style={{width: '100%'}}> {/* Make list full width if no filter */}

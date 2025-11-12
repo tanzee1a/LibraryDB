@@ -25,8 +25,7 @@ async function findById(userId) {
 }
 
 // --- MODIFIED: Find ALL Users (Patrons and Staff) ---
-async function findAllUsers(searchTerm) {
-
+async function findAllUsers(searchTerm, filters = {}, sort = '') {
     let sql = `
         SELECT 
             u.user_id, 
@@ -39,19 +38,47 @@ async function findAllUsers(searchTerm) {
         JOIN USER_ROLE ur ON u.role_id = ur.role_id
         LEFT JOIN STAFF s ON u.user_id = s.user_id AND ur.role_name = 'Staff'
         LEFT JOIN STAFF_ROLES sr ON s.role_id = sr.role_id
-    `; // Base SQL
+    `; 
     
-    let params = []; // Array for parameters
-    
+    let params = [];
+    let whereClauses = []; // Use an array to build WHERE clauses
+
+    // --- Search Term Clause ---
     if (searchTerm && searchTerm.trim()) {
         const queryTerm = `%${searchTerm}%`;
-        sql += ` WHERE (u.firstName LIKE ? OR u.lastName LIKE ? OR u.email LIKE ?)`;
+        // Add parentheses for correct AND/OR logic
+        whereClauses.push(`(u.firstName LIKE ? OR u.lastName LIKE ? OR u.email LIKE ?)`);
         params.push(queryTerm, queryTerm, queryTerm);
     }
 
-    sql += ` ORDER BY u.lastName, u.firstName;`;
+    // --- Role Filter Clause ---
+    const roleFilter = filters.role ? filters.role.split(',') : [];
+    if (roleFilter.length > 0) {
+        // 'role' is the param name from userFilterOptions
+        whereClauses.push(`ur.role_name IN (?)`);
+        params.push(roleFilter);
+    }
+    // --- End Role Filter ---
+
+    // Assemble the final SQL
+    if (whereClauses.length > 0) {
+        sql += ` WHERE ${whereClauses.join(' AND ')}`;
+    }
+
+   let orderByClause = ' '; // Default
+    if (sort === 'Fname_desc') {
+        orderByClause = ' ORDER BY u.firstName DESC';
+    }   else if (sort === 'Fname_asc') {
+        orderByClause = ' ORDER BY u.firstName ASC';
+    }   else if (sort === 'Lname_asc') {
+        orderByClause = ' ORDER BY u.lastName ASC';
+    }   else if (sort === 'Lname_desc') {
+        orderByClause = ' ORDER BY u.lastName DESC';
+    }
     
-    const [rows] = await db.query(sql, params); // <-- MODIFIED: Pass params
+    sql += orderByClause; // Append the sort logic
+    
+    const [rows] = await db.query(sql, params);
     return rows;
 }
 
