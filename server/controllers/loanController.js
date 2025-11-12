@@ -295,10 +295,12 @@ async function getAllBorrows(req, res) {
 
         const parsedUrl = url.parse(req.url, true);
         const searchTerm = parsedUrl.query.q || '';
+        const sort = parsedUrl.query.sort || 'borrow_newest'; // Default sort
         const filters = parsedUrl.query;
         delete filters.q;
+        delete filters.sort;
         
-        const borrows = await Loan.findAllBorrows(searchTerm, filters);
+        const borrows = await Loan.findAllBorrows(searchTerm, filters, sort);
 
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         return res.end(JSON.stringify(borrows));

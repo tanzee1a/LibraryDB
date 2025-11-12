@@ -604,7 +604,7 @@ async function findAllStatus(type) {
     return rows;
 }
 
-async function findAllBorrows(searchTerm, filters = {}) {
+async function findAllBorrows(searchTerm, filters = {}, sort = 'borrow_newest') {
 
     let params = [];
     let whereClauses = [];
@@ -662,7 +662,24 @@ async function findAllBorrows(searchTerm, filters = {}) {
         finalSql += ` WHERE ${whereClauses.join(' AND ')}`;
     }
     
-    finalSql += ` ORDER BY b.borrow_date DESC;`;
+    // --- Dynamic ORDER BY logic ---
+    let orderByClause = ' ORDER BY b.borrow_date DESC'; // Default
+    switch (sort) {
+        case 'borrow_oldest':
+            orderByClause = ' ORDER BY b.borrow_date ASC';
+            break;
+        case 'due_soonest':
+            // Show nulls (returned items) last when sorting by due date
+            orderByClause = ' ORDER BY b.due_date IS NULL ASC, b.due_date ASC';
+            break;
+        case 'due_latest':
+            orderByClause = ' ORDER BY b.due_date DESC';
+            break;
+        case 'borrow_newest':
+        default:
+            orderByClause = ' ORDER BY b.borrow_date DESC';
+    }
+    finalSql += orderByClause;
 
     const [rows] = await db.query(finalSql, params);
     return rows;
