@@ -164,6 +164,7 @@ const getStaffUnreadCount = async (req, res) => {
  * @access  Private (Patron)
  */
 const getPatronUnreadCount = async (req, res) => {
+    console.log(`[notificationController] getPatronUnreadCount: req.userId is: ${req.userId}`);
     // We use req.userId from the standard 'protect' middleware
     const patronUserId = req.userId; 
 
