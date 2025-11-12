@@ -258,7 +258,6 @@ function ManageUsers() {
                             >
                             <FaPlus />
                         </button>
-                        {/* TODO: Implement user search */}
                         <input 
                             type="text" 
                             placeholder="Search users (by name or email)..." 

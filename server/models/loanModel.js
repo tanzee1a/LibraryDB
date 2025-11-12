@@ -11,7 +11,6 @@ async function getStatusId(conn, statusName) {
   return rows[0].status_id;
 }
 
-// --- MODIFIED: Helper to get all rules from LOAN_POLICY ---
 // This function is now the single source of truth for all rules.
 // It needs the user_id to find their role.
 async function getLoanPolicy(conn, userId, itemId) {
@@ -32,9 +31,7 @@ async function getLoanPolicy(conn, userId, itemId) {
   }
   return rows[0];
 }
-// --- END MODIFICATION ---
 
-// --- NEW HELPER: Check user's global borrow limit ---
 async function checkBorrowLimit(conn, userEmail) {
     // 1. Get the user's limit from their role
     const [roleRows] = await conn.query(`
@@ -69,8 +66,6 @@ async function checkBorrowLimit(conn, userEmail) {
     // If we're here, the user is clear to borrow/hold one more item.
     return true; 
 }
-// --- END NEW HELPER ---
-
 
 // --- MODIFIED: User requests pickup for an AVAILABLE item ---
 async function requestPickup(itemId, userId) {
@@ -190,7 +185,6 @@ async function pickupHold(holdId, staffUserId) { // staffUserId not used yet, bu
         conn.release();
     }
 }
-
 
 // --- MODIFIED: User returns a LOANED OUT item ---
 async function returnItem(borrowId, staffUserId) { // staffUserId for auth later
@@ -349,7 +343,6 @@ async function markFound(borrowId, staffUserId) {
     }
 }
 
-
 // --- MODIFIED: User places a hold on an UNAVAILABLE item (Waitlist) ---
 async function placeWaitlistHold(itemId, userId) {
     const conn = await db.getConnection();
@@ -395,7 +388,6 @@ async function placeWaitlistHold(itemId, userId) {
         conn.release();
     }
 }
-
 
 // --- MODIFIED: Staff directly checks out an available item to a user. ---
 async function staffCheckoutItem(itemId, userEmail, staffUserId) { // staffUserId for logging/auth later
@@ -450,10 +442,7 @@ async function staffCheckoutItem(itemId, userEmail, staffUserId) { // staffUserI
     }
 }
 
-
-// --- NO CHANGES NEEDED for any of the functions below ---
 // They only query by user_id or fine_id, or they don't depend on loan policies.
-
 async function findLoansByUserId(userId) {
     const loanedOutStatusId = await getStatusId(db, 'Loaned Out');
     const sql = `
@@ -615,8 +604,12 @@ async function findAllStatus(type) {
     return rows;
 }
 
-async function findAllBorrows(filters = {}) {
-    const sql = `
+async function findAllBorrows(searchTerm, filters = {}) {
+
+    let params = [];
+    let whereClauses = [];
+
+    const baseSql = `
         SELECT 
             b.borrow_id, 
             b.item_id,
@@ -638,9 +631,40 @@ async function findAllBorrows(filters = {}) {
         LEFT JOIN BOOK bk ON i.item_id = bk.item_id AND i.category = 'BOOK'
         LEFT JOIN MOVIE m ON i.item_id = m.item_id AND i.category = 'MOVIE'
         LEFT JOIN DEVICE d ON i.item_id = d.item_id AND i.category = 'DEVICE'
-        ORDER BY b.borrow_date DESC;
     `;
-    const [rows] = await db.query(sql);
+
+    // --- Search Term Logic ---
+    if (searchTerm && searchTerm.trim()) {
+        const queryTerm = `%${searchTerm}%`;
+        whereClauses.push(`(
+            b.borrow_id LIKE ? OR
+            u.firstName LIKE ? OR
+            u.lastName LIKE ? OR
+            u.email LIKE ? OR
+            bk.title LIKE ? OR
+            m.title LIKE ? OR
+            d.device_name LIKE ?
+        )`);
+        // Add 7 params for each ?
+        params.push(queryTerm, queryTerm, queryTerm, queryTerm, queryTerm, queryTerm, queryTerm);
+    }
+
+    // --- Filter Logic ---
+    const statusFilter = filters.status ? filters.status.split(',') : [];
+    if (statusFilter.length > 0) {
+        whereClauses.push(`bs.status_name IN (?)`);
+        params.push(statusFilter);
+    }
+
+    // --- Assemble Final SQL ---
+    let finalSql = baseSql;
+    if (whereClauses.length > 0) {
+        finalSql += ` WHERE ${whereClauses.join(' AND ')}`;
+    }
+    
+    finalSql += ` ORDER BY b.borrow_date DESC;`;
+
+    const [rows] = await db.query(finalSql, params);
     return rows;
 }
 

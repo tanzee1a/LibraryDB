@@ -1,6 +1,6 @@
 const Loan = require('../models/loanModel');
 const { getPostData } = require('../utils');
-const url = require('url'); // <<< ADD THIS LINE
+const url = require('url');
 const userModel = require('../models/userModel');
 
 
@@ -101,7 +101,6 @@ async function returnItem(req, res, borrowId) {
     }
 }
 
-
 // @desc Staff marks a loan as lost
 // @route POST /api/borrows/:borrowId/lost
 async function markLost(req, res, borrowId) {
@@ -149,7 +148,6 @@ async function placeWaitlistHold(req, res, itemId) {
         res.end(JSON.stringify({ message: 'Could not place on waitlist', error: error.message }));
     }
 }
-
 
 // --- GET Endpoints for User Dashboard ---
 
@@ -294,9 +292,14 @@ async function waiveFine(req, res, fineId) {
 // @route GET /api/borrows
 async function getAllBorrows(req, res) {
     try {
-        // TODO: Add authentication check - only staff allowed
-        // TODO: Get filter parameters from req.url query string
-        const borrows = await Loan.findAllBorrows(/* pass filters */);
+
+        const parsedUrl = url.parse(req.url, true);
+        const searchTerm = parsedUrl.query.q || '';
+        const filters = parsedUrl.query;
+        delete filters.q;
+        
+        const borrows = await Loan.findAllBorrows(searchTerm, filters);
+
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         return res.end(JSON.stringify(borrows));
     } catch (error) {

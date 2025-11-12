@@ -224,7 +224,7 @@ const server = http.createServer((req, res) => {
         }
 
         // --- STAFF manages BORROW ROUTE ---
-        else if (req.url === '/api/borrows' && req.method === 'GET') {
+        else if (req.url.startsWith('/api/borrows') && req.method === 'GET') {
             staffProtect(req, res, () => getAllBorrows(req, res));
         }
         else if (req.url === '/api/staff/dashboard-stats' && req.method === 'GET') {
