@@ -103,7 +103,7 @@ const fetchStaffNotifications = async () => {
                     <div className='result-text-info'>
                       {/* Wrap title in Link if notification.link exists */}
                       {notification.link ? (
-                        <Link to={notification.link}>
+                        <Link to={notification.link} className='result-link'>
                           <h3 className='result-title result-title-blue'>{notification.title}</h3>
                         </Link>
                       ) : (
@@ -137,7 +137,7 @@ const fetchStaffNotifications = async () => {
                     <div className='result-text-info'>
                       {/* Wrap title in Link if notification.link exists */}
                       {notification.link ? (
-                        <Link to={notification.link}>
+                        <Link to={notification.link} className='result-link'>
                           <h3 className='result-title result-title-blue'>{notification.title}</h3>
                         </Link>
                       ) : (

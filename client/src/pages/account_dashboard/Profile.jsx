@@ -638,7 +638,7 @@ const handleMembershipFormChange = (e) => {
   return (
     <div>
       <div className="item-title">{user.firstName} {user.lastName}</div>
-      <div className="profile-meta">User ID: {user.user_id} · {user.email}</div>
+      <div className="profile-meta">Email: {user.email}</div>
       {user.role !== 'Student' && user.role !== 'Faculty' && (
         <div className='membership-info'>
           <h3>Membership</h3>

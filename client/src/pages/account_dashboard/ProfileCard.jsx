@@ -61,7 +61,7 @@ export default function UserProfile() {
         <div>
           {/* Use data fetched from the API */}
           <div className="item-title">{user.firstName} {user.lastName}</div>
-          <div className="profile-meta">User ID: {user.user_id} · {user.email}</div>
+          <div className="profile-meta">User Email: {user.email}</div>
         </div>
       </div>
     </div>

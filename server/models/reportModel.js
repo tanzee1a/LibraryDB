@@ -1,10 +1,107 @@
 // models/reportModel.js
 const db = require('../config/db');
 
-// --- Report 1: Overdue Items ---
-async function findOverdueItems() {
+async function popularGenresReport({ filterType = 'date', start = null, end = null, category = null } = {}) {
+    let sql = `
+        SELECT 
+            t.tag_name AS genre_name,
+            COUNT(b.borrow_id) AS total_borrows
+        FROM TAG t
+        JOIN ITEM_TAG it ON t.tag_id = it.tag_id
+        JOIN ITEM i ON it.item_id = i.item_id
+        LEFT JOIN BORROW b ON i.item_id = b.item_id
+    `;
+
+    const params = [];
+
+    if (filterType === 'date') {
+        if (start && end) sql += ' AND b.borrow_date BETWEEN ? AND ?';
+        else if (start) sql += ' AND b.borrow_date >= ?';
+        else if (end) sql += ' AND b.borrow_date <= ?';
+    } 
+    else if (filterType === 'month') {
+        if (start && end) sql += ' AND MONTH(b.borrow_date) BETWEEN ? AND ?';
+        else if (start) sql += ' AND MONTH(b.borrow_date) >= ?';
+        else if (end) sql += ' AND MONTH(b.borrow_date) <= ?';
+    } 
+    else if (filterType === 'year') {
+        if (start && end) sql += ' AND YEAR(b.borrow_date) BETWEEN ? AND ?';
+        else if (start) sql += ' AND YEAR(b.borrow_date) >= ?';
+        else if (end) sql += ' AND YEAR(b.borrow_date) <= ?';
+    }
+
+    if (start && end) params.push(start, end);
+    else if (start) params.push(start);
+    else if (end) params.push(end);
+
+    if (category) {
+        sql += ' AND i.category = ?';
+        params.push(category);
+    }
+
+
+    sql += `
+        GROUP BY t.tag_name
+        ORDER BY total_borrows DESC;
+    `;
+
+    const [rows] = await db.query(sql, params);
+    return rows;
+}
+async function popularItemReport({ filterType = 'date', start = null, end = null, category = null } = {}) {
+    let sql = `
+        SELECT 
+        i.item_id,
+        i.category,
+        COALESCE(bk.title, m.title, d.device_name) AS item_name,
+        COUNT(b.borrow_id) AS total_borrows
+        FROM ITEM i
+        LEFT JOIN BORROW b 
+        ON i.item_id = b.item_id
+    `;
+
+    const params = [];
+
+    if (filterType === 'date') {
+        if (start && end) sql += ' AND b.borrow_date BETWEEN ? AND ?';
+        else if (start) sql += ' AND b.borrow_date >= ?';
+        else if (end) sql += ' AND b.borrow_date <= ?';
+    } 
+    else if (filterType === 'month') {
+        if (start && end) sql += ' AND MONTH(b.borrow_date) BETWEEN ? AND ?';
+        else if (start) sql += ' AND MONTH(b.borrow_date) >= ?';
+        else if (end) sql += ' AND MONTH(b.borrow_date) <= ?';
+    } 
+    else if (filterType === 'year') {
+        if (start && end) sql += ' AND YEAR(b.borrow_date) BETWEEN ? AND ?';
+        else if (start) sql += ' AND YEAR(b.borrow_date) >= ?';
+        else if (end) sql += ' AND YEAR(b.borrow_date) <= ?';
+    }
+
+    if (start && end) params.push(start, end);
+    else if (start) params.push(start);
+    else if (end) params.push(end);
+
+    if (category) {
+        sql += ' AND i.category = ?';
+        params.push(category);
+    }
+
+    sql += `
+        LEFT JOIN BOOK bk ON i.item_id = bk.item_id AND i.category = 'BOOK'
+        LEFT JOIN MOVIE m ON i.item_id = m.item_id AND i.category = 'MOVIE'
+        LEFT JOIN DEVICE d ON i.item_id = d.item_id AND i.category = 'DEVICE'
+        GROUP BY i.item_id, i.category, item_name
+        ORDER BY total_borrows DESC;
+    `;
+
+    const [rows] = await db.query(sql, params);
+    return rows;
+}
+
+async function overdueItemsReport({ filterType = 'date', start = null, end = null, category = null } = {}) {
     const loanedOutStatusId = 2; // Assuming 2 = 'Loaned Out' from BORROW_STATUS
-    const sql = `
+    let sql = `
         SELECT 
             b.borrow_id,
             b.item_id,
@@ -13,6 +110,7 @@ async function findOverdueItems() {
             b.user_id,
             u.firstName,
             u.lastName,
+            u.email,
             b.borrow_date,
             b.due_date,
             DATEDIFF(CURDATE(), b.due_date) AS days_overdue -- Calculate days overdue
@@ -26,41 +124,51 @@ async function findOverdueItems() {
         WHERE 
             b.status_id = ? -- Must be 'Loaned Out'
             AND b.due_date < CURDATE() -- Due date must be in the past
-        ORDER BY days_overdue DESC; 
     `;
-    const [rows] = await db.query(sql, [loanedOutStatusId]);
+
+    const params = [loanedOutStatusId];
+
+
+    if (filterType === 'date') {
+        if (start && end) sql += ' AND b.borrow_date BETWEEN ? AND ?';
+        else if (start) sql += ' AND b.borrow_date >= ?';
+        else if (end) sql += ' AND b.borrow_date <= ?';
+    } 
+    else if (filterType === 'month') {
+        if (start && end) sql += ' AND MONTH(b.borrow_date) BETWEEN ? AND ?';
+        else if (start) sql += ' AND MONTH(b.borrow_date) >= ?';
+        else if (end) sql += ' AND MONTH(b.borrow_date) <= ?';
+    } 
+    else if (filterType === 'year') {
+        if (start && end) sql += ' AND YEAR(b.borrow_date) BETWEEN ? AND ?';
+        else if (start) sql += ' AND YEAR(b.borrow_date) >= ?';
+        else if (end) sql += ' AND YEAR(b.borrow_date) <= ?';
+    }
+
+    if (start && end) params.push(start, end);
+    else if (start) params.push(start);
+    else if (end) params.push(end);
+
+    if (category) {
+        sql += ' AND i.category = ?';
+        params.push(category);
+    }
+
+    sql += `
+        ORDER BY days_overdue DESC;
+    `;
+
+    const [rows] = await db.query(sql, params);
     return rows;
 }
 
-// --- Report 2: Most Popular Items (Last 90 days) ---
-async function findMostPopularItems(days = 90) {
-    const sql = `
-        SELECT 
-            b.item_id,
-            i.category,
-            COALESCE(bk.title, m.title, d.device_name) AS item_title,
-            COUNT(b.borrow_id) AS borrow_count
-        FROM BORROW b
-        JOIN ITEM i ON b.item_id = i.item_id
-        LEFT JOIN BOOK bk ON i.item_id = bk.item_id AND i.category = 'BOOK'
-        LEFT JOIN MOVIE m ON i.item_id = m.item_id AND i.category = 'MOVIE'
-        LEFT JOIN DEVICE d ON i.item_id = d.item_id AND i.category = 'DEVICE'
-        WHERE b.borrow_date >= DATE_SUB(CURDATE(), INTERVAL ? DAY) -- Filter by date range
-        GROUP BY b.item_id, i.category, item_title -- Group by item
-        ORDER BY borrow_count DESC -- Order by most popular
-        LIMIT 50; -- Limit results
-    `;
-    const [rows] = await db.query(sql, [days]);
-    return rows;
-}
-
-// --- Report 3: User Fine Summary ---
-async function findUsersWithOutstandingFines() {
-    const sql = `
+async function outstandingFinesReport({ filterType = 'date', start = null, end = null } = {}) {
+    let sql = `
         SELECT 
             f.user_id,
             u.firstName,
             u.lastName,
+            u.email,
             COUNT(f.fine_id) AS number_of_fines,
             SUM(f.amount) AS total_amount_due
         FROM FINE f
@@ -68,17 +176,43 @@ async function findUsersWithOutstandingFines() {
         WHERE 
             f.date_paid IS NULL -- Must be unpaid
             AND f.waived_at IS NULL -- Must not be waived
-        GROUP BY f.user_id, u.firstName, u.lastName -- Group by user
-        HAVING total_amount_due > 0 -- Only show users who owe money
+    `;
+
+    const params = [];
+
+    if (filterType === 'date') {
+        if (start && end) sql += ' AND f.date_issued BETWEEN ? AND ?';
+        else if (start) sql += ' AND f.date_issued >= ?';
+        else if (end) sql += ' AND f.date_issued <= ?';
+    } 
+    else if (filterType === 'month') {
+        if (start && end) sql += ' AND MONTH(f.date_issued) BETWEEN ? AND ?';
+        else if (start) sql += ' AND MONTH(f.date_issued) >= ?';
+        else if (end) sql += ' AND MONTH(f.date_issued) <= ?';
+    } 
+    else if (filterType === 'year') {
+        if (start && end) sql += ' AND YEAR(f.date_issued) BETWEEN ? AND ?';
+        else if (start) sql += ' AND YEAR(f.date_issued) >= ?';
+        else if (end) sql += ' AND YEAR(f.date_issued) <= ?';
+    }
+
+    if (start && end) params.push(start, end);
+    else if (start) params.push(start);
+    else if (end) params.push(end);
+
+    sql += `
+        GROUP BY f.user_id, u.firstName, u.lastName
+        HAVING total_amount_due > 0
         ORDER BY total_amount_due DESC;
     `;
-    const [rows] = await db.query(sql);
+
+    const [rows] = await db.query(sql, params);
     return rows;
 }
 
-
 module.exports = {
-    findOverdueItems,
-    findMostPopularItems,
-    findUsersWithOutstandingFines
+    popularGenresReport,
+    popularItemReport,
+    overdueItemsReport,
+    outstandingFinesReport
 };

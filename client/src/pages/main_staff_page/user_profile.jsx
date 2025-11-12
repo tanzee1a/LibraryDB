@@ -402,7 +402,6 @@ function UserProfile() {
                         <div className="result-details">
                         {isEditing ? (
                             <>
-                            <p> <strong>User ID:</strong> {user.user_id} </p> {/* ID not editable */}
                             <p> <strong>Email:</strong> <input type="email" name="email" value={editedUser.email} onChange={handleInputChange} className="edit-input" required/> </p>
                             {/* CASE 1: User is NOT staff */}
                             {!isOriginalRoleStaff ? (
@@ -442,7 +441,6 @@ function UserProfile() {
                             </>
                         ) : (
                             <>
-                            <p><strong>User ID:</strong> {user.user_id}</p>
                             <p><strong>Email:</strong> {user.email || 'N/A'}</p>
                             {/* Display staff role if applicable */}
                             <p><strong>Role:</strong> {user.role} {user.staff_role ? `(${user.staff_role})` : ''}</p>

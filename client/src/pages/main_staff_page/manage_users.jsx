@@ -205,7 +205,7 @@ function ManageUsers() {
                             <FaPlus />
                         </button>
                         {/* TODO: Implement user search */}
-                        <input type="text" placeholder="Search users (by name, email, ID)..." className="search-result-search-bar" />
+                        <input type="text" placeholder="Search users (by name or email)..." className="search-result-search-bar" />
                     </div>
                 </div>
                 <div className="search-results-contents">
@@ -267,7 +267,6 @@ function ManageUsers() {
                                         </h2>
                                         <div className="result-description">
                                             <div className="result-details">
-                                                <p><strong>ID:</strong> {user.user_id}</p>
                                                 <p><strong>Email:</strong> {user.email || 'N/A'}</p>
                                                 <p><strong>Role:</strong> {user.role} {user.staff_role ? `(${user.staff_role})` : ''}</p>
                                             </div>
@@ -299,7 +298,6 @@ function ManageUsers() {
                 <h2>Add New User</h2>
                 {submitError && <p style={{color: 'red'}}>{submitError}</p>}
                 <form onSubmit={handleAddUserSubmit}>
-                    <label> User ID (Optional - auto-generates if blank): <input type="text" className="edit-input" name="user_id" value={newUser.user_id} onChange={handleInputChange} maxLength="13" /> </label>
                     <label> First Name: <input type="text" className="edit-input" name="firstName" value={newUser.firstName} onChange={handleInputChange} required /> </label>
                     <label> Last Name: <input type="text" className="edit-input" name="lastName" value={newUser.lastName} onChange={handleInputChange} required /> </label>
                     <label> Email: <input type="email" className="edit-input" name="email" value={newUser.email} onChange={handleInputChange} required /> </label>
@@ -321,7 +319,6 @@ function ManageUsers() {
                                 {/* These values MUST match the 'role_name' in your STAFF_ROLES table */}
                                 <option value="Clerk">Clerk</option>
                                 <option value="Assistant Librarian">Assistant Librarian</option>
-                                <option value="Librarian">Librarian</option> {/* Added for Librarian-only creation */}
                             </select>
                         </label>
                     )}

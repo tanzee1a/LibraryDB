@@ -372,13 +372,13 @@ async function staffCheckoutItem(req, res) {
         const staff_user_id = 'STAFF_ID_PLACEHOLDER'; // Replace with real staff auth later
 
         const body = await getPostData(req);
-        const { userId, itemId } = JSON.parse(body); // Get IDs from request body
+        const { userEmail, itemId } = JSON.parse(body); // Get IDs from request body
 
-        if (!userId || !itemId) {
-            throw new Error('User ID and Item ID are required.');
+        if (!userEmail || !itemId) {
+            throw new Error('User Email and Item ID are required.');
         }
 
-        const result = await Loan.staffCheckoutItem(itemId, userId, staff_user_id);
+        const result = await Loan.staffCheckoutItem(itemId, userEmail, staff_user_id);
         
         res.writeHead(201, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         return res.end(JSON.stringify(result));

@@ -186,8 +186,10 @@ const handleSubmit = async (e) => {
       }
       // --- **** END OF STEP 3 **** ---
 
-      // --- STEP 4: Navigate to homepage ---
-      navigate('/', { replace: true });
+      setIsLoggedIn(true);
+      setIsStaff(registerData.user.role === 'Staff');
+
+      setTimeout(() => navigate('/', { replace: true }), 0);
 
     } catch (err) {
       console.error(err);
@@ -252,7 +254,7 @@ const handleSubmit = async (e) => {
 
               <div>
                 <label className="login-header">Membership Payment Info</label>
-                <p className="login-subheader">Eligible members can checkout items at no cost!</p>
+                <p className="login-subheader">Student or faculty? Ask our staff for exclusive benefits!</p>
               </div>
               <input
                 type="text"

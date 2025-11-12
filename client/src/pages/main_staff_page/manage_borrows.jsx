@@ -13,7 +13,7 @@ function ManageBorrows() {
 
     const [showAddBorrowSheet, setShowAddBorrowSheet] = useState(false);
     const initialBorrowState = {
-        user_id: '', // Changed from user_email
+        user_email: '',
         item_id: ''
     };
     const [newBorrow, setNewBorrow] = useState(initialBorrowState);
@@ -160,7 +160,7 @@ function ManageBorrows() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    userId: newBorrow.user_id, // Pass user_id
+                    userEmail: newBorrow.user_email, // Pass user_email
                     itemId: newBorrow.item_id  // Pass item_id
                 })
             });
@@ -308,7 +308,7 @@ function ManageBorrows() {
                                         <div className="result-description">
                                             <div className="result-details">
                                                 <p><Link to={`/item/${borrow.item_id}`} className="result-link">{borrow.item_title || 'Unknown Item'}</Link></p>
-                                                <p><small><strong>User:</strong> {borrow.firstName} {borrow.lastName} ({borrow.user_id})</small></p>
+                                                <p><small><strong>User:</strong> {borrow.firstName} {borrow.lastName} ({/*ADD EMAIL HERE*/})</small></p>
                                                 <p><small><strong>Item ID:</strong> {borrow.item_id}</small></p>
                                                 <p><small><strong>Borrowed:</strong> {borrow.borrow_date ? new Date(borrow.borrow_date).toLocaleDateString() : '-'}</small></p>
                                                 <p><small><strong>Due:</strong> {borrow.due_date ? new Date(borrow.due_date).toLocaleDateString() : '-'}</small></p>
@@ -336,15 +336,15 @@ function ManageBorrows() {
                 {submitError && <p style={{color: 'red'}}>{submitError}</p>}
                 <form onSubmit={handleAddBorrowSubmit}>
                     <label>
-                    User ID: {/* Changed from User Email */}
+                    User Email:
                     <input
                         type="text" // Changed from email
-                        name="user_id" // Changed from user_email
+                        name="user_email" // Changed from user_id
                         className="edit-input"
-                        value={newBorrow.user_id}
+                        value={newBorrow.user_email}
                         onChange={handleInputChange}
                         required
-                        placeholder="Enter Patron's User ID (e.g., U176...)"
+                        placeholder="Enter Patron's User Email (e.g., user@example.com)"
                     />
                     </label>
                     <label>

@@ -27,7 +27,7 @@ const { saveItem, unsaveItem, getMyWishlist } = require('./controllers/wishlistC
 const { getMyProfile, getAllUsers, staffCreateUser, getUserProfile, getUserBorrowHistory, getUserHoldHistory, getUserFineHistory, staffUpdateUser, staffDeleteUser, changePassword, changeEmail} = require('./controllers/userController');
 const { signup, cancel, renew } = require('./controllers/membershipController');
 const { searchItems } = require('./controllers/searchController');
-const { getOverdueReport, getPopularityReport, getFineReport } = require('./controllers/reportController');
+const { getPopularGenresReport, getPopularItemsReport, getOverdueItemsReport, getOutstandingFines } = require('./controllers/reportController');
 const { protect } = require('./middleware/authMiddleware'); // <--- ADD THIS IMPORT
 const { getDashboardStats, getMyStaffProfile } = require('./controllers/staffController');
 const { staffProtect} = require('./middleware/authMiddleware');
@@ -45,6 +45,8 @@ const server = http.createServer((req, res) => {
         res.end();
         return;
     }
+
+    console.log(`Incoming request: ${req.method} ${req.url}`);
 
     // --- Routing ---
     try {
@@ -258,17 +260,30 @@ const server = http.createServer((req, res) => {
             const holdId = req.url.split('/')[3];
             staffProtect(req, res, () => cancelHold(req, res, holdId));
         }
+
         // reports routes
-        else if (req.url === '/api/reports/overdue' && req.method === 'GET') {
-            staffProtect(req, res, () => getOverdueReport(req, res));
-            return;
-        }
         else if (req.url === '/api/reports/popular' && req.method === 'GET') {
             staffProtect(req, res, () => getPopularityReport(req, res));
             return;
         }
-        else if (req.url === '/api/reports/fines' && req.method === 'GET') {
-            staffProtect(req, res, () => getFineReport(req, res));
+        else if (req.url.startsWith('/api/reports/popular-genres') && req.method === 'GET') {
+            staffProtect(req, res, () => getPopularGenresReport(req, res));
+            return;
+        }
+        else if (req.url.startsWith('/api/reports/popular-items') && req.method === 'GET') {
+            staffProtect(req, res, () => getPopularItemsReport(req, res));
+            return;
+        }
+        else if (req.url.startsWith('/api/reports/overdue-items') && req.method === 'GET') {
+            staffProtect(req, res, () => getOverdueItemsReport(req, res));
+            return;
+        }
+        else if (req.url.startsWith('/api/reports/outstanding-fines') && req.method === 'GET') {
+            staffProtect(req, res, () => getOutstandingFines(req, res));
+            return;
+        }
+        else if (req.url.startsWith('/api/reports/fines-summary') && req.method === 'GET') {
+            staffProtect(req, res, () => getOutstandingFines(req, res));
             return;
         }
 

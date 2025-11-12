@@ -1,6 +1,6 @@
 import './navbar.css'
 import { IoSearch, IoPersonCircleOutline } from "react-icons/io5"
-import sampleData from '../../assets/sample_data.json'
+import { FaBell } from "react-icons/fa6"
 import { Link, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import Logo from "../../assets/logo-light.webp"
@@ -13,9 +13,9 @@ const Navbar = ({
     onNavigateDashboard = () => {}
   }) => {
     const navigate = useNavigate();
-    const filters = sampleData.item_filters;
     const [searchTerm, setSearchTerm] = useState('');
     const [searchType, setSearchType] = useState('Title');
+    const [unreadCount, setUnreadCount] = useState(1);
 
     const handleSearch = (event) => {
         if (event.key === 'Enter') {
@@ -38,29 +38,28 @@ const Navbar = ({
                 <div className="dropdown-menu">
                         <div className="dropdown-menu-contents">
                             <div className="category-column">
-                                    <IoSearch />
-                                    <div className="nav-search-container">
-                                        <select
-                                            className="nav-search-type-dropdown"
-                                            value={searchType}
-                                            onChange={(e) => setSearchType(e.target.value)}
-                                        >
-                                            <option value="Description">Description</option>
-                                            <option value="Title">Title</option>
-                                            <option value="Manufacturer">Manufacturer</option>
-                                            <option value="Author">Author</option>
-                                            <option value="Director">Director</option>
-                                            <option value="Tag">Tag</option>
-                                        </select>
-                                        <input
-                                            type="text"
-                                            className="nav-search-input" 
-                                            placeholder="Search the entire library..."
-                                            value={searchTerm}
-                                            onChange={(e) => setSearchTerm(e.target.value)}
-                                            onKeyDown={handleSearch}
-                                        />
-                                    </div>
+                                <div className="nav-search-container">
+                                    <select
+                                        className="nav-search-type-dropdown"
+                                        value={searchType}
+                                        onChange={(e) => setSearchType(e.target.value)}
+                                    >
+                                        <option value="Description">Description</option>
+                                        <option value="Title">Title</option>
+                                        <option value="Manufacturer">Manufacturer</option>
+                                        <option value="Author">Author</option>
+                                        <option value="Director">Director</option>
+                                        <option value="Tag">Tag</option>
+                                    </select>
+                                    <input
+                                        type="text"
+                                        className="nav-search-input" 
+                                        placeholder="Search the entire library..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        onKeyDown={handleSearch}
+                                    />
+                                </div>
 
                                 <p>Quick Links</p>
                                 <Link to="/search?category=BOOK">Books</Link>
@@ -80,7 +79,7 @@ const Navbar = ({
                 <ul className="nav-links">
                     <li><a href="/" className="logo"><img className="logo-image logo-image-small" src={Logo} alt="" />LBRY</a></li>
                     <li><a href="/search" className="logo">Browse</a></li>
-
+                    <li><a href="/pricing" className="logo">Pricing</a></li>
                     <li><Link to="/search?category=BOOK">Books</Link></li>
                     <li><Link to="/search?category=MOVIE">Movies</Link></li>
                     <li><Link to="/search?category=DEVICE">Devices</Link></li>
@@ -121,7 +120,6 @@ const Navbar = ({
                 <ul className="nav-links">
                 <li><a href="/" className="logo"><img className="logo-image logo-image-small" src={Logo} alt="" />LBRY</a></li>
                 <li><a href="/search" className="logo">Browse</a></li>
-                
                 <li><Link to="/search?category=BOOK">Books</Link></li>
                 <li><Link to="/search?category=MOVIE">Movies</Link></li>
                 <li><Link to="/search?category=DEVICE">Devices</Link></li>
@@ -209,6 +207,12 @@ const Navbar = ({
                 {isLibrarianRole && <li><a href="/manage-fines">Fines</a></li>}
 
                 {renderSearchDropdown()}
+                <li className="notification-icon">
+                    <Link to="/notifications">
+                        <FaBell />
+                        {unreadCount > 0 && <span className="badge">{unreadCount}</span>}
+                    </Link>
+                </li>
                 <li className="dropdown">
                 <button className="nav-icon">
                     <IoPersonCircleOutline />
@@ -237,7 +241,7 @@ const Navbar = ({
                                 <a href="/staff_page">Dashboard</a>
                             </div>
                         </div>
-                    </div>
+                </div>
                 </li>
                 </ul>
             </nav>

@@ -80,11 +80,11 @@ function StaffDashboard() {
           <div>
             <h3>Welcome, {profile.firstName} {profile.lastName}!</h3>
             <small>
-              Role: {profile.role_name} | ID: {profile.user_id}
+              Role: {profile.role_name}
               {' '}•{' '}
               <a 
                 href="/staff-profile" 
-                className="text-blue-600 hover:text-blue-800 hover:underline"
+                className="result-link hover:text-blue-800 hover:underline"
               >
                 Change your password here!
               </a>

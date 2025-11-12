@@ -35,14 +35,14 @@ async function getLoanPolicy(conn, userId, itemId) {
 // --- END MODIFICATION ---
 
 // --- NEW HELPER: Check user's global borrow limit ---
-async function checkBorrowLimit(conn, userId) {
+async function checkBorrowLimit(conn, userEmail) {
     // 1. Get the user's limit from their role
     const [roleRows] = await conn.query(`
         SELECT ur.total_borrow_limit 
         FROM USER u
         JOIN USER_ROLE ur ON u.role_id = ur.role_id
-        WHERE u.user_id = ?
-    `, [userId]);
+        WHERE u.user_email = ?
+    `, [userEmail]);
 
     if (roleRows.length === 0) throw new Error('User role not found.');
     const limit = roleRows[0].total_borrow_limit;
@@ -50,15 +50,15 @@ async function checkBorrowLimit(conn, userId) {
     // 2. Get user's current active checkouts
     const loanedOutStatusId = await getStatusId(conn, 'Loaned Out');
     const [borrowCountRows] = await conn.query(
-        'SELECT COUNT(*) as count FROM BORROW WHERE user_id = ? AND status_id = ?',
-        [userId, loanedOutStatusId]
+        'SELECT COUNT(*) as count FROM BORROW WHERE user_email = ? AND status_id = ?',
+        [userEmail, loanedOutStatusId]
     );
     const borrowCount = borrowCountRows[0].count;
 
     // 3. Get user's current active holds
     const [holdCountRows] = await conn.query(
-        'SELECT COUNT(*) as count FROM HOLD WHERE user_id = ? AND picked_up_at IS NULL AND canceled_at IS NULL AND expires_at >= NOW()',
-        [userId]
+        'SELECT COUNT(*) as count FROM HOLD WHERE user_email = ? AND picked_up_at IS NULL AND canceled_at IS NULL AND expires_at >= NOW()',
+        [userEmail]
     );
     const holdCount = holdCountRows[0].count;
 
@@ -398,14 +398,14 @@ async function placeWaitlistHold(itemId, userId) {
 
 
 // --- MODIFIED: Staff directly checks out an available item to a user. ---
-async function staffCheckoutItem(itemId, userId, staffUserId) { // staffUserId for logging/auth later
+async function staffCheckoutItem(itemId, userEmail, staffUserId) { // staffUserId for logging/auth later
     const conn = await db.getConnection();
     try {
         await conn.beginTransaction();
         const loanedOutStatusId = await getStatusId(conn, 'Loaned Out');
 
         // --- STEP 1: Check user's borrow limit (NEW) ---
-        await checkBorrowLimit(conn, userId);
+        await checkBorrowLimit(conn, userEmail);
         // --- END STEP 1 ---
 
         // 2. Check Availability & Lock Item
