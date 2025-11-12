@@ -315,6 +315,16 @@ const server = http.createServer((req, res) => {
             protect(req, res, () => markNotificationAsRead(req, res, notificationId));
             return;
         }
+        else if (req.method === 'GET' && req.url === '/api/staff-notifications/count') {
+        staffProtect(req, res, () => {
+            getStaffUnreadCount(req, res);
+        });
+        }
+        else if (req.method === 'GET' && req.url === '/api/my-notifications/count') {
+            protect(req, res, () => {
+                getPatronUnreadCount(req, res);
+            });
+        }
     
         // --- Not Found ---
         else {

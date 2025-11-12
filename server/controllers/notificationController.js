@@ -158,9 +158,50 @@ const getStaffUnreadCount = async (req, res) => {
     }
 };
 
+/**
+ * @desc    Get unread notification count for logged-in patron
+ * @route   GET /api/my-notifications/count
+ * @access  Private (Patron)
+ */
+const getPatronUnreadCount = async (req, res) => {
+    // We use req.userId from the standard 'protect' middleware
+    const patronUserId = req.userId; 
+
+    if (!patronUserId) {
+         res.writeHead(401, { 'Content-Type': 'application/json' });
+         res.end(JSON.stringify({ message: 'Authentication error: User ID not found.' }));
+         return;
+    }
+
+    try {
+        const [rows] = await pool.query(
+            `
+            SELECT COUNT(n.notification_id) AS unreadCount
+            FROM NOTIFICATION n
+            LEFT JOIN NOTIFICATION_READ_STATUS r 
+                ON n.notification_id = r.notification_id AND r.user_id = ?
+            WHERE 
+                n.target_user_id = ?  -- Only check for notifications to this specific user
+                AND r.notification_id IS NULL; -- Only count unread ones
+            `,
+            [patronUserId, patronUserId]
+        );
+        
+        const unreadCount = rows[0].unreadCount || 0;
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ unreadCount: unreadCount }));
+    } catch (error) {
+        console.error("Error in getPatronUnreadCount:", error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ message: 'Server error' }));
+    }
+};
+
 module.exports = {
     getMyNotifications,
     getStaffNotifications,
     markNotificationAsRead,
-    getStaffUnreadCount
+    getStaffUnreadCount,
+    getPatronUnreadCount
 };
