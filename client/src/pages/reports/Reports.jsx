@@ -176,9 +176,20 @@ function Reports() {
             if (yearRange.to) params.append('end', yearRange.to);
             }
 
-            if (selectedType === 'items' && category) params.append('category', category);
-            if (selectedType === 'borrows' && borrowStatus) params.append('status', borrowStatus);
-            if (selectedType === 'fines' && fineStatus) params.append('status', fineStatus);
+            switch (selectedType) {
+                case 'genres':
+                case 'items':
+                    if (category) params.append('category', category);
+                    break;
+                case 'borrows':
+                    if (borrowStatus) params.append('status', borrowStatus);
+                    break;
+                case 'fines':
+                    if (fineStatus) params.append('status', fineStatus);
+                    break;
+                default:
+                    break;
+            }
 
             const token = localStorage.getItem('authToken');
             const headers = {

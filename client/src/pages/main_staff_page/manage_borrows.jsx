@@ -308,7 +308,7 @@ function ManageBorrows() {
                                         <div className="result-description">
                                             <div className="result-details">
                                                 <p><Link to={`/item/${borrow.item_id}`} className="result-link">{borrow.item_title || 'Unknown Item'}</Link></p>
-                                                <p><small><strong>User:</strong> {borrow.firstName} {borrow.lastName}</small></p>
+                                                <p><small><strong>User:</strong> {borrow.firstName} {borrow.lastName} ({/*ADD EMAIL HERE*/})</small></p>
                                                 <p><small><strong>Item ID:</strong> {borrow.item_id}</small></p>
                                                 <p><small><strong>Borrowed:</strong> {borrow.borrow_date ? new Date(borrow.borrow_date).toLocaleDateString() : '-'}</small></p>
                                                 <p><small><strong>Due:</strong> {borrow.due_date ? new Date(borrow.due_date).toLocaleDateString() : '-'}</small></p>

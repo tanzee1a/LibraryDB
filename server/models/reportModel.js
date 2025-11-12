@@ -110,6 +110,7 @@ async function overdueItemsReport({ filterType = 'date', start = null, end = nul
             b.user_id,
             u.firstName,
             u.lastName,
+            u.email,
             b.borrow_date,
             b.due_date,
             DATEDIFF(CURDATE(), b.due_date) AS days_overdue -- Calculate days overdue
@@ -167,6 +168,7 @@ async function outstandingFinesReport({ filterType = 'date', start = null, end =
             f.user_id,
             u.firstName,
             u.lastName,
+            u.email,
             COUNT(f.fine_id) AS number_of_fines,
             SUM(f.amount) AS total_amount_due
         FROM FINE f
