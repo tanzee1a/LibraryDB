@@ -46,8 +46,6 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description')
         if (searchTerm.trim()) {
             if (searchType === 'Title') {
                 // Add sorting rank column
-                bookWhereClauses.push(`b.title LIKE ?`);
-                bookParams.push(queryTerm); // Find all matches
                 bookSelect += `,
                     CASE
                         WHEN b.title = ? THEN 1   -- 1st param
