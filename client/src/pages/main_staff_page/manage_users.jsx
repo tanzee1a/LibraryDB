@@ -38,6 +38,11 @@ function ManageUsers() {
             category: 'Role',
             param: 'role', 
             options: ['Patron', 'Student', 'Faculty', 'Staff']
+        },
+        {
+            category: 'Account Status',
+            param: 'status', // This will be the URL param
+            options: ['Active', 'Deactivated']
         }
     ];
 
@@ -250,7 +255,6 @@ function ManageUsers() {
                                 value={sort} 
                                 onChange={handleSortChange} 
                             >
-                                <option value="" disabled></option>
                                 <option value="Fname_asc">First Name (A–Z)</option>
                                 <option value="Lname_asc">Last Name (A–Z)</option>
                                 <option value="Fname_desc">First Name (Z–A)</option>
