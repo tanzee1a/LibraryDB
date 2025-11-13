@@ -1,9 +1,7 @@
 const db = require('../config/db'); 
 
 // --- Helper: Find or Create Author ID ---
-// (We need this because the frontend sends names, but the DB needs IDs)
 async function findOrCreateAuthorId(conn, authorName) {
-  // Simple split for now, assumes "First Last"
   const names = authorName.trim().split(' ');
   const firstName = names[0];
   const lastName = names.length > 1 ? names[names.length - 1] : null;
@@ -27,7 +25,6 @@ async function findOrCreateAuthorId(conn, authorName) {
 }
 
 // --- Helper: Find or Create Director ID ---
-// (Similar logic for directors)
 async function findOrCreateDirectorId(conn, directorName) {
   const names = directorName.trim().split(' ');
   const firstName = names[0];
@@ -126,7 +123,6 @@ async function findById(id) {
         `;
         const [deviceRows] = await db.query(deviceSql, [id]);
          if (deviceRows.length > 0) details = deviceRows[0];
-         // For devices, we can maybe put manufacturer in creators for consistency?
          if (details.manufacturer) creators = [details.manufacturer];
     }
 
@@ -141,8 +137,6 @@ async function findById(id) {
     const tags = tagRows.map(t => t.tag_name);
 
     // 4. Combine all data
-    // We merge the base 'item' data with the specific 'details'
-    // and add 'creators' and 'tags' arrays
     const fullItemDetails = {
         ...item,      // Includes item_id, available, category, description, etc. from ITEM table
         ...details,   // Includes title, publisher/runtime, page_number/format_name etc. from BOOK/MOVIE/DEVICE
@@ -150,7 +144,6 @@ async function findById(id) {
         tags: tags          // Array of tag names
     };
 
-    // Clean up redundant keys if ITEM and specific table have same column name (e.g., description)
     // The specific table's value will overwrite the ITEM table's value if spread last.
     // Ensure `title` is always present, taking it from details if possible.
     if (!fullItemDetails.title && item.category === 'DEVICE') {
@@ -161,30 +154,22 @@ async function findById(id) {
     return fullItemDetails;
 }
 
-// --- DELETE ITEM (Simpler now due to CASCADE) ---
+// --- DELETE ITEM ---
 async function remove(id) {
-    // Because your Foreign Keys use ON DELETE CASCADE, 
-    // deleting from ITEM automatically deletes from children (BOOK, MOVIE, DEVICE, etc.)
     const sql = 'DELETE FROM ITEM WHERE item_id = ?';
     await db.query(sql, [id]);
 }
 
 // --- SOFT DELETE ITEM (Mark as 'DELETED') ---
 async function softDeleteById(id) {
-    // This updates the item's status instead of permanently deleting it
     const sql = "UPDATE ITEM SET status = 'DELETED' WHERE item_id = ?";
     
-    // We can also add a check to only update if it's currently active
-    // const sql = "UPDATE ITEM SET status = 'DELETED' WHERE item_id = ? AND status = 'ACTIVE'";
-    
-    // The simpler query above is also fine.
     await db.query(sql, [id]);
 }
 
 // --- REACTIVATE ITEM (Mark as 'ACTIVE') ---
 async function reactivateById(id) {
     // This query sets the status back to 'ACTIVE'
-    // It's also a good idea to only update it if it's currently 'DELETED'
     const sql = "UPDATE ITEM SET status = 'ACTIVE' WHERE item_id = ? AND status = 'DELETED'";
     
     // We can use db.query and check affectedRows
@@ -194,14 +179,14 @@ async function reactivateById(id) {
 
 async function findAllLanguages() {
     // Select only the needed columns from the LANGUAGE table
-    const sql = 'SELECT language_id, name FROM LANGUAGE ORDER BY name'; // Order by name
+    const sql = 'SELECT language_id, name FROM LANGUAGE ORDER BY name'; 
     const [rows] = await db.query(sql);
     return rows;
 }
 
 async function findAllTags() {
     // Select only the needed columns from the LANGUAGE table
-    const sql = 'SELECT * FROM TAG ORDER BY tag_id'; // Order by name
+    const sql = 'SELECT * FROM TAG ORDER BY tag_id';
     const [rows] = await db.query(sql);
     return rows;
 }
@@ -213,7 +198,7 @@ async function findAllMovieFormats() {
 }
 
 
-// --- CREATE BOOK (Updated for new schema) ---
+// --- CREATE BOOK ---
 async function createBook(bookData) {
     const conn = await db.getConnection();
     try {
@@ -283,8 +268,6 @@ async function updateBook(id, bookData) {
           SET available = ?, description = ?, thumbnail_url = ?, shelf_location = ?
           WHERE item_id = ?
         `;
-        // Note: We only update 'available' based on 'quantity' now.
-        // on_hold/loaned_out are managed by borrow/return/hold logic.
         await conn.query(itemSql, [
             bookData.quantity, bookData.description, bookData.thumbnail_url, 
             bookData.shelf_location, id

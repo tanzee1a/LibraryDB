@@ -13,12 +13,7 @@ async function getMyProfile(req, res) {
             res.writeHead(401, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
             return res.end(JSON.stringify({ message: 'User not authenticated' }));
         }
-
-        // --- *** THIS IS THE KEY CHANGE *** ---
-        // Instead of the simple findById, we use the powerful findUserProfileById,
-        // which now gets membership, fines, and suspension status.
         const userProfile = await User.findUserProfileById(userId);
-        // --- *** END OF CHANGE *** ---
 
         if (!userProfile) {
             res.writeHead(404, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
@@ -26,7 +21,7 @@ async function getMyProfile(req, res) {
         }
 
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-        return res.end(JSON.stringify(userProfile)); // Return the full profile
+        return res.end(JSON.stringify(userProfile)); 
 
     } catch (error) {
         console.error("Error in getMyProfile:", error);
@@ -35,7 +30,6 @@ async function getMyProfile(req, res) {
     }
 }
 
-// --- ADDED: Get All Users (for Staff) ---
 // @desc Get ALL user records (for Staff)
 // @route GET /api/users
 async function getAllUsers(req, res) {
@@ -61,16 +55,14 @@ async function getAllUsers(req, res) {
     }
 }
 
-// --- ADDED: Staff Creates User ---
 // @desc Staff creates a new user (Patron or Staff)
 // @route POST /api/users
 async function staffCreateUser(req, res) {
     try {
-        const body = await getPostData(req); // Get the raw JSON string
+        const body = await getPostData(req); 
 
         let userData;
         
-        // 🛑 FIX: Safely parse the body string into an object
         try {
             userData = JSON.parse(body);
         } catch (jsonError) {
@@ -78,11 +70,7 @@ async function staffCreateUser(req, res) {
              return res.end(JSON.stringify({ message: 'Invalid JSON format in request body.' }));
         }
 
-        // Expecting firstName, lastName, email, role, temporaryPassword, user_id
-        
-        // Generate user_id if not provided (optional)
         if (!userData.user_id) {
-             // Simple ID generation - consider a more robust method if needed
              userData.user_id = `U${Date.now()}`.substring(0, 13); 
         }
 
@@ -92,7 +80,6 @@ async function staffCreateUser(req, res) {
         return res.end(JSON.stringify(newUser));
 
     } catch (error) {
-        // ... (existing error handling) ...
         const statusCode = error.message.includes('already exists') || error.message.includes('Missing required fields') ? 400 : 500;
         res.writeHead(statusCode, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }); 
         res.end(JSON.stringify({ 
@@ -101,12 +88,10 @@ async function staffCreateUser(req, res) {
         }));
     }
 }
-// --- ADDED: Get Specific User Profile (for Staff) ---
 // @desc Get detailed profile for a specific user ID
 // @route GET /api/users/:userId
 async function getUserProfile(req, res, userId) {
     try {
-        // TODO: Add Auth check - Staff only
         const userProfile = await User.findUserProfileById(userId);
 
         if (!userProfile) {
@@ -124,12 +109,10 @@ async function getUserProfile(req, res, userId) {
     }
 }
 
-// --- ADDED: Get Borrow History for a specific User ---
 // @desc Get borrow history list for a specific user ID
 // @route GET /api/users/:userId/borrows
 async function getUserBorrowHistory(req, res, userId) {
     try {
-        // TODO: Add Auth check - Staff only or check if userId matches logged-in user
         const history = await User.findBorrowHistoryForUser(userId);
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         return res.end(JSON.stringify(history));
@@ -140,12 +123,10 @@ async function getUserBorrowHistory(req, res, userId) {
     }
 }
 
-// --- ADDED: Get Hold History for a specific User ---
 // @desc Get hold history list for a specific user ID
 // @route GET /api/users/:userId/holds
 async function getUserHoldHistory(req, res, userId) {
      try {
-        // TODO: Add Auth check
         const history = await User.findHoldHistoryForUser(userId);
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         return res.end(JSON.stringify(history));
@@ -156,12 +137,10 @@ async function getUserHoldHistory(req, res, userId) {
     }
 }
 
-// --- ADDED: Get Fine History for a specific User ---
 // @desc Get fine history list for a specific user ID
 // @route GET /api/users/:userId/fines
 async function getUserFineHistory(req, res, userId) {
       try {
-        // TODO: Add Auth check
         const history = await User.findFineHistoryForUser(userId);
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         return res.end(JSON.stringify(history));
@@ -184,7 +163,6 @@ async function staffUpdateUser(req, res, userId) {
             return res.end(JSON.stringify({ message: 'Access Denied: Staff cannot update their own account via this endpoint.' }));
         }
 
-        // 1. Get the raw request body string
         body = await getPostData(req); 
 
         try {
@@ -197,7 +175,6 @@ async function staffUpdateUser(req, res, userId) {
         const updatedUser = await User.staffUpdateUser(userId, userData);
         
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-        // Return the updated data structure
         return res.end(JSON.stringify(updatedUser)); 
 
     } catch (error) {
@@ -219,24 +196,19 @@ async function staffDeleteUser(req, res, userId) {
         }
 
         
-        // Call the new model function
         const affectedRows = await User.staffDeactivateUser(userId);
 
         if (affectedRows === 0) {
-            // This now correctly means "User not found"
             res.writeHead(404, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
             return res.end(JSON.stringify({ message: 'User not found' }));
         }
 
-        // Updated success message
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         return res.end(JSON.stringify({ message: `User ${userId} deactivated` }));
 
     } catch (error) {
         console.error(`Error deactivating user ${userId}:`, error);
         
-        // Simplified the error handling, as the 409 "Conflict"
-        // for foreign keys is no longer a concern.
         res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         res.end(JSON.stringify({ message: 'Could not deactivate user', error: error.message }));
     }
@@ -244,9 +216,8 @@ async function staffDeleteUser(req, res, userId) {
 
 async function changePassword(req, res) {
     try {
-        const userId = req.userId; // Get user ID from the authentication token
+        const userId = req.userId; 
         const body = await getPostData(req);
-        // Expecting { currentPassword, newPassword } from the frontend
         const { currentPassword, newPassword } = JSON.parse(body); 
 
         if (!userId) {
@@ -259,11 +230,9 @@ async function changePassword(req, res) {
             return res.end(JSON.stringify({ message: 'Missing current or new password' }));
         }
 
-        // Call the model function to handle the password update logic
         const updateSuccessful = await User.changeUserPassword(userId, currentPassword, newPassword);
 
         if (!updateSuccessful) {
-            // This usually means the current password didn't match
             res.writeHead(401, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
             return res.end(JSON.stringify({ message: 'Current password incorrect' }));
         }
@@ -281,7 +250,7 @@ async function changePassword(req, res) {
 async function changeEmail(req, res) {
     try {
         const userId = req.userId;
-        const body = await getPostData(req); // Now safely returns a raw JSON string or empty string
+        const body = await getPostData(req); 
         
         let parsedData;
         
@@ -291,14 +260,12 @@ async function changeEmail(req, res) {
         }
         
         try {
-            // ✅ Parse the string here, in the controller
             parsedData = JSON.parse(body); 
         } catch (jsonError) {
              res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
              return res.end(JSON.stringify({ message: 'Invalid JSON format in request body.' }));
         }
         
-        // Use the safely parsed data
         const { newEmail } = parsedData;
 
         if (!userId) {
@@ -313,7 +280,6 @@ async function changeEmail(req, res) {
              return res.end(JSON.stringify({ message: 'User profile not found' }));
         }
 
-        // 🛑 STEP 2: Enforce the rule for Student and Faculty
         const userRole = userProfile.role;
         if (userRole === 'Student' || userRole === 'Faculty') {
             console.warn(`Denied email change for ${userRole}: ${userProfile.email}`);
@@ -333,7 +299,6 @@ async function changeEmail(req, res) {
         const updateSuccessful = await User.changeUserEmail(userId, newEmail);
 
         if (!updateSuccessful) {
-            // Model returned false, likely user not found (though protected)
             res.writeHead(404, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
             return res.end(JSON.stringify({ message: 'User not found or email could not be updated.' }));ç
         }
@@ -345,20 +310,15 @@ async function changeEmail(req, res) {
 
     } catch (error) {
         console.error("Error in changeEmail:", error);
-        // Catch known unique constraint violation from model (400 Bad Request)
         const statusCode = error.message.includes('already exists') || error.message.includes('New email is the same') ? 400 : 500;
         res.writeHead(statusCode, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         res.end(JSON.stringify({ message: 'Could not change email', error: error.message }));
     }
 }
 
-/**
- * @desc Staff activates a user
- * @route PUT /api/users/:userId/activate
- */
+
 async function staffActivateUser(req, res, userId) {
     try {
-        // TODO: Add Auth check - Staff only
 
         // Call the new model function
         const affectedRows = await User.staffActivateUser(userId);
@@ -388,9 +348,9 @@ module.exports = {
     getAllUsers,
     staffCreateUser,
     getUserProfile,
-    getUserBorrowHistory, // <-- Add this
-    getUserHoldHistory,   // <-- Add this
-    getUserFineHistory,    // <-- Add this
+    getUserBorrowHistory, 
+    getUserHoldHistory,   
+    getUserFineHistory,    
     staffUpdateUser,
     staffDeleteUser,
     changePassword,

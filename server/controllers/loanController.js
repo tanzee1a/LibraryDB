@@ -11,14 +11,11 @@ async function checkBorrowingEligibility(userId) {
         throw new Error('User profile not found.');
     }
 
-    // 1. Check for fine suspension (existing logic)
     if (userProfile.is_suspended) {
         throw new Error(`Borrowing suspended due to $${userProfile.total_fines.toFixed(2)} in outstanding fines.`);
     }
 
-    // 2. Check for membership status (NEW MEMBERSHIP LOGIC)
     if (userProfile.requires_membership_fee) {
-        // If they require a fee and are NOT 'active', deny the request
         if (userProfile.membership_status !== 'active') {
             
             let reason;
@@ -27,18 +24,16 @@ async function checkBorrowingEligibility(userId) {
             } else if (userProfile.membership_status === 'canceled') {
                  reason = 'Your membership is not set to auto-renew.';
             } else {
-                reason = 'Membership is required for this user role.'; // Includes 'new' status
+                reason = 'Membership is required for this user role.'; 
             }
 
             throw new Error(`Borrowing denied. ${reason} Please activate or renew your membership.`);
         }
     }
-    // If all checks pass, the function completes without throwing an error
 }
 
 // @desc User requests pickup for an available item
 // @route POST /api/request/:itemId
-// REQUIRES: protect middleware (sets req.userId)
 async function requestPickup(req, res, itemId) {
     try {
         const userId = req.userId; // 🔑 Sourced from auth middleware
@@ -48,25 +43,18 @@ async function requestPickup(req, res, itemId) {
         return res.end(JSON.stringify(result));
     } catch (error) {
         console.error("Error in requestPickup controller:", error);
-        // --- START FIX ---
-
-        // Determine status code based on the error message
-        // This gives you more specific HTTP responses
-        let statusCode = 400; // Default to 400 Bad Request
+        let statusCode = 400; 
 
         if (error.message.includes('Borrowing denied') || error.message.includes('Borrowing suspended')) {
-            statusCode = 403; // 403 Forbidden
+            statusCode = 403; 
         } else if (error.message.includes('already have an active hold')) {
-            statusCode = 409; // 409 Conflict (perfect for duplicates)
+            statusCode = 409; 
         } else if (error.message.includes('not found')) {
-            statusCode = 404; // 404 Not Found
+            statusCode = 404;
         }
-        // 'Borrow limit' or 'not available' can stay as 400
 
-        // Use the 'statusCode' variable you calculated
         res.writeHead(statusCode, { 'Content-Type': 'application/json' });
 
-        // Send the SPECIFIC error.message from the model as the primary message
         res.end(JSON.stringify({ message: error.message }));
     }
 }
@@ -75,7 +63,7 @@ async function requestPickup(req, res, itemId) {
 // @route POST /api/holds/:holdId/pickup
 async function pickupHold(req, res, holdId) {
     try {
-        const staff_user_id = req.userId; // 🔑 Use authenticated staff ID
+        const staff_user_id = req.userId; 
         const result = await Loan.pickupHold(Number(holdId), staff_user_id);
         res.writeHead(201, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify(result));
@@ -90,7 +78,7 @@ async function pickupHold(req, res, holdId) {
 // @route POST /api/return/:borrowId 
 async function returnItem(req, res, borrowId) {
     try {
-        const staff_user_id = req.userId; // 🔑 Use authenticated staff ID
+        const staff_user_id = req.userId; 
         const result = await Loan.returnItem(borrowId, staff_user_id);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify(result));
@@ -105,7 +93,7 @@ async function returnItem(req, res, borrowId) {
 // @route POST /api/borrows/:borrowId/lost
 async function markLost(req, res, borrowId) {
     try {
-      const staff_user_id = req.userId; // 🔑 Use authenticated staff ID
+      const staff_user_id = req.userId; 
       const result = await Loan.markLost(borrowId, staff_user_id);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify(result));
@@ -120,7 +108,7 @@ async function markLost(req, res, borrowId) {
 // @route POST /api/borrows/:borrowId/found
 async function markFound(req, res, borrowId) {
     try {
-      const staff_user_id = req.userId; // 🔑 Use authenticated staff ID
+      const staff_user_id = req.userId; 
       const result = await Loan.markFound(borrowId, staff_user_id);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify(result));
@@ -133,10 +121,9 @@ async function markFound(req, res, borrowId) {
 
 // @desc User places a hold on an UNAVAILABLE item (Waitlist)
 // @route POST /api/waitlist/:itemId
-// REQUIRES: protect middleware (sets req.userId)
 async function placeWaitlistHold(req, res, itemId) {
     try {
-        const userId = req.userId; // 🔑 Sourced from auth middleware
+        const userId = req.userId;
         await checkBorrowingEligibility(userId);
         const result = await Loan.placeWaitlistHold(itemId, userId);
         res.writeHead(201, { 'Content-Type': 'application/json' });
@@ -153,10 +140,9 @@ async function placeWaitlistHold(req, res, itemId) {
 
 // @desc Get all active loans for the current user
 // @route GET /api/my-loans
-// REQUIRES: protect middleware (sets req.userId)
 async function getMyLoans(req, res) {
     try {
-        const userId = req.userId; // 🔑 Sourced from auth middleware
+        const userId = req.userId;
         const loans = await Loan.findLoansByUserId(userId);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify(loans));
@@ -169,10 +155,9 @@ async function getMyLoans(req, res) {
 
 // @desc Get loan history for the current user
 // @route GET /api/my-history
-// REQUIRES: protect middleware (sets req.userId)
 async function getMyHistory(req, res) {
     try {
-        const userId = req.userId; // 🔑 Sourced from auth middleware
+        const userId = req.userId; 
         const history = await Loan.findLoanHistoryByUserId(userId);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify(history));
@@ -185,10 +170,9 @@ async function getMyHistory(req, res) {
 
 // @desc Get active holds (pickup requests) for the current user
 // @route GET /api/my-holds
-// REQUIRES: protect middleware (sets req.userId)
 async function getMyHolds(req, res) {
     try {
-        const userId = req.userId; // 🔑 Sourced from auth middleware
+        const userId = req.userId; 
         const holds = await Loan.findHoldsByUserId(userId);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify(holds));
@@ -201,10 +185,9 @@ async function getMyHolds(req, res) {
 
 // @desc Get waitlist items for the current user
 // @route GET /api/my-waitlist
-// REQUIRES: protect middleware (sets req.userId)
 async function getMyWaitlist(req, res) {
     try {
-        const userId = req.userId; // 🔑 Sourced from auth middleware
+        const userId = req.userId;
         const waitlist = await Loan.findWaitlistByUserId(userId);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify(waitlist));
@@ -217,10 +200,9 @@ async function getMyWaitlist(req, res) {
 
 // @desc Get fines for the current user
 // @route GET /api/my-fines
-// REQUIRES: protect middleware (sets req.userId)
 async function getMyFines(req, res) {
     try {
-        const userId = req.userId; // 🔑 Sourced from auth middleware
+        const userId = req.userId;
         const fines = await Loan.findFinesByUserId(userId);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify(fines));
@@ -235,7 +217,7 @@ async function getMyFines(req, res) {
 // @route POST /api/fines/:fineId/pay
 async function payFine(req, res, fineId) {
     try {
-        const staff_user_id = req.userId; // 🔑 Use authenticated staff ID
+        const staff_user_id = req.userId;
         const result = await Loan.payFine(Number(fineId), staff_user_id);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify(result));
@@ -248,12 +230,10 @@ async function payFine(req, res, fineId) {
 
 // @desc User pays one of their own outstanding fines
 // @route POST /api/my-fines/:fineId/pay
-// REQUIRES: protect middleware (sets req.userId)
 async function userPayFine(req, res, fineId) {
     try {
-        const userId = req.userId; // 泊 Sourced from auth middleware
+        const userId = req.userId; 
         
-        // Use the new model function, passing both fineId and userId
         const result = await Loan.userPayFine(Number(fineId), userId);
         
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -269,9 +249,8 @@ async function userPayFine(req, res, fineId) {
 // @route POST /api/fines/:fineId/waive
 async function waiveFine(req, res, fineId) {
     try {
-        const staff_user_id = req.userId; // 🔑 Use authenticated staff ID
+        const staff_user_id = req.userId; 
         
-        // Reason must be sent in the request body
         const body = await getPostData(req);
         const { reason } = JSON.parse(body);
         if (!reason) {
@@ -295,7 +274,7 @@ async function getAllBorrows(req, res) {
 
         const parsedUrl = url.parse(req.url, true);
         const searchTerm = parsedUrl.query.q || '';
-        const sort = parsedUrl.query.sort || 'borrow_newest'; // Default sort
+        const sort = parsedUrl.query.sort || 'borrow_newest'; 
         const filters = parsedUrl.query;
         delete filters.q;
         delete filters.sort;
@@ -359,14 +338,13 @@ async function getAllHolds(req, res) {
 // @route POST /api/holds/:holdId/cancel
 async function cancelHold(req, res, holdId) {
     try {
-        // TODO: Add Auth check - Staff only
-        const staff_user_id = req.userId; // 🔑 Use authenticated staff ID
+        const staff_user_id = req.userId; 
         const result = await Loan.cancelHold(Number(holdId), staff_user_id);
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         return res.end(JSON.stringify(result));
     } catch (error) {
         console.error("Error canceling hold:", error);
-        res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }); // 400 if hold not found/valid
+        res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }); 
         res.end(JSON.stringify({ message: 'Could not cancel hold', error: error.message }));
     }
 }
@@ -375,11 +353,10 @@ async function cancelHold(req, res, holdId) {
 // @route POST /api/borrows/checkout
 async function staffCheckoutItem(req, res) {
     try {
-        // TODO: Add Auth check - Staff only
-        const staff_user_id = req.userId; // 🔑 Use authenticated staff ID
+        const staff_user_id = req.userId; 
 
         const body = await getPostData(req);
-        const { userEmail, itemId } = JSON.parse(body); // Get IDs from request body
+        const { userEmail, itemId } = JSON.parse(body);
 
         if (!userEmail || !itemId) {
             throw new Error('User Email and Item ID are required.');
@@ -392,7 +369,7 @@ async function staffCheckoutItem(req, res) {
 
     } catch (error) {
         console.error("Error in staffCheckoutItem controller:", error);
-        res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }); // 400 for bad input/unavailable item
+        res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }); 
         res.end(JSON.stringify({ 
             message: 'Could not checkout item', 
             error: error.message 
@@ -400,13 +377,10 @@ async function staffCheckoutItem(req, res) {
     }
 }
 
-// --- ADDED: Get All Fines (for Staff) ---
 // @desc Get ALL fine records (for Staff)
 // @route GET /api/fines
 async function getAllFines(req, res) {
     try {
-        // TODO: Add Auth check - Staff only
-        // TODO: Get filter parameters from req.url query string
         const fines = await Loan.findAllFines(/* pass filters */);
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         return res.end(JSON.stringify(fines));
@@ -417,16 +391,13 @@ async function getAllFines(req, res) {
     }
 }
 
-// --- ADDED: Staff Manually Creates Fine ---
 // @desc Staff manually adds a new fine
 // @route POST /api/fines
 async function staffCreateFine(req, res) {
     try {
-        // TODO: Add Auth check - Staff only
-        const staff_user_id = req.userId; // 🔑 Use authenticated staff ID
+        const staff_user_id = req.userId; 
 
         const body = await getPostData(req);
-        // Expecting borrow_id, user_id, fee_type, amount, notes
         const fineData = JSON.parse(body); 
 
         const newFine = await Loan.staffCreateFine(fineData, staff_user_id);
@@ -436,7 +407,7 @@ async function staffCreateFine(req, res) {
 
     } catch (error) {
         console.error("Error in staffCreateFine controller:", error);
-        res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }); // 400 for bad input
+        res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         res.end(JSON.stringify({ 
             message: 'Could not create fine', 
             error: error.message 
@@ -446,15 +417,12 @@ async function staffCreateFine(req, res) {
 
 // @desc    User cancels their *own* active hold
 // @route   DELETE /api/holds/:holdId
-// REQUIRES: protect middleware (sets req.userId)
 async function cancelMyHold(req, res, holdId) {
   try {
-    const userId = req.userId; // 🔑 Sourced from auth middleware
+    const userId = req.userId; 
 
-    // Call the model function from your Loan model
     const result = await Loan.cancelMyHold(Number(holdId), userId);
 
-    // 200 OK - successfully deleted/canceled
     res.writeHead(200, { 'Content-Type': 'application/json' });
     return res.end(JSON.stringify(result));
 
@@ -463,7 +431,6 @@ async function cancelMyHold(req, res, holdId) {
     
     let statusCode = 400; // Bad Request
     
-    // Send 404 if the hold wasn't found or didn't belong to the user
     if (error.message.toLowerCase().includes('not found')) {
         statusCode = 404; // Not Found
     }

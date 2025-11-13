@@ -1,5 +1,4 @@
-// controllers/searchController.js
-const url = require('url'); // Need this to parse query parameters
+const url = require('url');
 const Search = require('../models/searchModel');
 const Item = require('../models/itemModel');
 const { exit } = require('process');
@@ -9,10 +8,10 @@ const { exit } = require('process');
 async function searchItems(req, res) {
     try {
         const parsedUrl = url.parse(req.url, true);
-        const searchTerm = parsedUrl.query.q || ''; // Get the 'q' parameter
+        const searchTerm = parsedUrl.query.q || ''; 
         const searchType = parsedUrl.query.searchType || 'Description';
-        const filters = parsedUrl.query; // Get all query params as potential filters
-        delete filters.q; // Remove 'q' itself from filters object
+        const filters = parsedUrl.query; 
+        delete filters.q; 
         delete filters.searchType // Remove 'searchType' itself from filters object
 
 

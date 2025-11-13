@@ -17,14 +17,14 @@ async function testConnection() {
         // Use createConnection for a single, direct test
         connection = await mysql.createConnection(connectionOptions);
         
-        console.log('✅ Connection successful!');
+        console.log('Connection successful!');
         
         console.log('Running test query (SELECT 1+1)...');
         const [rows] = await connection.query('SELECT 1+1 AS solution');
         
-        console.log(`✅ Query successful! Result: ${rows[0].solution}`);
+        console.log(`Query successful! Result: ${rows[0].solution}`);
     } catch (error) {
-        console.error('❌ Test failed:');
+        console.error('Test failed:');
         console.error(error);
     } finally {
         if (connection) {

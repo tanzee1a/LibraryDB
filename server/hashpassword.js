@@ -7,5 +7,5 @@ async function hashPassword(password) {
     console.log(`Hashed Password: ${hashedPassword}`);
 }
 
-// ⚠️ REPLACE 'your_admin_password_here' with the actual password you want!
+// REPLACE 'your_admin_password_here' with the actual password you want!
 hashPassword('clerk2025'); 

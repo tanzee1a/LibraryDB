@@ -1,7 +1,6 @@
-// models/staffModel.js (FIXED)
+// models/staffModel.js 
 const db = require('../config/db');
 
-// FIX 1: Join USER and USER_ROLE to check if the user is in the 'Staff' main category
 async function checkStaffRole(userId) {
     const sql = `
         SELECT 
@@ -15,11 +14,10 @@ async function checkStaffRole(userId) {
 }
 
 /**
- * Fetches dashboard statistics. (No change needed here, as it doesn't query the user role)
+ * Fetches dashboard statistics
  */
 async function getDashboardStats() {
-    // ... (content remains the same)
-    const loanedOutStatusId = 2; // Assuming 2 = 'Loaned Out'
+    const loanedOutStatusId = 2; 
     
     // Query for currently loaned out items
     const [loanRows] = await db.query(
@@ -57,9 +55,6 @@ async function getDashboardStats() {
  * Joins USER, STAFF, and STAFF_ROLES tables.
  */
 async function findStaffProfileById(userId) {
-    // FIX 2: Remove the incorrect 'AND u.role = 'Staff'' clause.
-    // The staffProtect middleware already confirms they are 'Staff' based on the JWT.
-    // Also, the JOIN to STAFF already ensures the user is a staff member.
     const sql = `
         SELECT 
             u.user_id,
@@ -73,7 +68,7 @@ async function findStaffProfileById(userId) {
         WHERE u.user_id = ?; 
     `;
     const [rows] = await db.query(sql, [userId]);
-    return rows[0]; // Return profile or undefined
+    return rows[0]; 
 }
 
 module.exports = {
