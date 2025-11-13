@@ -20,7 +20,7 @@ const {
 } = require('./controllers/loanController');
 
 const { 
-    getMyNotifications, getStaffNotifications, markNotificationAsRead, getStaffUnreadCount 
+    getMyNotifications, getStaffNotifications, markNotificationAsRead, getStaffUnreadCount, getPatronUnreadCount 
 } = require('./controllers/notificationController');
 const { registerUser, loginUser } = require('./controllers/loginRegisterController');
 const { saveItem, unsaveItem, getMyWishlist } = require('./controllers/wishlistController');
