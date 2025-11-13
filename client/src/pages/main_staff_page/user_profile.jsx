@@ -226,13 +226,11 @@ function UserProfile() {
 
     const handleDeleteUserClick = () => {
         if (isSelf) {
-            // Use setSaveError for consistent error display
-            setSaveError("You cannot deactivate your own profile. Please contact an administrator.");
+            alert("You cannot delete your own profile from Manage Users. Please contact your IT department.");
             return;
         }
         
-        // If not self, clear any previous error and proceed with the actual logic
-        setSaveError('');
+        // If not self, proceed with the actual delete logic (the async one)
         handleDeleteUser();
     };
 
