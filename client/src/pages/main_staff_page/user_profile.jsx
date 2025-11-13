@@ -39,6 +39,8 @@ function UserProfile() {
     const [loadingHistory, setLoadingHistory] = useState(false);
     const [historyError, setHistoryError] = useState('');
 
+    const [loggedInUserRole, setLoggedInUserRole] = useState(null); 
+    const [loggedInUserStaffRole, setLoggedInUserStaffRole] = useState(null); 
     const [loggedInUserId, setLoggedInUserId] = useState(null);
     const isSelf = String(userId) === String(loggedInUserId);
 
@@ -92,8 +94,16 @@ function UserProfile() {
         const token = localStorage.getItem('authToken');
         if (token) {
             const decoded = decodeToken(token);
-            if (decoded && decoded.id) {
-                setLoggedInUserId(decoded.id);
+            if (decoded) {
+                if (decoded.id) {
+                    setLoggedInUserId(decoded.id);
+                }
+                if (decoded.role) {
+                    setLoggedInUserRole(decoded.role);
+                }
+                if (decoded.staffRole) {
+                    setLoggedInUserStaffRole(decoded.staffRole);
+                }
             }
         }
         
@@ -409,6 +419,9 @@ function UserProfile() {
 
     const isOriginalRoleStaff = user.role === 'Staff' || user.role === 'Admin';
 
+    const isAssistantLibrarian = loggedInUserStaffRole === 'Assistant Librarian';
+    const shouldHideStaffRoleEdit = isAssistantLibrarian && isOriginalRoleStaff;
+
     return (
         <div>
             <div className="page-container">
@@ -467,25 +480,39 @@ function UserProfile() {
                                 
                             /* CASE 2: User IS staff */
                             <>
-                                <p> <strong>Role:</strong>
-                                    {/* Show a disabled input to "lock" their main role */}
-                                    <input 
-                                        type="text" 
-                                        value={editedUser.role} 
-                                        className="edit-input" 
-                                        disabled 
-                                        style={{ backgroundColor: '#eee', cursor: 'not-allowed' }} 
-                                    />
-                                </p>
-                                
-                                <p> <strong>Staff Role:</strong>
-                                    {/* Show the *editable* staff role dropdown */}
-                                    <select name="staffRole" value={editedUser.staffRole} onChange={handleInputChange} className="edit-input" required>
-                                        <option value="Clerk">Clerk</option>
-                                        <option value="Assistant Librarian">Assistant Librarian</option>
-                                        {/* You can add 'Admin' here if you want to allow changing to Admin */}
-                                    </select>
-                                </p>
+                                {shouldHideStaffRoleEdit ? (
+                                // 🛑 RENDER NOTHING or a Note if restricted
+                                null
+                            ) : (
+                                <>
+                                    {/* This is the regular Role input (which is disabled by default for staff) */}
+                                    <p> <strong>Role:</strong>
+                                        <input 
+                                            type="text" 
+                                            value={editedUser.role} 
+                                            className="edit-input" 
+                                            disabled 
+                                            style={{ backgroundColor: '#eee', cursor: 'not-allowed' }} 
+                                        />
+                                    </p>
+                                    
+                                    {/* This is the editable Staff Role input */}
+                                    <p> 
+                                        <strong>Staff Role:</strong>
+                                        <select 
+                                            name="staffRole" 
+                                            value={editedUser.staffRole} 
+                                            onChange={handleInputChange} 
+                                            className="edit-input" 
+                                            required
+                                        >
+                                            <option value="Clerk">Clerk</option>
+                                            <option value="Assistant Librarian">Assistant Librarian</option>
+                                            {/* Add Admin option if necessary */}
+                                        </select>
+                                    </p>
+                                </>
+                            )}
                             </>
                             )}
                             </>
