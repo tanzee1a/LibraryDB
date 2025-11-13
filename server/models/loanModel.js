@@ -32,14 +32,17 @@ async function getLoanPolicy(conn, userId, itemId) {
   return rows[0];
 }
 
-async function checkBorrowLimit(conn, userEmail) {
+async function checkBorrowLimit(conn, userId) {
+    // FIX 1: Changed userEmail to userId
+    console.log('Checking borrow limit for user:', userId); 
+    
     // 1. Get the user's limit from their role
     const [roleRows] = await conn.query(`
         SELECT ur.total_borrow_limit 
         FROM USER u
         JOIN USER_ROLE ur ON u.role_id = ur.role_id
-        WHERE u.user_email = ?
-    `, [userEmail]);
+        WHERE u.user_id = ?
+    `, [userId]); // This line was already correct
 
     if (roleRows.length === 0) throw new Error('User role not found.');
     const limit = roleRows[0].total_borrow_limit;
@@ -47,15 +50,17 @@ async function checkBorrowLimit(conn, userEmail) {
     // 2. Get user's current active checkouts
     const loanedOutStatusId = await getStatusId(conn, 'Loaned Out');
     const [borrowCountRows] = await conn.query(
-        'SELECT COUNT(*) as count FROM BORROW WHERE user_email = ? AND status_id = ?',
-        [userEmail, loanedOutStatusId]
+        'SELECT COUNT(*) as count FROM BORROW WHERE user_id = ? AND status_id = ?',
+        // FIX 2: Changed userEmail to userId
+        [userId, loanedOutStatusId] 
     );
     const borrowCount = borrowCountRows[0].count;
 
     // 3. Get user's current active holds
     const [holdCountRows] = await conn.query(
-        'SELECT COUNT(*) as count FROM HOLD WHERE user_email = ? AND picked_up_at IS NULL AND canceled_at IS NULL AND expires_at >= NOW()',
-        [userEmail]
+        'SELECT COUNT(*) as count FROM HOLD WHERE user_id = ? AND picked_up_at IS NULL AND canceled_at IS NULL AND expires_at >= NOW()',
+        // FIX 3: Changed userEmail to userId
+        [userId] 
     );
     const holdCount = holdCountRows[0].count;
 
