@@ -166,8 +166,8 @@ function UserProfile() {
             alert("You cannot edit your own details from Manage Users. Please go to account dashboard.");
             return; // Stop the function immediately
         }
-        if (isBlockedFromEditing) {
-            alert("You do not have the necessary permissions to edit this user's details.");
+        if (isBlockedFromEditingAllStaff) { 
+            alert("You do not have the necessary permissions to edit another staff member's details.");
             return; // Stop the function immediately
         }
         if (isEditing) {
@@ -185,6 +185,13 @@ function UserProfile() {
     async function handleSaveChanges() {
         setIsSaving(true);
         setSaveError('');
+
+        if (isBlockedFromEditingAllStaff) {
+            setSaveError("Permission denied: You cannot save changes for another staff member.");
+            setIsSaving(false);
+            setIsEditing(false); // Exit editing mode
+            return;
+        }
         
         const token = localStorage.getItem('authToken');
         if (!token) {
@@ -231,6 +238,10 @@ function UserProfile() {
     const handleDeleteUserClick = () => {
         if (isSelf) {
             alert("You cannot delete your own profile from Manage Users. Please contact your IT department.");
+            return;
+        }
+        if (isBlockedFromEditingAllStaff) {
+            alert("You do not have the necessary permissions to deactivate another staff member.");
             return;
         }
         
@@ -465,8 +476,7 @@ function UserProfile() {
     const isAssistantLibrarian = loggedInUserStaffRole === 'Assistant Librarian';
     const shouldHideStaffRoleEdit = isAssistantLibrarian && isOriginalRoleStaff;
 
-    const isHeadLibrarian = user?.staff_role === 'Librarian';
-    const isBlockedFromEditing = isAssistantLibrarian && isHeadLibrarian;
+    const isBlockedFromEditingAllStaff = isAssistantLibrarian && isOriginalRoleStaff;
 
 
     return (
