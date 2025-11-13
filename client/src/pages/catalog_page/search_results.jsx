@@ -261,9 +261,9 @@ function SearchResults({ isStaff }) {
         // --- Authentication ---
         const token = localStorage.getItem('authToken'); 
         if (!token) {
-        // Set the message for this specific item
-        setActionMessage({ type: 'error', text: 'You must be logged in.', itemId: itemId });
-        return;
+            // Set the message for this specific item
+            setActionMessage({ type: 'error', text: 'You must be logged in.', itemId: itemId });
+            return;
         }
         // ------------------------
 

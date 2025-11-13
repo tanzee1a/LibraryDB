@@ -81,8 +81,13 @@ function Homepage() {
               onKeyDown={handleSearch}
             />
           </div>
-          {/* --- END MODIFIED --- */}
-          
+          <div>
+          { !userFirstName && (
+          <div className="home-action-section fade-in">
+            <button className="primary-button" onClick={() => navigate('/pricing')}>Get Started</button>
+            <p>Ready to explore? Let's begin.</p>
+          </div>)}
+          </div>
         </div>
       </div>
     </div>
