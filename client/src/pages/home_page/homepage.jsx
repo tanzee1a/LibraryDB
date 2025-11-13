@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './homepage.css'
 import Logo from "../../assets/logo-dark.webp"
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 
 function Homepage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchType, setSearchType] = useState('Title'); 
-  const [userFirstName, setUserFirstName] = useState(null);
+  const [userProfile, setUserProfile] = useState({});
   const navigate = useNavigate();
 
   const handleSearch = (event) => {
@@ -24,7 +25,32 @@ function Homepage() {
   };
 
   useEffect(() => {
-    setUserFirstName(localStorage.getItem('userFirstName'));
+    const token = localStorage.getItem('authToken');
+        if (token) {
+            const fetchUserProfile = async () => {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/my-profile`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+    
+                    if (response.ok) {
+                        const data = await response.json();
+                        setUserProfile({
+                            firstName: data.firstName,
+                            is_suspended: data.is_suspended,
+                            requires_membership: data.requires_membership_fee,
+                            membership_status: data.membership_status
+                        });
+                    } else {
+                        setUserProfile({ is_suspended: false, total_fines: 0.00 });
+                    }
+                } catch (error) {
+                    console.error("Error fetching user profile:", error);
+                }
+            };
+    
+            fetchUserProfile();
+        } 
   }, []);
 
   const getGreeting = () => {
@@ -35,20 +61,69 @@ function Homepage() {
   };
 
   const renderWelcomeMessage = () => {
-    if (userFirstName) {
+    if (userProfile.firstName) {
       return (
         <div className="home-title fade-in-text-from-bottom">
-          <h1>{getGreeting()}, {userFirstName}!</h1>
+          <h1>{getGreeting()}, {userProfile.firstName}!</h1>
           <p>Let’s uncover stories and knowledge worth exploring.</p>
         </div>
     );
     }
+
     return (
         <div className="home-title fade-in-text-from-bottom">
           <h1>Search the world's knowledge</h1>
           <p>Access a world of stories, ideas, and innovation — all in one place.</p>
         </div>
     );
+  }
+
+  const renderActionButton = () => {
+    console.log("User Profile:", userProfile);
+    if (userProfile.is_suspended) {
+      return (
+        <div className="home-action-section fade-in">
+          <button className="red-button" disabled={true}>Account Suspended</button>
+          <p>Your account is suspended. Please contact support to resolve any issues and regain access.</p>
+        </div>
+      );
+    }
+
+    if (!userProfile.firstName) {
+      return (
+        <div className="home-action-section fade-in">
+          <button className="primary-button" onClick={() => navigate('/pricing')}>Get Started</button>
+          <p>Ready to explore? Let's begin.</p>
+        </div>
+      );
+    }
+
+
+    switch(userProfile.membership_status) {
+      case 'new':
+        return (
+          <div className="home-action-section fade-in">
+            <button className="primary-button" onClick={() => navigate('/account?section=profile')}>Complete Registration</button>
+            <p>We’re excited to have you on board. Let's get your account ready to go.</p>
+          </div>
+        );
+      case 'expired':
+        return (
+          <div className="home-action-section fade-in">
+            <button className="primary-button" onClick={() => navigate('/pricing')}>Reactivate Membership</button>
+            <p>Bring your membership back and continue exploring.</p>
+          </div>
+        );
+      case 'canceled':
+        return (
+          <div className="home-action-section fade-in">
+            <button className="secondary-button" onClick={() => navigate('/pricing')}>Reactivate Membership</button>
+            <p>Keep your access uninterrupted—reactivate today.</p>
+          </div>
+        );
+      default:
+        break;
+    }
   }
 
   return (
@@ -82,11 +157,7 @@ function Homepage() {
             />
           </div>
           <div>
-          { !userFirstName && (
-          <div className="home-action-section fade-in">
-            <button className="primary-button" onClick={() => navigate('/pricing')}>Get Started</button>
-            <p>Ready to explore? Let's begin.</p>
-          </div>)}
+          {renderActionButton()}
           </div>
         </div>
       </div>

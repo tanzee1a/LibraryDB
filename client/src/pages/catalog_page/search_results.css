@@ -9,8 +9,12 @@
     margin: 2rem 0;
 }
 
-.search-result-header h1{
-    margin: 1rem 0 0.5rem 0;
+.search-result-header h1 {
+    margin: 1rem 0 0 0;
+}
+.search-result-header p {
+    margin: 0.5rem 0 2rem 0;
+    color: var(--secondary-text-color);
 }
 
 .search-result-search-bar {

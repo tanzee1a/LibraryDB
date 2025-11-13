@@ -1,6 +1,7 @@
 import './navbar.css'
 import { IoSearch, IoPersonCircleOutline } from "react-icons/io5"
 import { FaBell } from "react-icons/fa6"
+import sampleData from '../../assets/sample_data.json'
 import { Link, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import Logo from "../../assets/logo-light.webp"
@@ -16,6 +17,7 @@ const Navbar = ({
     const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState('');
     const [searchType, setSearchType] = useState('Title');
+    const filters = sampleData.item_filters;
     // const [unreadCount, setUnreadCount] = useState(1);
 
     const handleSearch = (event) => {
@@ -81,9 +83,27 @@ const Navbar = ({
                     <li><a href="/" className="logo"><img className="logo-image logo-image-small" src={Logo} alt="" />LBRY</a></li>
                     <li><a href="/search" className="logo">Browse</a></li>
                     <li><a href="/pricing" className="logo">Pricing</a></li>
-                    <li><Link to="/search?category=BOOK">Books</Link></li>
+                    {/* Minimal Category Dropdowns */}
+                    {filters.map(filter => (
+                    <li key={filter.category} className="dropdown">
+                        <a href={`/search?category=${encodeURIComponent(filter.raw_category)}`}>{filter.category}</a>
+                        <div className="dropdown-menu">
+                        <div className="dropdown-menu-contents">
+                            {filter.topics.map(topic => (
+                            <div key={topic.name} className="category-column">
+                                <p>{topic.name}</p>
+                                {topic.options.map(option => (
+                                <a key={option} href={`/search?tag=${encodeURIComponent(option)}`}>{option}</a>
+                                ))}
+                            </div>
+                            ))}
+                        </div>
+                        </div>
+                    </li>
+                    ))}
+                    {/* <li><Link to="/search?category=BOOK">Books</Link></li>
                     <li><Link to="/search?category=MOVIE">Movies</Link></li>
-                    <li><Link to="/search?category=DEVICE">Devices</Link></li>
+                    <li><Link to="/search?category=DEVICE">Devices</Link></li> */}
 
                     {/* Search Dropdown */}
                     {renderSearchDropdown()}
