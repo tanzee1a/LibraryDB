@@ -21,7 +21,6 @@ function protect(req, res, next) {
         req.userId = decoded.id; 
         
         // 4. Proceed to the next middleware or controller function
-        // 🔑 THE FIX: Pass req and res so the controller wrapper receives them!
         next();
                 
     } catch (error) {
@@ -44,15 +43,13 @@ function staffProtect(req, res, next) {
     try {
         const decoded = jwt.verify(token, SECRET);
         
-        // 🔥 CRITICAL STAFF CHECK 🔥
         if (decoded.role !== 'Staff' && decoded.role !== 'Librarian') { 
-             // Assuming your staff roles are 'Staff' or 'Librarian'
              res.writeHead(403, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
              return res.end(JSON.stringify({ message: 'Forbidden, insufficient role access' }));
         }
 
         req.userId = decoded.id; 
-        req.userRole = decoded.role; // Optionally attach the role
+        req.userRole = decoded.role; 
         next(); 
     } catch (error) {
         console.error("Token verification error:", error.message);

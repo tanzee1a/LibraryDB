@@ -28,7 +28,7 @@ const { getMyProfile, getAllUsers, staffCreateUser, getUserProfile, getUserBorro
 const { signup, cancel, renew } = require('./controllers/membershipController');
 const { searchItems } = require('./controllers/searchController');
 const { getPopularGenresReport, getPopularItemsReport, getOverdueItemsReport, getOutstandingFines, getActiveUsersReport, getMembershipReport, getRevenueReport } = require('./controllers/reportController');
-const { protect } = require('./middleware/authMiddleware'); // <--- ADD THIS IMPORT
+const { protect } = require('./middleware/authMiddleware');
 const { getDashboardStats, getMyStaffProfile } = require('./controllers/staffController');
 const { staffProtect} = require('./middleware/authMiddleware');
 
@@ -110,7 +110,6 @@ const server = http.createServer((req, res) => {
         // --- Loan/Hold/Waitlist Routes (User Actions) ---
         else if (req.url.match(/^\/api\/request\/([a-zA-Z0-9-]+)$/) && req.method === 'POST') {
             const itemId = req.url.split('/')[3];
-            // FIX: Ensure req and res are passed to the controller
             protect(req, res, () => requestPickup(req, res, itemId)); 
             return;
         }
@@ -134,7 +133,6 @@ const server = http.createServer((req, res) => {
         } 
         else if (req.url.match(/^\/api\/waitlist\/([a-zA-Z0-9-]+)$/) && req.method === 'POST') {
             const itemId = req.url.split('/')[3];
-            // FIX: Ensure req and res are passed to the controller
             protect(req, res, () => placeWaitlistHold(req, res, itemId)); 
             return;
         }
@@ -146,30 +144,24 @@ const server = http.createServer((req, res) => {
 
         // --- User Data Routes (My- Routes) ---
         else if (req.url === '/api/my-loans' && req.method === 'GET') {
-            // FIX: Correctly wrap the controller function
             protect(req, res, () => getMyLoans(req, res));
             return;
         } else if (req.url === '/api/my-history' && req.method === 'GET') {
-            // FIX: Correctly wrap the controller function (This fixes your primary error)
             protect(req, res, () => getMyHistory(req, res));
             return; 
         } else if (req.url === '/api/my-holds' && req.method === 'GET') {
-            // FIX: Correctly wrap the controller function
             protect(req, res, () => getMyHolds(req, res)); 
             return;
         } else if (req.url === '/api/my-waitlist' && req.method === 'GET') {
-            // FIX: Correctly wrap the controller function
             protect(req, res, () => getMyWaitlist(req, res)); 
             return;
         } else if (req.url === '/api/my-fines' && req.method === 'GET') {
-            // FIX: Correctly wrap the controller function
             protect(req, res, () => getMyFines(req, res)); 
             return;
         }
     
         // Get My Profile
         else if (req.url === '/api/my-profile' && req.method === 'GET') {
-            // FIX: Correctly wrap the controller function
             protect(req, res, () => getMyProfile(req, res));
             return;
         }
@@ -178,7 +170,7 @@ const server = http.createServer((req, res) => {
             return;
         }
         else if (req.url === '/api/my-profile/email' && req.method === 'POST') {
-            protect(req, res, () => changeEmail(req, res)); // <-- NEW ROUTE
+            protect(req, res, () => changeEmail(req, res)); 
             return;
         }
         else if (req.url === '/api/fines' && req.method === 'GET') { 
@@ -211,14 +203,14 @@ const server = http.createServer((req, res) => {
             return;
         }
 
-        // --- Auth Routes --- (Unchanged, not protected)
+        // --- Auth Routes --- 
         else if (req.url === '/api/register' && req.method === 'POST') {
             registerUser(req, res);
         } else if (req.url === '/api/login' && req.method === 'POST') {
             loginUser(req, res);
         } 
 
-        // --- Search Route --- (Unchanged, not protected)
+        // --- Search Route --- 
         else if (req.url.startsWith('/api/search') && req.method === 'GET') {
             searchItems(req, res);
         }
@@ -258,7 +250,6 @@ const server = http.createServer((req, res) => {
             staffProtect(req, res, () => staffDeleteUser(req, res, userId));
         }
 
-        // Use startsWith to ignore potential query strings like '?'
         else if (req.url.startsWith('/api/holds') && req.method === 'GET') { 
             staffProtect(req, res, () => getAllHolds(req, res));
         }
@@ -324,7 +315,6 @@ const server = http.createServer((req, res) => {
         }
         else if (req.url.match(/^\/api\/notifications\/([0-9]+)\/read$/) && req.method === 'POST') {
             const notificationId = req.url.split('/')[3];
-            // Use 'protect' - it works for both patrons and staff
             protect(req, res, () => markNotificationAsRead(req, res, notificationId));
             return;
         }

@@ -16,10 +16,8 @@ async function registerUser(req, res) {
   let body = '';
   req.on('data', chunk => (body += chunk.toString()));
   req.on('end', async () => {
-    // 1. Initialize 'conn' outside of the try block
     let conn; 
     try {
-      // 2. MOVE the connection acquisition inside the try block
       conn = await pool.getConnection(); 
       
       const { email, password, firstName, lastName } = JSON.parse(body);
@@ -29,9 +27,8 @@ async function registerUser(req, res) {
         return res.end(JSON.stringify({ error: true, message: 'Email and password required' }));
       }
       
-      await conn.beginTransaction(); // Start transaction
+      await conn.beginTransaction(); 
 
-      // --- STEP 1: Get the role_id for 'Patron' ---
       const roleName = 'Patron';
       const [roleRows] = await conn.query(
           'SELECT role_id FROM USER_ROLE WHERE role_name = ?',
@@ -39,11 +36,9 @@ async function registerUser(req, res) {
       );
 
       if (roleRows.length === 0) {
-          // This error will be caught by the catch block below
           throw new Error("Default role 'Patron' not found in USER_ROLE table."); 
       }
       const role_id = roleRows[0].role_id;
-      // --- END STEP 1 ---
 
       // Hash password
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -51,7 +46,7 @@ async function registerUser(req, res) {
       // Generate user_id
       const userId = generateUserId();
       
-      // --- STEP 2: Insert into USER table (using role_id) ---
+      // Insert into USER table (using role_id) 
       await conn.query(
         'INSERT INTO USER (user_id, email, role_id, firstName, lastName) VALUES (?, ?, ?, ?, ?)',
         [userId, email, role_id, firstName || '', lastName || '']
@@ -62,21 +57,19 @@ async function registerUser(req, res) {
         [email, hashedPassword]
       );
 
-      await conn.commit(); // Commit transaction
+      await conn.commit();
 
-      // After successfully committing, generate a token for the new user
       const token = jwt.sign(
-        { id: userId, email: email, role: roleName, staffRole: null}, // New user is always a Patron
+        { id: userId, email: email, role: roleName, staffRole: null}, 
         SECRET,
         { expiresIn: '1h' }
       );
       
       res.writeHead(201, { 'Content-Type': 'application/json' });
-      // Return the token and user info, just like /api/login does
       res.end(JSON.stringify({ 
         message: 'User registered successfully',
-        token, // <-- Send the token
-        user: { // <-- Send the nested user object
+        token, 
+        user: {
           id: userId,
           email: email,
           role: roleName,
@@ -88,9 +81,7 @@ async function registerUser(req, res) {
     
     } catch (err) {
       console.error('Registration Error:', err);
-      // 3. Rollback is safe because 'conn' is defined outside and checked here
       if (conn) {
-          // Only roll back if the transaction was started
           await conn.rollback().catch(e => console.error("Rollback failed:", e)); 
       }
 
@@ -105,7 +96,6 @@ async function registerUser(req, res) {
         res.end(JSON.stringify({ error: true, message: 'Error registering user' }));
       }
     } finally {
-      // 4. Release is safe because 'conn' is defined outside and checked here
       if (conn) {
           conn.release();
       }
@@ -119,7 +109,6 @@ async function loginUser(req, res) {
   req.on('data', chunk => (body += chunk.toString()));
   req.on('end', async () => {
     try {
-      // SECRET needs to be defined in scope for jwt.sign
       const SECRET = process.env.JWT_SECRET || 'super_secret_key'; 
       const { email, password } = JSON.parse(body);
 
@@ -147,27 +136,23 @@ async function loginUser(req, res) {
       );
       
       if (rows.length === 0) {
-        // This handles cases where the email doesn't exist in either table (or the join fails)
         res.writeHead(401, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify({ message: 'Invalid email or password' }));
       }
 
       const user = rows[0];
 
-      // Check *after* finding the user, but *before* checking the password.
       if (user.account_status === 'DEACTIVATED') {
           res.writeHead(403, { 'Content-Type': 'application/json' }); // 403 Forbidden
           return res.end(JSON.stringify({ message: 'Your account has been deactivated. Please contact support.' }));
       }
       
-      // The password hash is now retrieved from the joined USER_CREDENTIAL table
       const isMatch = await bcrypt.compare(password, user.password_hash);
       if (!isMatch) {
         res.writeHead(401, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify({ message: 'Invalid email or password' }));
       }
 
-      // Assuming jwt and SECRET are defined/imported globally
       const token = jwt.sign(
         { id: user.user_id, email: user.email, role: user.role, staffRole: user.staffRole || null},
         SECRET,

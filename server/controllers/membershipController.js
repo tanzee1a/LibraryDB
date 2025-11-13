@@ -3,14 +3,12 @@ const { getPostData } = require('../utils.js');
 
 // @desc    Sign up for a new membership
 // @route   POST /api/membership/signup
-// REQUIRES: protect middleware (sets req.userId)
 async function signup(req, res) {
     let bodyString;
     let userData;
     try {
         bodyString = await getPostData(req);
         
-        // 🛑 CRITICAL FIX: Parse the body string into an object 🛑
         try {
             userData = JSON.parse(bodyString);
         } catch (jsonError) {
@@ -19,14 +17,12 @@ async function signup(req, res) {
         }
         
         const userId = req.userId;
-        // userData is now an object: { name, cardNumber, expDate, cvv, billingAddress }
         const result = await Membership.create(userId, userData);
 
         res.writeHead(201, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify(result));
     } catch (error) {
         console.error("Error signing up for membership:", error);
-        // Use 400 for input validation errors
         const statusCode = error.message.includes('required') ? 400 : 500;
         res.writeHead(statusCode, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ message: 'Could not sign up for membership', error: error.message }));
@@ -35,7 +31,6 @@ async function signup(req, res) {
 
 // @desc    Cancel a membership (turn off auto-renew)
 // @route   POST /api/membership/cancel
-// REQUIRES: protect middleware (sets req.userId)
 async function cancel(req, res) {
     try {
         const userId = req.userId;
@@ -52,7 +47,6 @@ async function cancel(req, res) {
 
 // @desc    Renew a membership
 // @route   POST /api/membership/renew
-// REQUIRES: protect middleware (sets req.userId)
 async function renew(req, res) {
     try {
         const userId = req.userId;

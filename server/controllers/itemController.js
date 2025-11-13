@@ -38,8 +38,7 @@ async function getItem(req, res, id){
 
 async function getLanguages(req, res){
     try {
-        // Call the new function from your Item model
-        const languages = await Item.findAllLanguages(); // <--- Use Item.findAllLanguages()
+        const languages = await Item.findAllLanguages(); 
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         res.end(JSON.stringify(languages));
     } catch (error) {
@@ -51,8 +50,7 @@ async function getLanguages(req, res){
 
 async function getMovieFormats(req, res){
     try {
-        // Call the new function from your Item model
-        const formats = await Item.findAllMovieFormats(); // <--- Use Item.findAllLanguages()
+        const formats = await Item.findAllMovieFormats(); 
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         res.end(JSON.stringify(formats));
     } catch (error) {
@@ -65,8 +63,7 @@ async function getMovieFormats(req, res){
 
 async function getTags(req, res){
     try {
-        // Call the new function from your Item model
-        const tags = await Item.findAllTags(); // <--- Use Item.findAllTags()
+        const tags = await Item.findAllTags(); 
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         res.end(JSON.stringify(tags));
     } catch (error) {
@@ -199,7 +196,7 @@ async function createDevice(req, res){
 }
 
 
-// --- UPDATE Functions (Updated Fields) ---
+// --- UPDATE Functions ---
 
 // @desc Update a book
 // @route PUT /api/items/book/:id
@@ -336,16 +333,13 @@ async function deleteItem(req, res, id) {
             return; // Stop execution
         }
         
-        // Optional: Check if it's already deleted
         if (item.status === 'DELETED') {
              res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
              res.end(JSON.stringify({ message: 'Item is already deleted.' }));
              return; // Stop execution
         }
-        // --- END NEW LOGIC ---
-
         // Call your new model function
-        await Item.softDeleteById(id); // <-- Changed from Item.remove
+        await Item.softDeleteById(id);
 
         // Update the success message
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });

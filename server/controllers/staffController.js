@@ -2,8 +2,6 @@
 const Staff = require('../models/staffModel');
 
 async function isUserStaff(userId) {
-    // This model method needs to check the USER table for role='Staff'
-    // or check if an entry exists in the STAFF table.
     return await Staff.checkStaffRole(userId); 
 }
 
@@ -11,14 +9,13 @@ async function isUserStaff(userId) {
 // @route GET /api/staff/dashboard-stats
 async function getDashboardStats(req, res) {
     try {
-        const logged_in_user_id = req.userId; // Provided by 'protect' middleware
+        const logged_in_user_id = req.userId; 
 
         if (!logged_in_user_id || !(await isUserStaff(logged_in_user_id))) {
             res.writeHead(403, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
             return res.end(JSON.stringify({ message: 'Forbidden: Staff access required.' }));
        }
 
-        // TODO: Add Auth check - Staff only
         const stats = await Staff.getDashboardStats();
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         return res.end(JSON.stringify(stats));

@@ -39,7 +39,6 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description')
             if (searchType === 'Title') {
                 bookWhereClauses.push(`b.title LIKE ?`);
                 bookParams.push(queryTerm); // Find all matches
-                // Add sorting rank column
                 bookSelect += `,
                     CASE
                         WHEN b.title = ? THEN 1   -- Exact match
@@ -145,9 +144,7 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description')
 
         // Movie Format filter logic
         if (formatFilter.length > 0) {
-            // Add the JOIN for movie formats
             movieJoins.push(`JOIN MOVIE_FORMAT mf ON m.format_id = mf.format_id`);
-            // Add the WHERE clause
             movieWhereClauses.push(`mf.format_name IN (?)`);
             movieParams.push(formatFilter);
         }

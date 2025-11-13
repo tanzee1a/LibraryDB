@@ -1,7 +1,6 @@
 const db = require('../config/db'); 
-const { v4: uuidv4 } = require('uuid'); // For generating borrow_ids
+const { v4: uuidv4 } = require('uuid'); 
 
-// --- Helper: Get Status ID from Name (No Change) ---
 async function getStatusId(conn, statusName) {
   const [rows] = await conn.query(
     'SELECT status_id FROM BORROW_STATUS WHERE status_name = ?', 
@@ -11,8 +10,6 @@ async function getStatusId(conn, statusName) {
   return rows[0].status_id;
 }
 
-// This function is now the single source of truth for all rules.
-// It needs the user_id to find their role.
 async function getLoanPolicy(conn, userId, itemId) {
   const [rows] = await conn.query(`
     SELECT 
@@ -33,7 +30,6 @@ async function getLoanPolicy(conn, userId, itemId) {
 }
 
 async function checkBorrowLimit(conn, userId) {
-    // FIX 1: Changed userEmail to userId
     console.log('Checking borrow limit for user:', userId); 
     
     // 1. Get the user's limit from their role
@@ -42,7 +38,7 @@ async function checkBorrowLimit(conn, userId) {
         FROM USER u
         JOIN USER_ROLE ur ON u.role_id = ur.role_id
         WHERE u.user_id = ?
-    `, [userId]); // This line was already correct
+    `, [userId]); 
 
     if (roleRows.length === 0) throw new Error('User role not found.');
     const limit = roleRows[0].total_borrow_limit;
@@ -51,7 +47,6 @@ async function checkBorrowLimit(conn, userId) {
     const loanedOutStatusId = await getStatusId(conn, 'Loaned Out');
     const [borrowCountRows] = await conn.query(
         'SELECT COUNT(*) as count FROM BORROW WHERE user_id = ? AND status_id = ?',
-        // FIX 2: Changed userEmail to userId
         [userId, loanedOutStatusId] 
     );
     const borrowCount = borrowCountRows[0].count;
@@ -59,7 +54,6 @@ async function checkBorrowLimit(conn, userId) {
     // 3. Get user's current active holds
     const [holdCountRows] = await conn.query(
         'SELECT COUNT(*) as count FROM HOLD WHERE user_id = ? AND picked_up_at IS NULL AND canceled_at IS NULL AND expires_at >= NOW()',
-        // FIX 3: Changed userEmail to userId
         [userId] 
     );
     const holdCount = holdCountRows[0].count;
@@ -68,21 +62,16 @@ async function checkBorrowLimit(conn, userId) {
     if ((borrowCount + holdCount) >= limit) {
         throw new Error(`Borrow limit reached (${limit} items). You currently have ${borrowCount} borrows and ${holdCount} active holds.`);
     }
-    // If we're here, the user is clear to borrow/hold one more item.
     return true; 
 }
 
-// --- MODIFIED: User requests pickup for an AVAILABLE item ---
 async function requestPickup(itemId, userId) {
     const conn = await db.getConnection();
     try {
         await conn.beginTransaction();
 
-        // --- STEP 1: Check user's borrow limit ---
         await checkBorrowLimit(conn, userId);
-        // --- END STEP 1 ---
 
-        // 2. Check Availability
         const [items] = await conn.query(
           'SELECT available, category FROM ITEM WHERE item_id = ? FOR UPDATE', // Lock the row
           [itemId]
@@ -90,8 +79,7 @@ async function requestPickup(itemId, userId) {
         if (items.length === 0) throw new Error('Item not found.');
         if (items[0].available <= 0) throw new Error('Item is not available.');
 
-        // --- STEP 2.5: CHECK FOR EXISTING HOLD (NEW) ---
-        // Check if this user *already* has an active hold on this *exact* item.
+        // Check if this user already has an active hold on this exact item.
         const [existingHolds] = await conn.query(
             `SELECT COUNT(*) as holdCount 
              FROM HOLD 
@@ -102,15 +90,12 @@ async function requestPickup(itemId, userId) {
         if (existingHolds[0].holdCount > 0) {
             throw new Error('You already have an active hold on this item.');
         }
-        // --- END STEP 2.5 ---
 
-        // 3. Put item on hold
         await conn.query(
             'UPDATE ITEM SET available = available - 1, on_hold = on_hold + 1 WHERE item_id = ?', 
             [itemId]
         );
 
-        // 4. Create HOLD record (e.g., expires in 3 days)
         const holdExpires = new Date();
         holdExpires.setDate(holdExpires.getDate() + 3); 
         
@@ -132,8 +117,8 @@ async function requestPickup(itemId, userId) {
     }
 }
 
-// --- MODIFIED: Staff checks out a PENDING hold ---
-async function pickupHold(holdId, staffUserId) { // staffUserId not used yet, but needed for auth
+// --- Staff checks out a PENDING hold ---
+async function pickupHold(holdId, staffUserId) { 
     const conn = await db.getConnection();
     try {
         await conn.beginTransaction();
@@ -152,26 +137,24 @@ async function pickupHold(holdId, staffUserId) { // staffUserId not used yet, bu
         
         const { item_id: itemId, user_id: userId, category } = holds[0];
         
-        // --- STEP 2: Get Loan Policy (MODIFIED) ---
-        // We now pass the userId to the new helper
+        // --- 2: Get Loan Policy ---
         const policy = await getLoanPolicy(conn, userId, itemId);
         const dueDate = new Date();
         dueDate.setDate(dueDate.getDate() + policy.loan_days);
-        // --- END STEP 2 ---
 
-        // 3. Update ITEM status (No change)
+        // 3. Update ITEM status 
         await conn.query(
             'UPDATE ITEM SET on_hold = on_hold - 1, loaned_out = loaned_out + 1 WHERE item_id = ?', 
             [itemId]
         );
 
-        // 4. Update HOLD status (No change)
+        // 4. Update HOLD status 
         await conn.query(
             'UPDATE HOLD SET picked_up_at = NOW() WHERE hold_id = ?', 
             [holdId]
         );
 
-        // 5. Create BORROW record (No change)
+        // 5. Create BORROW record 
         const borrowId = `B${Date.now()}${Math.floor(Math.random()*100)}`; // Simple unique ID
         const borrowSql = `
             INSERT INTO BORROW (borrow_id, borrow_date, due_date, status_id, user_id, item_id)
@@ -191,15 +174,15 @@ async function pickupHold(holdId, staffUserId) { // staffUserId not used yet, bu
     }
 }
 
-// --- MODIFIED: User returns a LOANED OUT item ---
-async function returnItem(borrowId, staffUserId) { // staffUserId for auth later
+// --- User returns a LOANED OUT item ---
+async function returnItem(borrowId, staffUserId) {
     const conn = await db.getConnection();
     try {
         await conn.beginTransaction();
         const returnedStatusId = await getStatusId(conn, 'Returned');
         const loanedOutStatusId = await getStatusId(conn, 'Loaned Out');
 
-        // 1. Get Borrow details & lock Item (No change)
+        // 1. Get Borrow details & lock Item 
         const [borrows] = await conn.query(
             `SELECT b.item_id, b.user_id, b.due_date, i.category 
              FROM BORROW b
@@ -212,13 +195,13 @@ async function returnItem(borrowId, staffUserId) { // staffUserId for auth later
 
         const { item_id: itemId, user_id: userId, due_date: dueDate } = borrows[0];
 
-        // 2. Update ITEM status (No change)
+        // 2. Update ITEM status 
         await conn.query(
             'UPDATE ITEM SET loaned_out = loaned_out - 1, available = available + 1 WHERE item_id = ?', 
             [itemId]
         );
 
-        // 3. Update BORROW status (No change)
+        // 3. Update BORROW status 
         await conn.query(
             'UPDATE BORROW SET status_id = ?, return_date = CURDATE() WHERE borrow_id = ?', 
             [returnedStatusId, borrowId]
@@ -236,15 +219,15 @@ async function returnItem(borrowId, staffUserId) { // staffUserId for auth later
     }
 }
 
-// --- MODIFIED: Staff marks a loan as LOST ---
-async function markLost(borrowId, staffUserId) { // staffUserId for auth
+// --- Staff marks a loan as LOST ---
+async function markLost(borrowId, staffUserId) { 
     const conn = await db.getConnection();
     try {
         await conn.beginTransaction();
         const lostStatusId = await getStatusId(conn, 'Lost');
         const loanedOutStatusId = await getStatusId(conn, 'Loaned Out'); 
 
-         // 1. Get Borrow details & lock Item (No change)
+         // 1. Get Borrow details & lock Item
         const [borrows] = await conn.query(
             `SELECT b.item_id, b.user_id, i.category 
              FROM BORROW b
@@ -257,20 +240,19 @@ async function markLost(borrowId, staffUserId) { // staffUserId for auth
 
         const { item_id: itemId, user_id: userId } = borrows[0];
 
-        // 2. Update ITEM status (item is gone) (No change)
+        // 2. Update ITEM status (item is gone) 
         await conn.query(
             'UPDATE ITEM SET loaned_out = loaned_out - 1 WHERE item_id = ?', 
             [itemId]
         );
 
-        // 3. Update BORROW status (No change)
+        // 3. Update BORROW status
         await conn.query(
             'UPDATE BORROW SET status_id = ? WHERE borrow_id = ?', 
             [lostStatusId, borrowId]
         );
 
-        // --- STEP 4: Create LOST fine (MODIFIED) ---
-        // Get policy using new helper
+        // --- STEP 4: Create LOST fine  ---
         const policy = await getLoanPolicy(conn, userId, itemId);
         const fineSql = `
             INSERT INTO FINE (borrow_id, user_id, fee_type, amount, notes)
@@ -280,7 +262,6 @@ async function markLost(borrowId, staffUserId) { // staffUserId for auth
             borrowId, userId, policy.lost_fee, 
             'Item marked as lost.'
         ]);
-        // --- END STEP 4 ---
 
         await conn.commit();
         return { borrow_id: borrowId, message: 'Item marked as lost and fine assessed.' };
@@ -294,7 +275,7 @@ async function markLost(borrowId, staffUserId) { // staffUserId for auth
     }
 }
 
-// --- Staff marks a LOST item as FOUND (No Change) ---
+// --- Staff marks a LOST item as FOUND ---
 async function markFound(borrowId, staffUserId) { 
     const conn = await db.getConnection();
     try {
@@ -348,15 +329,14 @@ async function markFound(borrowId, staffUserId) {
     }
 }
 
-// --- MODIFIED: User places a hold on an UNAVAILABLE item (Waitlist) ---
+// --- User places a hold on an UNAVAILABLE item (Waitlist) ---
 async function placeWaitlistHold(itemId, userId) {
     const conn = await db.getConnection();
     try {
         await conn.beginTransaction();
 
-        // --- STEP 1: Check user's borrow limit (NEW) ---
+        // --- STEP 1: Check user's borrow limit ---
         await checkBorrowLimit(conn, userId);
-        // --- END STEP 1 ---
 
         // 2. Check Availability & Lock Item
         const [items] = await conn.query(
@@ -394,16 +374,15 @@ async function placeWaitlistHold(itemId, userId) {
     }
 }
 
-// --- MODIFIED: Staff directly checks out an available item to a user. ---
-async function staffCheckoutItem(itemId, userEmail, staffUserId) { // staffUserId for logging/auth later
+// --- Staff directly checks out an available item to a user. ---
+async function staffCheckoutItem(itemId, userEmail, staffUserId) { 
     const conn = await db.getConnection();
     try {
         await conn.beginTransaction();
         const loanedOutStatusId = await getStatusId(conn, 'Loaned Out');
 
-        // --- STEP 1: Check user's borrow limit (NEW) ---
+        // --- STEP 1: Check user's borrow limit ---
         await checkBorrowLimit(conn, userEmail);
-        // --- END STEP 1 ---
 
         // 2. Check Availability & Lock Item
         const [items] = await conn.query(
@@ -415,11 +394,10 @@ async function staffCheckoutItem(itemId, userEmail, staffUserId) { // staffUserI
         
         const { category } = items[0];
 
-        // --- STEP 3: Get Loan Policy (MODIFIED) ---
+        // --- STEP 3: Get Loan Policy ---
         const policy = await getLoanPolicy(conn, userId, itemId);
         const dueDate = new Date();
         dueDate.setDate(dueDate.getDate() + policy.loan_days);
-        // --- END STEP 3 ---
 
         // 4. Update ITEM status
         await conn.query(
@@ -428,7 +406,7 @@ async function staffCheckoutItem(itemId, userEmail, staffUserId) { // staffUserI
         );
 
         // 5. Create BORROW record
-        const borrowId = `B${Date.now()}${Math.floor(Math.random()*100)}`; // Simple unique ID
+        const borrowId = `B${Date.now()}${Math.floor(Math.random()*100)}`;
         const borrowSql = `
             INSERT INTO BORROW (borrow_id, borrow_date, due_date, status_id, user_id, item_id)
             VALUES (?, CURDATE(), ?, ?, ?, ?)
@@ -447,7 +425,6 @@ async function staffCheckoutItem(itemId, userEmail, staffUserId) { // staffUserI
     }
 }
 
-// They only query by user_id or fine_id, or they don't depend on loan policies.
 async function findLoansByUserId(userId) {
     const loanedOutStatusId = await getStatusId(db, 'Loaned Out');
     const sql = `
@@ -651,7 +628,6 @@ async function findAllBorrows(searchTerm, filters = {}, sort = 'borrow_newest') 
             m.title LIKE ? OR
             d.device_name LIKE ?
         )`);
-        // Add 8 params for each ?
         params.push(queryTerm, queryTerm, queryTerm, queryTerm, queryTerm, queryTerm, queryTerm, queryTerm);
     }
 
@@ -669,13 +645,12 @@ async function findAllBorrows(searchTerm, filters = {}, sort = 'borrow_newest') 
     }
     
     // --- Dynamic ORDER BY logic ---
-    let orderByClause = ' ORDER BY b.borrow_date DESC'; // Default
+    let orderByClause = ' ORDER BY b.borrow_date DESC';
     switch (sort) {
         case 'borrow_oldest':
             orderByClause = ' ORDER BY b.borrow_date ASC';
             break;
         case 'due_soonest':
-            // Show nulls (returned items) last when sorting by due date
             orderByClause = ' ORDER BY b.due_date IS NULL ASC, b.due_date ASC';
             break;
         case 'due_latest':
@@ -740,7 +715,6 @@ async function findAllHolds(searchTerm, filters = {}, sort = 'requested_newest')
             d.device_name LIKE ? OR
             h.hold_id LIKE ?
         )`);
-        // Add 8 params for each ?
         queryParams.push(queryTerm, queryTerm, queryTerm, queryTerm, queryTerm, queryTerm, queryTerm, queryTerm);
     }
     
@@ -868,7 +842,6 @@ async function findAllFines(filters = {}) {
     return rows;
 }
 
-// This is the function in your Loan model/service
 async function staffCreateFine(fineData, staffUserId) {
     // 1. Destructure 'email' instead of 'user_id'
     const { borrow_id, email, fee_type, amount, notes } = fineData;
@@ -883,10 +856,9 @@ async function staffCreateFine(fineData, staffUserId) {
         throw new Error(`Invalid fee_type. Must be one of: ${validFeeTypes.join(', ')}`);
     }
 
-    // 4. NEW STEP: Find the user_id from the email
-    let user_id; // Declare user_id
+    // 4. Find the user_id from the email
+    let user_id; 
     try {
-        // Assuming your users table is named 'USER'
         const userSql = `SELECT user_id FROM USER WHERE email = ?`; 
         const [users] = await db.query(userSql, [email]);
         
@@ -903,13 +875,11 @@ async function staffCreateFine(fineData, staffUserId) {
     }
 
     // 5. The INSERT query now uses the 'user_id' variable we just found.
-    //    No changes are needed to the SQL string itself.
     const sql = `
         INSERT INTO FINE (borrow_id, user_id, fee_type, amount, notes, date_issued)
         VALUES (?, ?, ?, ?, ?, NOW()) 
     `;
     
-    // This 'user_id' is now the one we looked up
     const [result] = await db.query(sql, [borrow_id, user_id, fee_type.toUpperCase(), amount, notes]);
 
     return { fine_id: result.insertId, message: 'Fine created successfully.' };
@@ -921,7 +891,6 @@ async function cancelMyHold(holdId, userId) {
         await conn.beginTransaction();
 
         // 1. Get Hold details AND verify ownership
-        // This is the key change: we add "AND user_id = ?"
         const [holds] = await conn.query(
             `SELECT item_id 
              FROM HOLD 
@@ -934,10 +903,6 @@ async function cancelMyHold(holdId, userId) {
         );
 
         if (holds.length === 0) {
-            // This error now triggers if:
-            // 1. The hold doesn't exist.
-            // 2. The hold is already picked up/canceled/expired.
-            // 3. The hold belongs to a *different* user.
             throw new Error('Active hold not found or does not belong to user.');
         }
         

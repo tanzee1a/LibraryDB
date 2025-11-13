@@ -7,7 +7,6 @@ const SUSPENSION_THRESHOLD = 20.00;
  * Finds a user by their ID.
  */
 async function findById(userId) {
-    // --- MODIFIED: JOIN to get staff_role and account_status ---
     const sql = `
         SELECT 
             u.user_id, 
@@ -24,12 +23,11 @@ async function findById(userId) {
         LEFT JOIN STAFF_ROLES sr ON s.role_id = sr.role_id -- <<< --- ADDED
         WHERE u.user_id = ?
     `;
-    // --- END MODIFICATION ---
     const [rows] = await db.query(sql, [userId]);
-    return rows[0]; // Returns the user object or undefined if not found
+    return rows[0]; 
 }
 
-// --- MODIFIED: Find ALL Users (Patrons and Staff) ---
+// --- Find ALL Users (Patrons and Staff) ---
 async function findAllUsers(searchTerm, filters = {}, sort = '') {
     let sql = `
         SELECT 
@@ -63,15 +61,12 @@ async function findAllUsers(searchTerm, filters = {}, sort = '') {
         params.push(roleFilter);
     }
     
-    // --- (NEW) Status Filter Clause ---
-    // This allows your frontend to filter by 'ACTIVE' or 'DEACTIVATED'
-    // by passing a filter like ?status=ACTIVE
+    // --- Status Filter Clause ---
     const statusFilter = filters.status ? filters.status.split(',') : [];
     if (statusFilter.length > 0) {
-        whereClauses.push(`u.account_status IN (?)`); // --- ADDED
-        params.push(statusFilter); // --- ADDED
+        whereClauses.push(`u.account_status IN (?)`); 
+        params.push(statusFilter); 
     }
-    // --- End Status Filter ---
 
     // Assemble the final SQL
     if (whereClauses.length > 0) {
@@ -96,12 +91,10 @@ async function findAllUsers(searchTerm, filters = {}, sort = '') {
     return rows;
 }
 
-// --- MODIFIED: Staff Creates User (with Hashing) ---
+// --- Staff Creates User (with Hashing) ---
 async function staffCreateUser(userData) {
-    // 'role' is the role NAME (e.g., "Student") from the frontend
     const { user_id, email, role, firstName, lastName, temporaryPassword, staffRole } = userData;
 
-    // Basic validation
     if (!user_id || !email || !role || !firstName || !lastName || !temporaryPassword) {
         throw new Error('Missing required fields for user creation.');
     }
@@ -128,7 +121,6 @@ async function staffCreateUser(userData) {
             throw new Error(`Invalid user role specified: ${role}`);
         }
         const role_id = roleRows[0].role_id; // This is the ID we need
-        // --- END STEP 1 ---
 
         // --- STEP 2: Insert into USER table (using role_id) ---
         const userSql = `
@@ -137,7 +129,6 @@ async function staffCreateUser(userData) {
         `; 
         // Pass the role_id (number) instead of the role (name)
         await conn.query(userSql, [user_id, email, role_id, firstName, lastName]);
-        // --- END STEP 2 ---
 
         // 3. Insert into USER_CREDENTIAL table (No change)
         const credentialSql = `
@@ -160,7 +151,7 @@ async function staffCreateUser(userData) {
 
             // 4b. Insert into STAFF table using the dynamically found ID
             const staffSql = 'INSERT INTO STAFF (user_id, role_id) VALUES (?, ?)';
-            await conn.query(staffSql, [user_id, specificStaffRoleId]); // <-- USE new ID
+            await conn.query(staffSql, [user_id, specificStaffRoleId]); 
         }
 
         await conn.commit();
@@ -241,7 +232,7 @@ async function findUserProfileById(userId) {
         userProfile.outstanding_fines = userProfile.total_fines;
 
 
-        // --- STEP 3: Get Membership Status (NEW) ---
+        // --- STEP 3: Get Membership Status ---
         if (userProfile.requires_membership_fee) {
             const membershipSql = "SELECT * FROM PATRON_MEMBERSHIP WHERE user_id = ?";
             const [membershipRows] = await conn.query(membershipSql, [userId]);
@@ -282,7 +273,6 @@ async function findUserProfileById(userId) {
     }
 }
 
-// --- NO CHANGES NEEDED FOR THESE FUNCTIONS ---
 async function findBorrowHistoryForUser(userId) {
     const returnedStatusId = 3; // 'Returned'
     const lostStatusId = 4;     // 'Lost'
@@ -363,7 +353,6 @@ async function findFineHistoryForUser(userId) {
      const [rows] = await db.query(sql, [userId]);
     return rows;
 }
-// --- END NO CHANGES ---
 
 /**
  * Staff updates a user's details.
@@ -421,7 +410,6 @@ async function staffUpdateUser(userId, userData) {
             }
         }
         
-        // --- Core Logic ---
 
         if (USER_ROLES_PRIMARY.includes(role)) {
             
@@ -493,8 +481,6 @@ async function staffUpdateUser(userId, userData) {
 async function staffDeleteUser(userId) {
     // WARNING: This is a HARD DELETE.
     // This will FAIL if the user has any BORROW or FINE records
-    // due to your schema's foreign key constraints.
-    // (HOLD, WISHLIST, STAFF tables should cascade delete).
     
     const sql = 'DELETE FROM USER WHERE user_id = ?';
     try {
@@ -517,8 +503,6 @@ async function staffDeleteUser(userId) {
 async function staffDeactivateUser(userId) {
     
     // Step 1: First, check if the user actually exists.
-    // This allows us to differentiate "not found" (0) from "success" (1)
-    // even if the user was already deactivated.
     const [userRows] = await db.query('SELECT user_id FROM USER WHERE user_id = ?', [userId]);
 
     if (userRows.length === 0) {
@@ -529,8 +513,6 @@ async function staffDeactivateUser(userId) {
     const sql = "UPDATE USER SET account_status = 'DEACTIVATED' WHERE user_id = ?";
     
     try {
-        // We run the update. We don't need to check affectedRows here,
-        // because we already know the user exists.
         await db.query(sql, [userId]);
         
         // Return 1 to signal "Success"
@@ -606,7 +588,7 @@ async function changeUserEmail(userId, newEmail) {
             throw new Error('New email is the same as the current email.');
         }
 
-        // Check 2: CRITICAL PRE-CHECK - Is the new email already used by someone else?
+        // Check 2: Is the new email already used by someone else?
         const [duplicateCheck] = await conn.query(
             'SELECT user_id FROM USER WHERE email = ? AND user_id != ?',
             [newEmail, userId]
@@ -624,9 +606,7 @@ async function changeUserEmail(userId, newEmail) {
             WHERE user_id = ?
         `;
         const [userResult] = await conn.query(userUpdateSql, [newEmail, userId]);
-        
-        // FIX: The commit is now reached if no error was thrown.
-                
+                        
         await conn.commit();
         return true;
 
@@ -645,10 +625,9 @@ async function changeUserEmail(userId, newEmail) {
     }
 }
 
-/**
+/*
  * Staff activates a user. (SOFT "UNDELETE")
  * Sets their account_status to 'ACTIVE'.
- * @returns {Promise<number>} 1 if successful, 0 if user not found.
  */
 async function staffActivateUser(userId) {
     
