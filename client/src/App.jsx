@@ -17,11 +17,10 @@ import Reports from './pages/reports/Reports.jsx';
 import Navbar from './pages/navbar/navbar.jsx';
 import Footer from './pages/footer/footer.jsx';
 import Staff_page from './pages/staff_dashboard/StaffDashboard.jsx';
-import StaffRoute from './pages/staffAuthRoutes/StaffRoute.jsx'; // 👈 Import the guard
-import LibrarianRoute from "./pages/staffAuthRoutes/librarianRoute.jsx";
+import StaffRoute from './pages/staffAuthRoutes/StaffRoute.jsx';
 import AssistLibRoute from "./pages/staffAuthRoutes/AssistLibRoute.jsx";
 import ClerkRoute from "./pages/staffAuthRoutes/ClerkRoute.jsx";
-import StaffProfile from './pages/staff_dashboard/StaffProfile.jsx'; // 👈 NEW IMPORT: Staff's own profile
+import StaffProfile from './pages/staff_dashboard/StaffProfile.jsx'; 
 import { useState, useEffect } from 'react';
 import './App.css';
 
@@ -43,7 +42,6 @@ function App() {
       setIsStaff(role === 'Staff');
     }
     
-    // CRITICAL: Set loading to false ONLY after state is set
     setLoading(false); 
   }, []); 
 
@@ -51,16 +49,14 @@ function App() {
     const fetchUnreadCount = async () => {
       const token = getToken();
 
-      // Don't fetch if not logged in
       if (!isLoggedIn || !token) {
         setUnreadCount(0);
         return;
       }
 
-      // Determine the correct endpoint based on user type
       const endpoint = isStaff
         ? `${API_BASE_URL}/api/staff-notifications/count`
-        : `${API_BASE_URL}/api/my-notifications/count`; // (Assuming you create this endpoint for patrons)
+        : `${API_BASE_URL}/api/my-notifications/count`; 
 
       try {
         const res = await fetch(endpoint, {
@@ -70,7 +66,6 @@ function App() {
           const data = await res.json();
           setUnreadCount(data.unreadCount);
         } else {
-          // Don't spam console if it fails, just set to 0
           setUnreadCount(0);
         }
       } catch (error) {
@@ -79,17 +74,14 @@ function App() {
       }
     };
 
-    fetchUnreadCount(); // Fetch on initial load/auth change
+    fetchUnreadCount(); 
     
-    // Optional: Poll for new notifications every 2 minutes
     const intervalId = setInterval(fetchUnreadCount, 120000); 
     
-    // Clean up interval on component unmount or state change
     return () => clearInterval(intervalId);
 
   }, [isLoggedIn, isStaff]);
 
-  // Block rendering until state is initialized
   if (loading) {
     return (
         <div style={{ padding: '20px', textAlign: 'center', fontFamily: 'Inter' }}>

@@ -30,7 +30,7 @@ function Login({ setIsStaff, setIsLoggedIn }) {
       localStorage.setItem('userFirstName', data.user.firstName);
       localStorage.setItem('userId', data.user.user_id);
 
-      // 2. Update React state immediately (optional, but good practice)
+      // 2. Update React state immediately
       const isStaffUser = data.user.role === 'Staff';
       setIsStaff(isStaffUser);
       setIsLoggedIn(true);
@@ -40,10 +40,8 @@ function Login({ setIsStaff, setIsLoggedIn }) {
 
       // 3. Navigate the user
       if (isStaffUser) {
-          // Staff can use soft navigation
           navigate('/staff_page', { replace: true });
       } else {
-          // 🚨 FIX: Force a hard reload for patron users
           navigate('/account', { replace: true });
         }
       }else {

@@ -5,37 +5,24 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000
 
 function Notifications({ setUnreadCount }) {
   const [allNotifications, setAllNotifications] = useState([]);
-  // const { setUnreadCount } = useOutletContext();
 
-  // Helper to get token (replace with your auth context/storage)
   const getToken = () => localStorage.getItem('authToken');
 
 const fetchStaffNotifications = async () => {
-        // --- DEBUG 1: Is this function even being called? ---
-        console.log("[DEBUG] fetchStaffNotifications: Function called.");
-
         try {
         const token = getToken();
         
-        // --- DEBUG 2: Are we getting the token? ---
-        console.log("[DEBUG] fetchStaffNotifications: Token is:", token);
-
         if (!token) {
             console.error("[ERROR] fetchStaffNotifications: No token found. Fetch aborted.");
-            return; // Don't fetch if not logged in
+            return; 
         }
 
-        // --- DEBUG 3: If we have a token, we are attempting to fetch ---
-        console.log(`[DEBUG] fetchStaffNotifications: Attempting to fetch from ${API_BASE_URL}/api/staff-notifications`);
-
+       
         const res = await fetch(`${API_BASE_URL}/api/staff-notifications`, {
             headers: {
             'Authorization': `Bearer ${token}`
             }
         });
-
-        // --- DEBUG 4: What was the response? ---
-        console.log(`[DEBUG] fetchStaffNotifications: Response status: ${res.status}`);
 
         if (res.ok) {
             const data = await res.json();
@@ -70,7 +57,6 @@ const fetchStaffNotifications = async () => {
       });
 
       if (res.ok) {
-        // Update state locally
         setAllNotifications(prev =>
           prev.map(notif =>
             notif.notification_id === notificationId
@@ -107,7 +93,6 @@ const fetchStaffNotifications = async () => {
                 <div key={notification.notification_id} className="search-result-item">
                   <div className="result-info">
                     <div className='result-text-info'>
-                      {/* Wrap title in Link if notification.link exists */}
                       {notification.link ? (
                         <Link to={notification.link} className='result-link'>
                           <h3 className='result-title result-title-blue'>{notification.title}</h3>
@@ -141,7 +126,6 @@ const fetchStaffNotifications = async () => {
                 <div key={notification.notification_id} className="search-result-item">
                   <div className="result-info">
                     <div className='result-text-info'>
-                      {/* Wrap title in Link if notification.link exists */}
                       {notification.link ? (
                         <Link to={notification.link} className='result-link'>
                           <h3 className='result-title result-title-blue'>{notification.title}</h3>

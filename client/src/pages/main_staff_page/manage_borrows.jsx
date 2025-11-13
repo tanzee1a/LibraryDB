@@ -49,19 +49,16 @@ function ManageBorrows() {
         const sortType = event.target.value;
         setSort(sortType); // Update local state for the dropdown
 
-        // Get current params to preserve filters/search
         const currentParams = Object.fromEntries(searchParams.entries());
         const next = new URLSearchParams(currentParams);
 
         next.set('sort', sortType);
         
-        // Set the new URL, which triggers useEffect to refetch
         setSearchParams(next);
     };
 
     const renderBorrowActionButtons = (borrow) => {
         const buttons = [];
-        // Use status_name fetched from API
         switch (borrow.status_name) { 
             case 'Loaned Out': // Check includes Overdue implicitly via date
                 buttons.push(<button key="return" onClick={() => handleReturn(borrow.borrow_id)} className="action-button primary-button">Mark as Returned</button>);
@@ -80,7 +77,6 @@ function ManageBorrows() {
                 buttons.push(<button key="found" onClick={() => handleMarkFound(borrow.borrow_id)} className="action-button secondary-button">Mark as Found</button>);
                 break;
             case 'Returned':
-                // No actions needed
                 break;
             default:
                 break;
@@ -90,7 +86,7 @@ function ManageBorrows() {
 
     const handleReturn = (borrowId) => {
 
-        const token = localStorage.getItem('authToken'); // Or wherever you store your token
+        const token = localStorage.getItem('authToken'); 
         if (!token) {
             alert('You are not logged in.');
             return; 
@@ -106,7 +102,7 @@ function ManageBorrows() {
     };
 
     const handleMarkLost = (borrowId) => {
-        const token = localStorage.getItem('authToken'); // Or wherever you store your token
+        const token = localStorage.getItem('authToken'); 
         if (!token) {
             alert('You are not logged in.');
             return; 
@@ -120,23 +116,21 @@ function ManageBorrows() {
             .catch(err => alert(`Error: ${err.message}`));
     };
 
-    // TODO: Add backend logic & API for ReadyForPickup, CancelRequest, MarkAsFound if needed
-    const handleReadyForPickup = (holdId /* Need hold ID here */) => { alert('Ready for Pickup - Not implemented'); };
-    const handleCancelRequest = (holdId /* Need hold ID here */) => { alert('Cancel Request - Not implemented'); };
+    const handleReadyForPickup = (holdId) => { alert('Ready for Pickup - Not implemented'); };
+    const handleCancelRequest = (holdId) => { alert('Cancel Request - Not implemented'); };
     const handleMarkFound = (borrowId) => {
-        const token = localStorage.getItem('authToken'); // Or wherever you store your token
+        const token = localStorage.getItem('authToken'); 
         if (!token) {
             alert('You are not logged in.');
             return; 
         }
 
-        fetch(`${API_BASE_URL}/api/borrows/${borrowId}/found`, { // <<< New endpoint
+        fetch(`${API_BASE_URL}/api/borrows/${borrowId}/found`, { 
             method: 'POST', 
             headers: {'Authorization': `Bearer ${token}`}
         })
             .then(r => { 
                 if (!r.ok) {
-                    // Try to get error message from backend
                     return r.json().then(err => {
                         throw new Error(err.message || 'Marking found failed');
                     });
@@ -158,7 +152,7 @@ function ManageBorrows() {
         }));
     }
 
-    const handleAddBorrowSubmit = async (e) => { // Make async
+    const handleAddBorrowSubmit = async (e) => { 
         e.preventDefault();
         setIsSubmitting(true);
         setSubmitError('');
@@ -168,8 +162,8 @@ function ManageBorrows() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    userEmail: newBorrow.user_email, // Pass user_email
-                    itemId: newBorrow.item_id  // Pass item_id
+                    userEmail: newBorrow.user_email, 
+                    itemId: newBorrow.item_id  
                 })
             });
 
@@ -178,7 +172,6 @@ function ManageBorrows() {
                 throw new Error(errorData.message || `HTTP error ${response.status}`);
             }
 
-            // Success!
             console.log("Borrow Record Added:", await response.json());
             setShowAddBorrowSheet(false);     // Close sheet
             setNewBorrow(initialBorrowState); // Reset form
@@ -188,7 +181,7 @@ function ManageBorrows() {
             console.error("Add Borrow Error:", err);
             setSubmitError(`Failed to add borrow: ${err.message}`);
         } finally {
-            setIsSubmitting(false); // Re-enable button
+            setIsSubmitting(false); 
         }
     };
 
@@ -203,10 +196,9 @@ function ManageBorrows() {
             return;
         }
 
-        // Get the full query string from state
         const queryString = searchParams.toString();
 
-        fetch(`${API_BASE_URL}/api/borrows?${queryString}`, { // <-- Pass the query string
+        fetch(`${API_BASE_URL}/api/borrows?${queryString}`, { 
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -232,8 +224,8 @@ function ManageBorrows() {
     };
 
     useEffect(() => {
-        fetchBorrows(); // Fetch on initial mount & search/filter change
-        fetchBorrowStatus(); // Fetch borrow status options
+        fetchBorrows(); 
+        fetchBorrowStatus(); 
     }, [searchParams]);
 
     const handleSearch = (event) => {
@@ -301,8 +293,8 @@ function ManageBorrows() {
                             Sort by:
                             <select
                                 className="sort-select"
-                                value={sort} // Use state to control the value
-                                onChange={handleSortChange} // Use new handler
+                                value={sort} 
+                                onChange={handleSortChange} 
                             >
                                 <option value="borrow_newest">Newest Borrows</option>
                                 <option value="borrow_oldest">Oldest Borrows</option>
@@ -342,7 +334,6 @@ function ManageBorrows() {
                         {!loading && !error && borrows.length === 0 && <p>No borrow records found.</p>}
 
                         {!loading && !error && borrows.map((borrow) => {
-                            // Use data fetched from API
                             return (
                                 <div key={`borrow-${borrow.borrow_id}`} className={`search-result-item ${borrow.category?.toLowerCase() || 'default'}`}>
                                     <div className="result-info">
@@ -357,7 +348,6 @@ function ManageBorrows() {
                                     <div className='result-text-info'>
                                         <div className='result-title-header'>
                                             <h3 className="result-title">Borrow #{borrow.borrow_id}</h3>
-                                             {/* Display status_name from API */}
                                             <p className={`result-status status-${borrow.status_name?.replace(/\s+/g, '-').toLowerCase()}`}>{borrow.status_name || 'Unknown'}</p> 
                                         </div>
                                         <div className="result-description">
@@ -387,14 +377,13 @@ function ManageBorrows() {
             <div className="sheet-overlay" onClick={() => !isSubmitting && setShowAddBorrowSheet(false)}>
                 <div className="sheet-container" onClick={(e) => e.stopPropagation()}>
                 <h2>Add New Borrow (Direct Checkout)</h2>
-                {/* Display submission error */}
                 {submitError && <p style={{color: 'red'}}>{submitError}</p>}
                 <form onSubmit={handleAddBorrowSubmit}>
                     <label>
                     User Email:
                     <input
-                        type="text" // Changed from email
-                        name="user_email" // Changed from user_id
+                        type="text" 
+                        name="user_email" 
                         className="edit-input"
                         value={newBorrow.user_email}
                         onChange={handleInputChange}
@@ -405,7 +394,7 @@ function ManageBorrows() {
                     <label>
                     Item ID:
                     <input
-                        type="text" // Changed from number, item_id is char(13)
+                        type="text" 
                         name="item_id"
                         className="edit-input"
                         value={newBorrow.item_id}
@@ -431,7 +420,6 @@ function ManageBorrows() {
                 </div>
             </div>
             )}
-            {/* --- END MODIFIED --- */}
         </div>
     )
 }

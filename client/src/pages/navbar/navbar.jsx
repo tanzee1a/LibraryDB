@@ -83,7 +83,6 @@ const Navbar = ({
                     <li><a href="/" className="logo"><img className="logo-image logo-image-small" src={Logo} alt="" />LBRY</a></li>
                     <li><a href="/search" className="logo">Browse</a></li>
                     <li><a href="/pricing" className="logo">Pricing</a></li>
-                    {/* Minimal Category Dropdowns */}
                     {filters.map(filter => (
                     <li key={filter.category} className="dropdown">
                         <a href={`/search?category=${encodeURIComponent(filter.raw_category)}`}>{filter.category}</a>
@@ -101,9 +100,7 @@ const Navbar = ({
                         </div>
                     </li>
                     ))}
-                    {/* Search Dropdown */}
                     {renderSearchDropdown()}
-                    {/* Login/Register Links */}
                     <li className="dropdown">
                         <button className="nav-icon"><IoPersonCircleOutline /></button>
                         <div className="dropdown-menu">
@@ -129,7 +126,7 @@ const Navbar = ({
                 onNavigateDashboard(sectionKey);
             } else {
                 // If on another page, navigate to the account page first
-                navigate(`/account?section=${sectionKey}`); // Optional: use query param for clean redirect
+                navigate(`/account?section=${sectionKey}`); 
             }
         };
         return (
@@ -155,7 +152,6 @@ const Navbar = ({
                         <div className="dropdown-menu-contents">
                             <div className="category-column">
                             <p>Profile</p>
-                            {/* FIX APPLIED HERE: Using && for conditional rendering */}
                             {isLoggedIn && (
                                 <a
                                     href="#"
@@ -178,7 +174,7 @@ const Navbar = ({
                                 href="/account"
                                 onClick={(e) => {
                                     e.preventDefault(); 
-                                    handleNavToSection('loans'); // Navigate to the 'loans' section
+                                    handleNavToSection('loans'); 
                                 }}
                             >
                             Your Loans
@@ -187,7 +183,7 @@ const Navbar = ({
                                 href="/account"
                                 onClick={(e) => {
                                     e.preventDefault();
-                                    handleNavToSection('holds'); // Navigate to the 'wishlist' section
+                                    handleNavToSection('holds'); 
                                 }}
                             >
                             Your Holds
@@ -203,11 +199,8 @@ const Navbar = ({
     }
 
     const staffNavbar = () => {
-        // 1. Retrieve the role from localStorage
         const staffRole = localStorage.getItem('staffRole');
         
-        // 2. Define visibility flag: TRUE for Librarian and Assistant Librarian
-        // This variable controls the links that are NOT available to the Clerk.
         const isLibrarianRole = staffRole === 'Librarian' || staffRole === 'Assistant Librarian';
 
         return (
@@ -215,20 +208,15 @@ const Navbar = ({
                 <ul className="nav-links">
                 <li><a href="/" className="logo"><img className="logo-image logo-image-small" src={Logo} alt="LBRY Logo" />LBRY</a></li>
                 
-                {/* These links are hidden from CLERKS by checking if the user
-                  is a Librarian or Assistant Librarian. 
-                */}
+                {/* these links are hidden from clerks */}
                 {isLibrarianRole && <li><a href="/manage-users">Users</a></li>}
                 {isLibrarianRole && <li><a href="/search">Items</a></li>}
                 
-                {/* These links are the CORE access points and are visible 
-                  to ALL staff, including Clerks.
-                */}
+                {/* visible to all staff */}
                 <li><a href="/manage-borrows">Borrows</a></li>
                 <li><a href="/manage-holds">Holds</a></li>
                 
-                {/* This link is hidden from CLERKS.
-                */}
+                {/* This link is hidden from clerks */}
                 {isLibrarianRole && <li><a href="/manage-fines">Fines</a></li>}
 
                 {renderSearchDropdown()}
@@ -246,7 +234,6 @@ const Navbar = ({
                         <div className="dropdown-menu-contents">
                             <div className="category-column">
                                 <p>Profile</p>
-                                {/* ... (Logout logic remains the same) ... */}
                                 {isLoggedIn && (
                                     <a
                                         href="#"

@@ -1,7 +1,7 @@
 import './user_profile.css';
-import React, { useState, useEffect } from 'react'; // --- ADDED useEffect ---
-import { useParams, Link, useNavigate } from 'react-router-dom'; // --- ADD useNavigate ---
-import { IoCheckmark, IoTrash, IoTimeOutline, IoHourglassOutline, IoWalletOutline, IoReturnUpBackOutline } from "react-icons/io5"; // --- ADDED History Icons ---
+import React, { useState, useEffect } from 'react'; 
+import { useParams, Link, useNavigate } from 'react-router-dom'; 
+import { IoCheckmark, IoTrash, IoTimeOutline, IoHourglassOutline, IoWalletOutline, IoReturnUpBackOutline } from "react-icons/io5"; 
 import { MdEdit } from "react-icons/md";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
@@ -20,17 +20,16 @@ const decodeToken = (token) => {
 };
 
 function UserProfile() {
-    // --- State for fetched user, loading, error, editing ---
-    const { userId } = useParams(); // Get user ID from URL
+    const { userId } = useParams(); 
     const navigate = useNavigate();
-    const [user, setUser] = useState(null); // Full profile from API
+    const [user, setUser] = useState(null); 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [isEditing, setIsEditing] = useState(false);
-    const [editedUser, setEditedUser] = useState(null); // State for edits
+    const [editedUser, setEditedUser] = useState(null); 
     const [isSaving, setIsSaving] = useState(false);
     const [saveError, setSaveError] = useState('');
-    const [activeSection, setActiveSection] = useState('borrows'); // State for history tabs
+    const [activeSection, setActiveSection] = useState('borrows'); 
 
     // State for history lists ---
     const [borrowHistory, setBorrowHistory] = useState([]);
@@ -64,13 +63,12 @@ function UserProfile() {
         fetch(`${API_BASE_URL}/api/users/${userId}`, {
             method: 'GET',
             headers: {
-                'Authorization': `Bearer ${token}`, // CRITICAL: Add Auth Header
+                'Authorization': `Bearer ${token}`, 
                 'Content-Type': 'application/json'
             }
         })
             .then(res => {
                 if (res.status === 404) throw new Error('User not found');
-                // Check for unauthorized access
                 if (res.status === 401 || res.status === 403) throw new Error('Unauthorized to access user data.'); 
                 if (!res.ok) throw new Error('Failed to fetch user profile');
                 return res.json();
@@ -108,10 +106,8 @@ function UserProfile() {
         }
         
         fetchUserProfile();
-    }, [userId]); // Refetch if userId changes
-    // --- End Fetch ---
+    }, [userId]); 
 
-    // Add this useEffect inside the UserProfile component
     useEffect(() => {
         if (!userId) return; 
 
@@ -123,21 +119,18 @@ function UserProfile() {
     
         setLoadingHistory(true);
         setHistoryError('');
-        // ... clear previous data ...
     
-        // --- Authentication Logic for History Fetch ---
         const token = localStorage.getItem('authToken');
         if (!token) {
             setHistoryError('Authentication missing for history data.');
             setLoadingHistory(false);
             return;
         }
-        // --- End Auth Logic ---
     
         fetch(`${API_BASE_URL}${endpoint}`, {
             method: 'GET',
             headers: {
-                'Authorization': `Bearer ${token}`, // CRITICAL: Add Auth Header
+                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             }
         })
@@ -146,7 +139,6 @@ function UserProfile() {
                 return res.ok ? res.json() : Promise.reject(`Failed to fetch ${activeSection}`);
             })
             .then(data => {
-                // ... (rest of your success logic remains the same)
                 if (activeSection === 'borrows') setBorrowHistory(data || []);
                 if (activeSection === 'holds') setHoldHistory(data || []);
                 if (activeSection === 'fines') setFineHistory(data || []);
@@ -158,22 +150,21 @@ function UserProfile() {
                 setLoadingHistory(false);
             });
     
-    }, [activeSection, userId]); // Re-run when tab or user changes
+    }, [activeSection, userId]); 
 
     // --- Edit/Save Logic ---
     function handleEditToggle() {
         if (isSelf) { 
             alert("You cannot edit your own details from Manage Users. Please go to account dashboard.");
-            return; // Stop the function immediately
+            return; 
         }
         if (isBlockedFromEditingAllStaff) { 
             alert("You do not have the necessary permissions to edit another staff member's details.");
-            return; // Stop the function immediately
+            return; 
         }
         if (isEditing) {
-            handleSaveChanges(); // Call save function when toggling off
+            handleSaveChanges();
         } else {
-             // Reset edit state to current user data when starting edit
             setEditedUser({ 
                 ...user,
                 staffRole: user.staff_role || 'Clerk'
@@ -189,7 +180,7 @@ function UserProfile() {
         if (isBlockedFromEditingAllStaff) {
             setSaveError("Permission denied: You cannot save changes for another staff member.");
             setIsSaving(false);
-            setIsEditing(false); // Exit editing mode
+            setIsEditing(false); 
             return;
         }
         
@@ -205,22 +196,21 @@ function UserProfile() {
                 method: 'PUT',
                 headers: { 
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}` // CRITICAL: Add Auth Header
+                    'Authorization': `Bearer ${token}` 
                 },
                 body: JSON.stringify({ 
                     firstName: editedUser.firstName,
                     lastName: editedUser.lastName,
                     email: editedUser.email,
-                    role: editedUser.role, // e.g., "Staff"
-                    staffRole: editedUser.staffRole // e.g., "Clerk"
+                    role: editedUser.role, 
+                    staffRole: editedUser.staffRole 
                 })
             });
             if (!response.ok) {
                  const errData = await response.json();
                  throw new Error(errData.error || `Failed to save changes (Status: ${response.status})`);
             }
-            // Success
-            fetchUserProfile(); // <-- ADD THIS LINE
+            fetchUserProfile();
             setIsEditing(false);
         } catch (err) {
             console.error("Save User Error:", err);
@@ -245,13 +235,11 @@ function UserProfile() {
             return;
         }
         
-        // If not self, proceed with the actual delete logic (the async one)
+        // If not self, proceed with the actual delete logic
         handleDeleteUser();
     };
 
-    // Replace your existing handleDeleteUser function
     const handleDeleteUser = async () => {
-        // Change the confirm message to reflect "deactivation"
         if (window.confirm(`Are you sure you want to DEACTIVATE user ${user.firstName} ${user.lastName}? This can be undone.`)) {
 
             setIsSaving(true); 
@@ -276,25 +264,21 @@ function UserProfile() {
                     throw new Error(errData.error || 'Failed to deactivate user');
                 }
 
-                // --- CRITICAL CHANGE ---
-                // DO NOT navigate away. Instead, refresh the user's data.
+               
                 fetchUserProfile(); 
-                // alert('User deactivated successfully.'); // Optional: show a small toast/message
 
             } catch (err) {
                 setSaveError(err.message);
             } finally {
-                // Re-enable buttons even on success, as we are staying on the page
                 setIsSaving(false); 
             }
         }
     };
 
-    // Add this new function inside your UserProfile component
     const handleActivateUser = async () => {
         if (window.confirm(`Are you sure you want to ACTIVATE user ${user.firstName} ${user.lastName}?`)) {
 
-            setIsSaving(true); // Reuse isSaving to disable buttons
+            setIsSaving(true); 
             setSaveError('');
 
             const token = localStorage.getItem('authToken');
@@ -305,7 +289,6 @@ function UserProfile() {
             }
 
             try {
-                // Calls your NEW backend endpoint
                 const response = await fetch(`${API_BASE_URL}/api/users/${userId}/activate`, { 
                     method: 'PUT', 
                     headers: { 
@@ -317,7 +300,6 @@ function UserProfile() {
                     throw new Error(errData.error || 'Failed to activate user');
                 }
 
-                // Success: Refresh the profile to show the "Active" status
                 fetchUserProfile();
 
             } catch (err) {
@@ -327,13 +309,8 @@ function UserProfile() {
             }
         }
     };
-
-    // --- Render History Section ---
-    // NOTE: This now uses separate API calls for detailed history.
-    // We'll keep the basic structure but add placeholders for fetching.
-    // Replace the old renderHistorySection function
+    
     function renderHistorySection() {
-    // Show loading/error states for history section
     if (loadingHistory) return <p>Loading history...</p>;
     if (historyError) return <p style={{ color: 'red' }}>{historyError}</p>;
 
@@ -344,20 +321,19 @@ function UserProfile() {
             <>
                 <h2>Borrow History</h2>
                 {borrowHistory.map((borrow) => (
-                    <div key={`borrow-${borrow.borrow_id}`} className="search-result-item"> {/* Use unique key */}
+                    <div key={`borrow-${borrow.borrow_id}`} className="search-result-item"> 
                         <div className="result-info">
                         <div>
                             <img 
                             src={borrow.thumbnail_url || '/placeholder-image.png'} 
                             alt={borrow.item_title} 
                             className="result-thumbnail" 
-                            onError={(e) => { e.target.onerror = null; e.target.src='/placeholder-image.png'; }} // <<< Correct onError handler
+                            onError={(e) => { e.target.onerror = null; e.target.src='/placeholder-image.png'; }} 
                             />
                         </div>
                         <div className='result-text-info'>
                             <div className='result-title-header'>
                                 <h3 className="result-title">Borrow #{borrow.borrow_id}</h3>
-                                {/* Display actual status */}
                                 <p className={`result-status status-${borrow.status_name?.replace(/\s+/g, '-').toLowerCase()}`}>{borrow.status_name}</p>
                             </div>
                             <div className="result-description">
@@ -370,8 +346,6 @@ function UserProfile() {
                             </div>
                         </div>
                         <div className="result-actions">
-                            {/* TODO: Add staff action buttons if needed (Mark Lost/Found?) */}
-                            {/* Use renderBorrowActionButtons(borrow) if defined elsewhere and applicable */}
                         </div>
                     </div>
                     <hr className="thin-divider" />
@@ -407,7 +381,6 @@ function UserProfile() {
                             </div>
                         </div>
                         <div className="result-actions">
-                            {/* No actions usually needed for past holds */}
                         </div>
                     </div>
                     <hr className="thin-divider" />
@@ -427,7 +400,6 @@ function UserProfile() {
                         <div className='result-text-info'>
                             <div className='result-title-header'>
                                 <h3 className="result-title">Fine #{fine.fine_id} ({fine.fee_type})</h3>
-                                {/* Calculate status */}
                                 <p className={`result-status ${fine.date_paid ? 'status-paid' : (fine.waived_at ? 'status-waived' : 'status-unpaid')}`}>
                                     {fine.date_paid ? 'Paid' : (fine.waived_at ? 'Waived' : 'Unpaid')}
                                 </p>
@@ -445,11 +417,8 @@ function UserProfile() {
                             </div>
                         </div>
                         <div className="result-actions">
-                            {/* Add Pay/Waive buttons if needed */}
                             {!fine.date_paid && !fine.waived_at && (
                                 <>
-                                    {/* <button className="btn primary">Mark Paid</button> */}
-                                    {/* <button className="btn secondary">Waive</button> */}
                                 </>
                             )}
                         </div>
@@ -462,20 +431,15 @@ function UserProfile() {
         default: return null;
     }
     }
-    // --- End Render History ---
 
 
-    // --- Loading/Error States ---
     if (loading) return <div className="page-container"><p>Loading user profile...</p></div>;
     if (error) return <div className="page-container"><p style={{ color: 'red' }}>Error: {error}</p></div>;
     if (!user) return <div className="page-container"><p>User not found.</p></div>; // Should not happen if fetch works
-    // --- End States ---
 
     const isOriginalRoleStaff = user?.role === 'Staff' || user.role === 'Admin';
-
     const isAssistantLibrarian = loggedInUserStaffRole === 'Assistant Librarian';
     const shouldHideStaffRoleEdit = isAssistantLibrarian && isOriginalRoleStaff;
-
     const isBlockedFromEditingAllStaff = isAssistantLibrarian && isOriginalRoleStaff;
 
 
@@ -498,8 +462,6 @@ function UserProfile() {
                             <span className="status-badge status-deactivated">Deactivated</span>
                         )}
 
-                        {/* --- CHANGE #1 --- */}
-                        {/* This is the cleaner logic: Hide the Edit button entirely if the user is not active */}
                         { user.account_status === 'ACTIVE' && (
                             <button 
                                 className="action-circle-button primary-button" 
@@ -513,7 +475,6 @@ function UserProfile() {
                         
                         {!isEditing && (
                             (user.account_status === 'DEACTIVATED') ? (
-                                // This is the "Activate" button, it's correct
                                 <button 
                                     className="action-circle-button green-button" 
                                     onClick={handleActivateUser} 
@@ -523,13 +484,9 @@ function UserProfile() {
                                     <IoReturnUpBackOutline />
                                 </button>
                             ) : (
-                                // --- CHANGE #2 ---
-                                // This is the "Deactivate" button.
-                                // It now calls your teammate's "handleDeleteUserClick" function
-                                // which contains the "isSelf" check.
                                 <button 
                                     className="action-circle-button red-button" 
-                                    onClick={handleDeleteUserClick} // <-- This is the merged line
+                                    onClick={handleDeleteUserClick} 
                                     disabled={isSaving}
                                     title="Deactivate User"
                                 >
@@ -540,7 +497,6 @@ function UserProfile() {
                         
                     </div>
                      
-                     {/* This error message now works for Edit, Deactivate, and Activate errors */}
                      {saveError && <p style={{ color: 'red', marginTop: '5px' }}>{saveError}</p>}
 
 

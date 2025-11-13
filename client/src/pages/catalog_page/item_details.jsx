@@ -27,28 +27,23 @@ function ItemDetails({ isStaff }) {
   });
   const [userProfileLoading, setUserProfileLoading] = useState(true);
 
-  // --- ADD NEW STATE ---
   // State for handling the loan request action (pickup or waitlist)
   const [isSubmitting, setIsSubmitting] = useState(false);
   // Used to display success/error messages
   const [actionMessage, setActionMessage] = useState({ type: '', text: '' }); 
   // Used to hide buttons after a successful request
   const [requestMade, setRequestMade] = useState(false);
-  // --- END NEW STATE ---
 
-  // --- ADD STATE FOR WISHLIST ---
+  // --- WISHLIST ---
   const [isWishlistSubmitting, setIsWishlistSubmitting] = useState(false);
   const [wishlistMessage, setWishlistMessage] = useState({ type: '', text: '' });
-  const [isWishlisted, setIsWishlisted] = useState(false); // We'll need to check this
-  // --- END ADD ---
+  const [isWishlisted, setIsWishlisted] = useState(false); 
 
-  // --- ADD THIS NEW STATE FOR EDIT SHEET ---
+  // --- EDIT SHEET ---
   const [showEditSheet, setShowEditSheet] = useState(false);
-  const [formData, setFormData] = useState(null); // Will hold form data
+  const [formData, setFormData] = useState(null); 
   const [isEditSubmitting, setIsEditSubmitting] = useState(false);
   const [editMessage, setEditMessage] = useState({ type: '', text: '' });
-  // --- END ADD ---
-  // const [isDeleting, setIsDeleting] = useState(false);
   const [isDeleteSubmitting, setIsDeleteSubmitting] = useState(false);
   const [isReactivateSubmitting, setIsReactivateSubmitting] = useState(false);
 
@@ -57,7 +52,6 @@ function ItemDetails({ isStaff }) {
   const isAuthorizedToEdit = isStaff && (staffRole === 'Librarian' || staffRole === 'Assistant Librarian');
 
 
-  // --- ADD: Function to get headers ---
   const getAuthHeaders = () => {
     const token = localStorage.getItem('authToken'); 
     if (!token) return null;
@@ -91,7 +85,6 @@ function ItemDetails({ isStaff }) {
 
   useEffect(() => {
     const token = localStorage.getItem('authToken');
-    // Only fetch if a user is logged in AND they are not staff
     if (!token || isStaff) {
       setUserProfileLoading(false);
       return;
@@ -109,13 +102,10 @@ function ItemDetails({ isStaff }) {
           setUserProfile({
               is_suspended: data.is_suspended,
               total_fines: Number(data.outstanding_fines) || 0.00,
-              // --- ADDED MEMBERSHIP FIELDS ---
               requires_membership: data.requires_membership_fee,
               membership_status: data.membership_status
-              // --- END ADDED ---
           });
       } else {
-          // Ensure defaults are safe if fetch fails
           setUserProfile({ 
               is_suspended: false, 
               total_fines: 0.00,
@@ -134,7 +124,6 @@ function ItemDetails({ isStaff }) {
   }, [isStaff]);
 
 
-  // --- ADD: New handler for Wishlist ---
   const handleWishlistAction = async () => {
     if (isWishlistSubmitting) return;
 
@@ -147,13 +136,9 @@ function ItemDetails({ isStaff }) {
     setIsWishlistSubmitting(true);
     setWishlistMessage({ type: '', text: '' });
     
-    // We'll assume POST to add, DELETE to remove.
-    // TODO: You'll need logic to check if item is *already* wishlisted.
-    // For now, this just adds it.
-    
     try {
       const response = await fetch(`${API_BASE_URL}/api/wishlist/${itemId}`, {
-        method: 'POST', // Use 'DELETE' to remove
+        method: 'POST', 
         headers: headers,
       });
 
@@ -162,9 +147,8 @@ function ItemDetails({ isStaff }) {
         throw new Error(data.message || 'An error occurred.'); 
       }
 
-      // Success!
       setWishlistMessage({ type: 'success', text: 'Saved for later!' });
-      setIsWishlisted(true); // Disable the button
+      setIsWishlisted(true); 
 
     } catch (err) {
       setWishlistMessage({ type: 'error', text: err.message || 'Could not save item.' });
@@ -172,30 +156,18 @@ function ItemDetails({ isStaff }) {
       setIsWishlistSubmitting(false);
     }
   };
-  // --- END ADD ---
-
-  // --- ADD NEW HANDLER FUNCTION ---
-  /**
-   * Handles both "Request Pickup" and "Join Waitlist" actions.
-   * @param {'request' | 'waitlist'} actionType 
-   */
+  
   const handleLoanAction = async (actionType) => {
-    if (isSubmitting) return; // Prevent double-clicks
-
-    // --- Authentication ---
-    // This assumes you store your auth token in localStorage.
-    // !! Replace this with your actual auth token retrieval logic !!
+    if (isSubmitting) return; 
     const token = localStorage.getItem('authToken'); 
     if (!token) {
       setActionMessage({ type: 'error', text: 'You must be logged in to make a request.' });
       return;
     }
-    // ------------------------
 
     setIsSubmitting(true);
-    setActionMessage({ type: '', text: '' }); // Clear previous messages
+    setActionMessage({ type: '', text: '' }); 
 
-    // Determine the correct backend endpoint
     const endpoint = actionType === 'request'
       ? `/api/request/${itemId}`
       : `/api/waitlist/${itemId}`;
@@ -204,7 +176,6 @@ function ItemDetails({ isStaff }) {
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: 'POST',
         headers: {
-          // Send the token for your 'protect' middleware
           'Authorization': `Bearer ${token}`, 
           'Content-Type': 'application/json'
         },
@@ -213,49 +184,40 @@ function ItemDetails({ isStaff }) {
       const data = await response.json();
 
       if (!response.ok) {
-        // Use the error message from the backend
         throw new Error(data.message || 'An error occurred.'); 
       }
 
-      // Success!
       setActionMessage({
         type: 'success',
         text: actionType === 'request' 
           ? 'Pickup requested successfully!' 
           : 'You have been added to the waitlist!'
       });
-      setRequestMade(true); // Hide the buttons
+      setRequestMade(true); 
 
     } catch (err) {
-      // Display the error
       setActionMessage({ type: 'error', text: err.message || 'Could not complete your request.' });
     } finally {
-      setIsSubmitting(false); // Re-enable button (if error occurred)
+      setIsSubmitting(false); 
     }
   };
-  // --- END NEW HANDLER FUNCTION ---
 
   const handleEditClick = () => {
     if (!item) return;
     
-    // Pre-populate formData with item data
     setFormData({
       ...item,
-      // Use device_name for title if it's a device
       title: item.category === 'DEVICE' ? item.device_name : item.title,
-      // Convert arrays to comma-separated strings for the input field
       tags: item.tags ? item.tags.join(', ') : '',
       creators: item.creators ? item.creators.join(', ') : '',
-      // Format date for <input type="date">
       published_date: item.published_date ? new Date(item.published_date).toISOString().split('T')[0] : '',
       quantity: item.quantity || 0, 
     });
     
-    setEditMessage({ type: '', text: '' }); // Clear old messages
-    setShowEditSheet(true); // Open the sheet
+    setEditMessage({ type: '', text: '' }); 
+    setShowEditSheet(true); 
   };
 
-  // Updates formData state as user types
   const handleFormChange = (e) => {
     const { name, value, type } = e.target;
     setFormData(prev => ({
@@ -264,13 +226,12 @@ function ItemDetails({ isStaff }) {
     }));
   };
 
-  // Submits the edit
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     setEditMessage({ type: '', text: '' });
     setIsEditSubmitting(true);
 
-    const headers = getAuthHeaders(); // Uses your existing function
+    const headers = getAuthHeaders(); 
     if (!headers) {
       setEditMessage({ type: 'error', text: 'You must be logged in.' });
       setIsEditSubmitting(false);
@@ -318,7 +279,7 @@ function ItemDetails({ isStaff }) {
         case 'DEVICE':
           endpoint = `${API_BASE_URL}/api/items/device/${itemId}`;
           body = {
-            device_name: formData.title, // 'title' in form maps to 'device_name'
+            device_name: formData.title, 
             description: formData.description,
             thumbnail_url: formData.thumbnail_url,
             shelf_location: formData.shelf_location,
@@ -345,7 +306,6 @@ function ItemDetails({ isStaff }) {
 
       setEditMessage({ type: 'success', text: 'Item updated successfully!' });
       
-      // Reload the page to see changes
       setTimeout(() => {
         window.location.reload(); 
       }, 1500);
@@ -358,13 +318,11 @@ function ItemDetails({ isStaff }) {
   };
 
   const handleSoftDelete = async () => {
-    // --- NEW: Check if item is currently loaned or on hold ---
     if (item.loaned_out > 0 || item.on_hold > 0) {
       setEditMessage({ type: 'error', text: 'Cannot delete item: It is currently loaned out or on hold.' });
       return;
     }
 
-    // 1. Confirm with the user
     if (!window.confirm("Are you sure you want to mark this item as 'Deleted'? Users will no longer see it.")) {
       return;
     }
@@ -380,8 +338,6 @@ function ItemDetails({ isStaff }) {
     }
 
     try {
-      // 2. Call the DELETE endpoint. Your backend controller is already
-      // set up to perform a *soft delete* on this route.
       const response = await fetch(`${API_BASE_URL}/api/items/${itemId}`, {
         method: 'DELETE',
         headers: headers
@@ -392,18 +348,15 @@ function ItemDetails({ isStaff }) {
         throw new Error(data.message || 'Failed to delete item.');
       }
       
-      // 3. Handle Success: Update state instead of redirecting
       setEditMessage({ type: 'success', text: 'Item marked as deleted.' });
       
-      // Update the main item state, which will cause the button to flip
       setItem(prev => ({ ...prev, status: 'DELETED' }));
-      // Also update the form data state
       setFormData(prev => ({ ...prev, status: 'DELETED' }));
 
     } catch (err) {
       setEditMessage({ type: 'error', text: err.message });
     } finally {
-      setIsDeleteSubmitting(false); // Re-enable button
+      setIsDeleteSubmitting(false); 
     }
   };
 
@@ -423,7 +376,6 @@ function ItemDetails({ isStaff }) {
     }
 
     try {
-      // Call the new reactivate endpoint we designed
       const response = await fetch(`${API_BASE_URL}/api/items/${itemId}/reactivate`, {
         method: 'PUT',
         headers: headers
@@ -434,12 +386,9 @@ function ItemDetails({ isStaff }) {
         throw new Error(data.message || 'Failed to reactivate item.');
       }
       
-      // Handle Success: Update state
       setEditMessage({ type: 'success', text: 'Item reactivated successfully.' });
       
-      // Update the main item state, which will flip the button back
       setItem(prev => ({ ...prev, status: 'ACTIVE' }));
-      // Also update the form data state
       setFormData(prev => ({ ...prev, status: 'ACTIVE' }));
 
     } catch (err) {
@@ -449,7 +398,6 @@ function ItemDetails({ isStaff }) {
     }
   };
   
-  // These render functions will be used *inside* the edit sheet
   const renderBookFields = () => (
     <>
       <label>Authors (comma-separated): 
@@ -610,18 +558,18 @@ function ItemDetails({ isStaff }) {
         <div className="item-details-container">
           <div className="thumbnail-section">
             <img 
-                src={item.thumbnail_url || '/placeholder-image.png'} // Use fetched URL or placeholder
-                alt={item.title || 'Item thumbnail'} // Use fetched title for alt text
+                src={item.thumbnail_url || '/placeholder-image.png'} 
+                alt={item.title || 'Item thumbnail'} 
                 className="thumbnail" 
                 onError={(e) => { e.target.onerror = null; e.target.src='/placeholder-image.png'; }}
             />
             { isAuthorizedToEdit && ( 
-              <button 
-              className="action-button secondary-button"
-              onClick={handleEditClick}>
-              Edit
-            </button>
-            )}
+               <button
+               className="action-button secondary-button"
+               onClick={handleEditClick}>
+                Edit
+              </button>
+              )}
             <div className="availability-info">
               <p><strong>Available:</strong> <span>{item.available}</span></p>
               {item.available <= 0 && item.on_hold > 0 && <p><strong>On Hold:</strong> <span>{item.on_hold}</span></p>}
@@ -630,12 +578,10 @@ function ItemDetails({ isStaff }) {
               )}
             </div>
 
-            {/* --- UPDATE THIS SECTION --- */}
             {(userProfileLoading && !isStaff) && (
                 <p className={`action-message`}>Loading User Status...</p>
             )}
 
-            {/* --- Eligibility Checks --- */}
             {
                 !userProfileLoading && !isStaff && (() => {
                     const isSuspended = userProfile.is_suspended;
@@ -657,12 +603,10 @@ function ItemDetails({ isStaff }) {
                         );
                     }
                     
-                    // If eligible, return null to proceed to normal buttons
                     return null;
                 })()
             }
 
-            {/* Check 3: Display Success/Error Messages */}
             {actionMessage.text && (
                 <p className={`action-message ${actionMessage.type}`}>
                     {actionMessage.text}
@@ -675,8 +619,6 @@ function ItemDetails({ isStaff }) {
                 </p>
             )}
 
-            {/* Check 4: Wishlist Button */}
-            {/* Only show the wishlist button if no denial message was rendered */}
             {(!isWishlisted && !isStaff && !(userProfile.is_suspended || (userProfile.requires_membership && userProfile.membership_status !== 'active'))) && (
                 <button
                     className="action-button secondary-button"
@@ -689,8 +631,6 @@ function ItemDetails({ isStaff }) {
                 </button>
             )}
 
-            {/* Check 5: Loan/Waitlist Buttons */}
-            {/* Only show the borrowing buttons if no denial message was rendered and request hasn't been made */}
             {(!requestMade && !isStaff && !(userProfile.is_suspended || (userProfile.requires_membership && userProfile.membership_status !== 'active'))) && (
                 item.available > 0 ? (
                     <button
@@ -710,7 +650,6 @@ function ItemDetails({ isStaff }) {
                     </button>
                 )
             )}
-            {/* --- END UPDATE --- */}
           </div>
 
           <div className="details-section">
@@ -743,8 +682,6 @@ function ItemDetails({ isStaff }) {
               </p>
             )}
             
-            {/* We use the same <label>...<input className="edit-input" /></label> structure */}
-            {/* from search_results.jsx to get the same styling. */}
             <form onSubmit={handleFormSubmit}>
               <label> Title: 
                 <input type="text" name="title" value={formData.title || ''} onChange={handleFormChange} required className="edit-input" />
@@ -765,15 +702,12 @@ function ItemDetails({ isStaff }) {
                 <input type="text" name="tags" value={formData.tags || ''} onChange={handleFormChange} className="edit-input" />
               </label>
 
-              {/* --- Conditional Fields --- */}
               {item.category === 'BOOK' && renderBookFields()}
               {item.category === 'MOVIE' && renderMovieFields()}
               {item.category === 'DEVICE' && renderDeviceFields()}
 
-              {/* --- Actions --- */}
               <div className="sheet-actions">
                 
-                {/* --- NEW: Conditional Delete/Reactivate Buttons --- */}
                 {item.status === 'ACTIVE' ? (
                   <button
                       type="button"
@@ -793,7 +727,6 @@ function ItemDetails({ isStaff }) {
                       {isReactivateSubmitting ? 'Reactivating...' : 'Reactivate Item'}
                   </button>
                 )}
-                {/* --- END NEW --- */}
 
                 <button 
                     type="submit" 
@@ -815,7 +748,6 @@ function ItemDetails({ isStaff }) {
           </div>
         </div>
       )}
-      {/* --- END ADD --- */}
     </div>
   )
 }

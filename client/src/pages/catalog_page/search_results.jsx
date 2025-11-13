@@ -7,12 +7,6 @@ import { BiSort } from "react-icons/bi"
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
 
-/**
- * Handles "Request Pickup" and "Join Waitlist" actions for a specific item.
- * @param {string} itemId - The ID of the item to action.
- * @param {'request' | 'waitlist'} actionType 
- */
-
 function SearchResults({ isStaff }) {
     const [results, setResults] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -347,11 +341,9 @@ function SearchResults({ isStaff }) {
         if (!token) {
             setSubmitError('Authentication required. Please log in.');
             setIsSubmitting(false);
-            // This is what likely generated your "Error: Not authorized, no token" log
             return; 
         }
 
-        // 1. Determine Endpoint and Prepare Base Data
         let endpoint = '';
         const commonData = {
             item_id: newItem.item_id,
@@ -365,11 +357,9 @@ function SearchResults({ isStaff }) {
 
         let specificData = {};
 
-        // 2. Prepare Category-Specific Data and Endpoint
         if (newItem.category === 'BOOK') {
             endpoint = '/api/items/book';
             specificData = {
-                // isbn_13: newItem.isbn, // Removed
                 publisher: newItem.publisher,
                 published_date: newItem.published_date,
                 language_id: parseInt(newItem.language_id, 10) || 1, // Use selected/default ID
@@ -378,14 +368,12 @@ function SearchResults({ isStaff }) {
             };
         } else if (newItem.category === 'MOVIE') { // Changed from MEDIA
             endpoint = '/api/items/movie';
-             // --- TODO: Generate or get a unique movie_id (like UPC) if needed by backend ---
-            // Let's assume item_id is sufficient for now based on previous discussion
             specificData = {
                 // movie_id: `MOV-${uuidv4().substring(0, 8)}`, // Example if needed
                 language_id: parseInt(newItem.language_id, 10) || 1,
-                format_id: parseInt(newItem.format_id, 10) || 1, // Use selected/default ID
+                format_id: parseInt(newItem.format_id, 10) || 1, 
                 runtime: parseInt(newItem.runtime, 10) || 0,
-                rating_id: parseInt(newItem.rating_id, 10) || 1, // Use selected/default ID
+                rating_id: parseInt(newItem.rating_id, 10) || 1, 
                 release_year: parseInt(newItem.release_year, 10) || null,
                 directors: newItem.directors ? newItem.directors.split(',').map(d => d.trim()).filter(Boolean) : [], // Split directors
             };
@@ -396,20 +384,15 @@ function SearchResults({ isStaff }) {
                 device_name: newItem.title, // Use title as device_name based on schema
                 device_type: parseInt(newItem.device_type, 10) || 1, // Use selected/default ID
             };
-             // Device doesn't have its own title field, reuse commonData.title
              delete specificData.title; 
-             // Device model uses device_name
              specificData.device_name = commonData.title;
         } else {
              setSubmitError('Invalid item category selected.');
              setIsSubmitting(false);
-             return; // Stop if category is wrong
+             return;
         }
 
-        // 3. Combine Data and Make API Call
         const payload = { ...commonData, ...specificData };
-        console.log("Submitting:", endpoint, payload); // For debugging
-
         try {
             const response = await fetch(`${API_BASE_URL}${endpoint}`, {
                 method: 'POST',
@@ -425,18 +408,16 @@ function SearchResults({ isStaff }) {
                 throw new Error(errorData.message || `HTTP error ${response.status}`);
             }
 
-            // Success!
+            
             console.log("Item Added:", await response.json());
-            setShowAddItemSheet(false);     // Close sheet
-            setNewItem(initialNewItemState); // Reset form
-            // Optionally: Refresh search results list here if needed
-            // fetchSearchResults(); // You'd need to extract fetch logic into a reusable function
+            setShowAddItemSheet(false);     
+            setNewItem(initialNewItemState);
 
         } catch (err) {
             console.error("Add Item Error:", err);
             setSubmitError(`Failed to add item: ${err.message}`);
         } finally {
-            setIsSubmitting(false); // Re-enable button
+            setIsSubmitting(false); 
         }
     }
 
@@ -522,7 +503,6 @@ function SearchResults({ isStaff }) {
                     <button 
                         className="action-button primary-button"
                         onClick={() => handleLoanAction(item.item_id, 'request')}
-                        // Disable if submitting, OR if suspended (though checked above, good for safety)
                         disabled={isSubmitting || submittingItemId !== null || userProfile.is_suspended} 
                     >
                         {isSubmitting ? 'Requesting...' : 'Request Pickup'}
@@ -531,14 +511,12 @@ function SearchResults({ isStaff }) {
                     <button 
                         className="action-button secondary-button"
                         onClick={() => handleLoanAction(item.item_id, 'waitlist')}
-                        // Disable if submitting, OR if suspended (though checked above, good for safety)
                         disabled={isSubmitting || submittingItemId !== null || userProfile.is_suspended} 
                     >
                         {isSubmitting ? 'Joining...' : 'Join Waitlist'}
                     </button>
                 )}
 
-                {/* 4. Display an error/success message only if it belongs to *this* item */}
                 {actionMessage.itemId === item.item_id && (
                     <p className={`action-message ${actionMessage.type}`}>
                         {actionMessage.text}
@@ -607,7 +585,6 @@ function SearchResults({ isStaff }) {
                         <div key={filterGroup.param} className="filter-category">
                             <h3>{filterGroup.category}</h3>
                             <hr className='thin-divider divider--tight' />
-                            {/* Add loading check for tags */}
                             {filterGroup.param === 'tag' && tagsLoading ? (
                                 <p>Loading tags...</p>
                             ) : (
@@ -630,17 +607,14 @@ function SearchResults({ isStaff }) {
                     ))}
                 </div>
                 <div className="search-results-list">
-                    {/* --- ADDED --- Loading, Error, No Results states */}
                      {loading && <p>Loading results...</p>}
                      {error && <p style={{ color: 'red' }}>{error}</p>}
                      {!loading && !error && results.length === 0 && <p>No results found {query ? `for "${query}"` : ''}.</p>}
-                     {/* --- END ADDED --- */}
                     {!loading && !error && results.map((item) => {
                         return (
                         <div key={item.item_id} className={`search-result-item ${item.category.toLowerCase()}`}>
                             <div className="result-info">
                                 <div>
-                                    {/* --- MODIFIED --- Use thumbnail_url from API */}
                                     <img 
                                         src={item.thumbnail_url || '/placeholder-image.png'} 
                                         alt={item.title} 
@@ -650,7 +624,6 @@ function SearchResults({ isStaff }) {
                                 </div>
                                 <div className='result-text-info'>
                                     <h3 className="result-title">
-                                     {/* --- MODIFIED --- Use Link component */}
                                     <Link to={`/item/${item.item_id}`} className="result-link">
                                         {item.title} 
                                     </Link>
@@ -684,13 +657,11 @@ function SearchResults({ isStaff }) {
             <div className="sheet-overlay" onClick={() => !isSubmitting && setShowAddItemSheet(false)}> 
                 <div className="sheet-container" onClick={(e) => e.stopPropagation()}>
                 <h2>Add New Item</h2>
-                {/* Display submission error */}
                 {submitError && <p style={{color: 'red'}}>{submitError}</p>}
                 
                 <form onSubmit={handleAddItemSubmit}>
-                    {/* --- Common fields --- */}
                     <label>
-                    Item ID (13 chars): {/* Add this label and input */}
+                    Item ID (13 chars): 
                     <input 
                         type="text" 
                         name="item_id" 
@@ -704,10 +675,9 @@ function SearchResults({ isStaff }) {
                     </label>
                     <label> Title: <input type="text" name="title" value={newItem.title} onChange={handleItemInputChange} required className="edit-input" /></label>
                     <label> Category:
-                        {/* --- MODIFIED: Use category, not item_category --- */}
                         <select className="edit-input" name="category" value={newItem.category} onChange={handleItemInputChange}>
                             <option value="BOOK">Book</option>
-                            <option value="MOVIE">Movie</option> {/* Changed from MEDIA */}
+                            <option value="MOVIE">Movie</option> 
                             <option value="DEVICE">Device</option>
                         </select>
                     </label>
@@ -717,7 +687,6 @@ function SearchResults({ isStaff }) {
                     <label> Quantity: <input type="number" name="quantity" min="0" value={newItem.quantity} onChange={handleItemInputChange} required className="edit-input" /></label>
                     <label> Tags (comma-separated): <input type="text" name="tags" value={newItem.tags} onChange={handleItemInputChange} className="edit-input" /></label>
 
-                    {/* --- Conditional Fields --- */}
                     {newItem.category === 'BOOK' && (
                     <>
                         {/* <label>ISBN: <input type="text" name="isbn" value={newItem.isbn} onChange={handleItemInputChange} className="edit-input" /></label> */}
@@ -747,7 +716,7 @@ function SearchResults({ isStaff }) {
                     </>
                     )}
 
-                    {newItem.category === 'MOVIE' && ( // Changed from MEDIA
+                    {newItem.category === 'MOVIE' && ( 
                     <>
                         <label>Directors (comma-separated): <input type="text" name="directors" value={newItem.directors} onChange={handleItemInputChange} className="edit-input" /></label>
                         <label>Release Year: <input type="number" name="release_year" min="1800" max={new Date().getFullYear()+1} value={newItem.release_year} onChange={handleItemInputChange} className="edit-input" required/></label>
@@ -796,7 +765,6 @@ function SearchResults({ isStaff }) {
                                 <option value="2">PG</option>
                                 <option value="3">PG-13</option>
                                 <option value="4">R</option>
-                                {/* TODO: Fetch ratings dynamically */}
                             </select>
                         </label>
                     </>
@@ -806,13 +774,11 @@ function SearchResults({ isStaff }) {
                     <>
                         <label>Manufacturer: <input type="text" name="manufacturer" value={newItem.manufacturer} onChange={handleItemInputChange} className="edit-input" /></label>
                         <label>Device Type ID:
-                         {/* --- MODIFIED: Use device_type ID --- */}
                         <select name="device_type" value={newItem.device_type} onChange={handleItemInputChange} className="edit-input" required>
                             <option value="1">Laptops</option>
                             <option value="2">Tablets</option>
                             <option value="3">Cameras</option>
                             <option value="4">Headphones</option>
-                             {/* TODO: Fetch device types dynamically */}
                         </select>
                         </label>
                     </>
@@ -820,7 +786,6 @@ function SearchResults({ isStaff }) {
 
                     {/* --- Actions --- */}
                     <div className="sheet-actions">
-                    {/* Disable button while submitting */}
                     <button type="submit" className="action-button primary-button" disabled={isSubmitting}>
                          {isSubmitting ? 'Adding...' : 'Add Item'}
                     </button>
@@ -828,7 +793,7 @@ function SearchResults({ isStaff }) {
                         type="button"
                         className="action-button secondary-button"
                         onClick={() => setShowAddItemSheet(false)}
-                        disabled={isSubmitting} // Disable cancel too
+                        disabled={isSubmitting} 
                     >
                         Cancel
                     </button>

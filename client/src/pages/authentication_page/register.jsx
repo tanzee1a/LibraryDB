@@ -25,7 +25,6 @@ function Register({ setIsStaff, setIsLoggedIn }) {
   const navigate = useNavigate();
 
   // Input validation
-// Replace your existing 'validate' function with this one
   const validate = () => {
     const e = {};
     const { name, cardNumber, expDate, cvv, billingAddress } = membershipForm;
@@ -84,7 +83,6 @@ function Register({ setIsStaff, setIsLoggedIn }) {
     return Object.keys(e).length === 0;
   };
 
-  // Add this function inside your Register component
   const handleMembershipFormChange = (e) => {
     const { name, value } = e.target;
     let processedValue = value;
@@ -133,7 +131,6 @@ const handleSubmit = async (e) => {
 
     try {
       // --- STEP 1: Register the user ---
-      // This fetch will now return the token AND user object
       const response = await fetch(`${API_BASE_URL}/api/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -153,7 +150,6 @@ const handleSubmit = async (e) => {
       }
       
       // --- STEP 2: Store login data (token, role, etc.) ---
-      // We get this directly from the /api/register response now
       localStorage.setItem('authToken', registerData.token);
       localStorage.setItem('userRole', registerData.user.role);
       localStorage.setItem('userFirstName', registerData.user.firstName);
@@ -162,7 +158,7 @@ const handleSubmit = async (e) => {
       if (!signUpLater) {
         console.log("Registration successful, now signing up for membership...");
         try {
-          const token = registerData.token; // Use the token we just received
+          const token = registerData.token; 
           
           const membershipResponse = await fetch(`${API_BASE_URL}/api/membership/signup`, {
             method: 'POST',
@@ -184,7 +180,6 @@ const handleSubmit = async (e) => {
           alert(`Registration was successful, but membership signup failed: ${memErr.message}. Please sign up from your profile.`);
         }
       }
-      // --- **** END OF STEP 3 **** ---
 
       setIsLoggedIn(true);
       setIsStaff(registerData.user.role === 'Staff');
@@ -268,40 +263,40 @@ const handleSubmit = async (e) => {
                 type="text"
                 className="input-field"
                 placeholder="Name on Card"
-                name="name" // <-- ADD NAME
+                name="name" 
                 value={membershipForm.name}
-                onChange={handleMembershipFormChange} // <-- USE NEW HANDLER
+                onChange={handleMembershipFormChange} 
                 disabled={signUpLater}
               />
               {errors.name && <p className="error">{errors.name}</p>}
               <input
-                type="text" // <-- CHANGE TO "text"
+                type="text" 
                 className="input-field"
                 placeholder="Card Number"
-                name="cardNumber" // <-- ADD NAME
+                name="cardNumber" 
                 value={membershipForm.cardNumber}
-                onChange={handleMembershipFormChange} // <-- USE NEW HANDLER
+                onChange={handleMembershipFormChange}
                 disabled={signUpLater}
               />
               {errors.cardNumber && <p className="error">{errors.cardNumber}</p>}
               <div className="flex">
                 <input
                   className="input-field input-field-small"
-                  type="text" // <-- CHANGE TO "text"
+                  type="text" 
                   placeholder="Exp Date (MM/YY)"
-                  name="expDate" // <-- ADD NAME
+                  name="expDate" 
                   value={membershipForm.expDate}
-                  onChange={handleMembershipFormChange} // <-- USE NEW HANDLER
+                  onChange={handleMembershipFormChange} 
                   disabled={signUpLater}
                 />
                 {errors.expDate && <p className="error">{errors.expDate}</p>}
                 <input
                   className="input-field input-field-small"
-                  type="text" // <-- CHANGE TO "text"
+                  type="text" 
                   placeholder="CVV"
-                  name="cvv" // <-- ADD NAME
+                  name="cvv" 
                   value={membershipForm.cvv}
-                  onChange={handleMembershipFormChange} // <-- USE NEW HANDLER
+                  onChange={handleMembershipFormChange} 
                   disabled={signUpLater}
                 />
                 {errors.cvv && <p className="error">{errors.cvv}</p>}
@@ -310,9 +305,9 @@ const handleSubmit = async (e) => {
                 type="text"
                 className="input-field"
                 placeholder="Billing Address"
-                name="billingAddress" // <-- ADD NAME
+                name="billingAddress"
                 value={membershipForm.billingAddress}
-                onChange={handleMembershipFormChange} // <-- USE NEW HANDLER
+                onChange={handleMembershipFormChange} 
                 disabled={signUpLater}
               />
               {errors.billingAddress && <p className="error">{errors.billingAddress}</p>}

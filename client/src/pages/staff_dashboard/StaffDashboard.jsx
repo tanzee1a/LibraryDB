@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-// --- ADDED IoPersonCircleOutline for profile ---
 import { IoBookOutline, IoPeopleOutline, IoSwapHorizontalOutline, IoHourglassOutline, IoWalletOutline, IoDocumentTextOutline, IoPersonCircleOutline, IoNotificationsOutline } from 'react-icons/io5';
 import './StaffDashboard.css';
 
@@ -62,7 +61,6 @@ function StaffDashboard() {
   }, []);
 
   // Determine if the logged-in user is a Head Librarian
-  // This depends on the profile state being loaded and checking its role_name property
   const isHeadLibrarian = profile && profile.role_name === 'Librarian';
   const isAssistLibrarian = profile && profile.role_name === 'Assistant Librarian';
   const isClerk = profile && profile.role_name === 'Clerk';
@@ -71,7 +69,6 @@ function StaffDashboard() {
 
   return (
     <div className="page-container staff-dashboard-container">
-      {/* Profile Section */}
       {loadingProfile ? (
         <div className="staff-profile-header card loading">Loading profile...</div>
       ) : profile ? (
@@ -97,9 +94,7 @@ function StaffDashboard() {
 
       <h1>Staff Dashboard</h1>
 
-      {/* Quick Stats Section */}
       <div className="stats-grid">
-        {/* ... (Stat Cards for Loans, Overdue, Pickups, Fines) ... */}
         <div className="stat-card">
           <IoSwapHorizontalOutline className="stat-icon loans" />
           <div>
