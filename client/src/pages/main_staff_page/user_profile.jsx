@@ -226,16 +226,6 @@ function UserProfile() {
         handleDeleteUser();
     };
 
-    const handleDeleteUserClick = () => {
-        if (isSelf) {
-            alert("You cannot delete your own profile from Manage Users. Please contact your IT department.");
-            return;
-        }
-        
-        // If not self, proceed with the actual delete logic (the async one)
-        handleDeleteUser();
-    };
-
     // Replace your existing handleDeleteUser function
     const handleDeleteUser = async () => {
         // Change the confirm message to reflect "deactivation"
