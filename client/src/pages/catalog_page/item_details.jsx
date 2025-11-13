@@ -50,6 +50,11 @@ function ItemDetails({ isStaff }) {
   // --- END ADD ---
   const [isDeleting, setIsDeleting] = useState(false);
 
+
+  const staffRole = localStorage.getItem('staffRole');
+  const isAuthorizedToEdit = isStaff && (staffRole === 'Librarian' || staffRole === 'Assistant Librarian');
+
+
   // --- ADD: Function to get headers ---
   const getAuthHeaders = () => {
     const token = localStorage.getItem('authToken'); 
@@ -558,13 +563,13 @@ function ItemDetails({ isStaff }) {
                 className="thumbnail" 
                 onError={(e) => { e.target.onerror = null; e.target.src='/placeholder-image.png'; }}
             />
-            { isStaff && (
-              <button 
-              className="action-button secondary-button"
-              onClick={handleEditClick}>
-              Edit
-            </button>
-            )}
+            { isAuthorizedToEdit && ( 
+              <button 
+              className="action-button secondary-button"
+              onClick={handleEditClick}>
+              Edit
+            </button>
+            )}
             <div className="availability-info">
               <p><strong>Available:</strong> <span>{item.available}</span></p>
               {item.available <= 0 && item.on_hold > 0 && <p><strong>On Hold:</strong> <span>{item.on_hold}</span></p>}
