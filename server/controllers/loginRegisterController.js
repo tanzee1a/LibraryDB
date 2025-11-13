@@ -127,6 +127,7 @@ async function loginUser(req, res) {
         `SELECT 
           U.user_id,
           U.email,
+          U.account_status,
           UR.role_name AS role, -- Get the role NAME from USER_ROLE
           SR.role_name AS staffRole,
           U.firstName,
@@ -152,6 +153,12 @@ async function loginUser(req, res) {
       }
 
       const user = rows[0];
+
+      // Check *after* finding the user, but *before* checking the password.
+      if (user.account_status === 'DEACTIVATED') {
+          res.writeHead(403, { 'Content-Type': 'application/json' }); // 403 Forbidden
+          return res.end(JSON.stringify({ message: 'Your account has been deactivated. Please contact support.' }));
+      }
       
       // The password hash is now retrieved from the joined USER_CREDENTIAL table
       const isMatch = await bcrypt.compare(password, user.password_hash);

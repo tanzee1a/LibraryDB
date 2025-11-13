@@ -1,7 +1,7 @@
 import './user_profile.css';
 import React, { useState, useEffect } from 'react'; // --- ADDED useEffect ---
 import { useParams, Link, useNavigate } from 'react-router-dom'; // --- ADD useNavigate ---
-import { IoCheckmark, IoTrash, IoTimeOutline, IoHourglassOutline, IoWalletOutline } from "react-icons/io5"; // --- ADDED History Icons ---
+import { IoCheckmark, IoTrash, IoTimeOutline, IoHourglassOutline, IoWalletOutline, IoReturnUpBackOutline } from "react-icons/io5"; // --- ADDED History Icons ---
 import { MdEdit } from "react-icons/md";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
@@ -226,9 +226,7 @@ function UserProfile() {
         const { name, value } = e.target;
         setEditedUser(prev => ({ ...prev, [name]: value }));
     }
-    // --- End Edit/Save ---
 
-    // --- End Edit/Save ---
 
     const handleDeleteUserClick = () => {
         if (isSelf) {
@@ -240,15 +238,17 @@ function UserProfile() {
         handleDeleteUser();
     };
 
+    // Replace your existing handleDeleteUser function
     const handleDeleteUser = async () => {
-        if (window.confirm(`Are you sure you want to delete user ${user.firstName} ${user.lastName}? This cannot be undone.`)) {
+        // Change the confirm message to reflect "deactivation"
+        if (window.confirm(`Are you sure you want to DEACTIVATE user ${user.firstName} ${user.lastName}? This can be undone.`)) {
 
-            setIsSaving(true); // Reuse isSaving to disable buttons
+            setIsSaving(true); 
             setSaveError('');
 
             const token = localStorage.getItem('authToken');
             if (!token) {
-                setSaveError('Authentication required to delete.');
+                setSaveError('Authentication required to deactivate.');
                 setIsSaving(false);
                 return;
             }
@@ -257,26 +257,65 @@ function UserProfile() {
                 const response = await fetch(`${API_BASE_URL}/api/users/${userId}`, { 
                     method: 'DELETE', 
                     headers: { 
-                        'Authorization': `Bearer ${token}` // Add auth header
+                        'Authorization': `Bearer ${token}`
                     } 
                 });
                 if (!response.ok) {
-                    const errData = await response.json(); // Get error from backend
-                    throw new Error(errData.error || 'Failed to delete user');
+                    const errData = await response.json(); 
+                    throw new Error(errData.error || 'Failed to deactivate user');
                 }
 
-                alert('User deleted successfully. Redirecting...'); 
-                navigate('/manage-users'); // Redirect to user list
+                // --- CRITICAL CHANGE ---
+                // DO NOT navigate away. Instead, refresh the user's data.
+                fetchUserProfile(); 
+                // alert('User deactivated successfully.'); // Optional: show a small toast/message
 
             } catch (err) {
-                // Display the error from the backend (e.g., "Cannot delete user...")
                 setSaveError(err.message);
-                setIsSaving(false); // Re-enable buttons on failure
+            } finally {
+                // Re-enable buttons even on success, as we are staying on the page
+                setIsSaving(false); 
             }
         }
     };
-    // --- End Delete ---
-    
+
+    // Add this new function inside your UserProfile component
+    const handleActivateUser = async () => {
+        if (window.confirm(`Are you sure you want to ACTIVATE user ${user.firstName} ${user.lastName}?`)) {
+
+            setIsSaving(true); // Reuse isSaving to disable buttons
+            setSaveError('');
+
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                setSaveError('Authentication required to activate.');
+                setIsSaving(false);
+                return;
+            }
+
+            try {
+                // Calls your NEW backend endpoint
+                const response = await fetch(`${API_BASE_URL}/api/users/${userId}/activate`, { 
+                    method: 'PUT', 
+                    headers: { 
+                        'Authorization': `Bearer ${token}`
+                    } 
+                });
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.error || 'Failed to activate user');
+                }
+
+                // Success: Refresh the profile to show the "Active" status
+                fetchUserProfile();
+
+            } catch (err) {
+                setSaveError(err.message);
+            } finally {
+                setIsSaving(false);
+            }
+        }
+    };
 
     // --- Render History Section ---
     // NOTE: This now uses separate API calls for detailed history.
@@ -445,27 +484,53 @@ function UserProfile() {
                         <h1 className="item-title">{user.firstName} {user.lastName}</h1>
                         )}
 
-                                <button 
-                                    className="action-circle-button primary-button" 
-                                    onClick={handleEditToggle} 
-                                    disabled={isSaving} // Only disable if saving is in progress
-                                >
-                                    {isEditing ? (isSaving ? '...' : <IoCheckmark />) : <MdEdit />}
-                                </button>
+                        {!isEditing && user.account_status === 'DEACTIVATED' && (
+                            <span className="status-badge status-deactivated">Deactivated</span>
+                        )}
 
-                                {/* DELETE BUTTON: Disable if viewing own account */}
-                                {!isEditing && (
-                                    <button 
-                                        className="action-circle-button red-button" 
-                                        onClick={handleDeleteUserClick} 
-                                        disabled={isSaving}
-                                    >
-                                        <IoTrash />
-                                    </button>
-                                )}
+                        {/* --- CHANGE #1 --- */}
+                        {/* This is the cleaner logic: Hide the Edit button entirely if the user is not active */}
+                        { user.account_status === 'ACTIVE' && (
+                            <button 
+                                className="action-circle-button primary-button" 
+                                onClick={handleEditToggle} 
+                                disabled={isSaving}
+                                title={isEditing ? "Save Changes" : "Edit User"}
+                            >
+                                {isEditing ? (isSaving ? '...' : <IoCheckmark />) : <MdEdit />}
+                            </button>
+                        )}
+                        
+                        {!isEditing && (
+                            (user.account_status === 'DEACTIVATED') ? (
+                                // This is the "Activate" button, it's correct
+                                <button 
+                                    className="action-circle-button green-button" 
+                                    onClick={handleActivateUser} 
+                                    disabled={isSaving}
+                                    title="Activate User"
+                                >
+                                    <IoReturnUpBackOutline />
+                                </button>
+                            ) : (
+                                // --- CHANGE #2 ---
+                                // This is the "Deactivate" button.
+                                // It now calls your teammate's "handleDeleteUserClick" function
+                                // which contains the "isSelf" check.
+                                <button 
+                                    className="action-circle-button red-button" 
+                                    onClick={handleDeleteUserClick} // <-- This is the merged line
+                                    disabled={isSaving}
+                                    title="Deactivate User"
+                                >
+                                    <IoTrash />
+                                </button>
+                            )
+                        )}
                         
                     </div>
-                     {/* Display Save Error */}
+                     
+                     {/* This error message now works for Edit, Deactivate, and Activate errors */}
                      {saveError && <p style={{ color: 'red', marginTop: '5px' }}>{saveError}</p>}
 
 
@@ -474,25 +539,20 @@ function UserProfile() {
                         {isEditing ? (
                             <>
                             <p> <strong>Email:</strong> <input type="email" name="email" value={editedUser.email} onChange={handleInputChange} className="edit-input" required/> </p>
-                            {/* CASE 1: User is NOT staff */}
                             {!isOriginalRoleStaff ? (
                                 <p> <strong>Role:</strong>
                                     <select name="role" value={editedUser.role} onChange={handleInputChange} className="edit-input" required>
-                                        {/* Only show non-staff roles */}
                                         <option value="Patron">Patron</option>
                                         <option value="Student">Student</option>
                                         <option value="Faculty">Faculty</option>
                                     </select>
                                 </p>
                             ) : (
-                                
-                            /* CASE 2: User IS staff */
                             <>
                                 {shouldHideStaffRoleEdit ? (
-                                null
+                                null 
                             ) : (
                                 <>
-                                    {/* This is the regular Role input (which is disabled by default for staff) */}
                                     <p> <strong>Role:</strong>
                                         <input 
                                             type="text" 
@@ -503,7 +563,6 @@ function UserProfile() {
                                         />
                                     </p>
                                     
-                                    {/* This is the editable Staff Role input */}
                                     <p> 
                                         <strong>Staff Role:</strong>
                                         <select 
@@ -515,7 +574,6 @@ function UserProfile() {
                                         >
                                             <option value="Clerk">Clerk</option>
                                             <option value="Assistant Librarian">Assistant Librarian</option>
-                                            {/* Add Admin option if necessary */}
                                         </select>
                                     </p>
                                 </>
@@ -526,13 +584,11 @@ function UserProfile() {
                         ) : (
                             <>
                             <p><strong>Email:</strong> {user.email || 'N/A'}</p>
-                            {/* Display staff role if applicable */}
                             <p><strong>Role:</strong> {user.role} {user.staff_role ? `(${user.staff_role})` : ''}</p>
                             </>
                         )}
                         </div>
 
-                        {/* Display Counts from API */}
                         <div className="result-details">
                             <p><strong>Current Borrows:</strong> {user.current_borrows}</p>
                             <p><strong>Active Holds:</strong> {user.active_holds}</p>

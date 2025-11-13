@@ -7,16 +7,21 @@ const SUSPENSION_THRESHOLD = 20.00;
  * Finds a user by their ID.
  */
 async function findById(userId) {
-    // --- MODIFIED: JOIN to get role_name ---
+    // --- MODIFIED: JOIN to get staff_role and account_status ---
     const sql = `
         SELECT 
             u.user_id, 
             u.email, 
-            ur.role_name AS role, -- Get the name from USER_ROLE
+            ur.role_name AS role,
             u.firstName, 
-            u.lastName 
+            u.lastName,
+            u.account_status, -- <<< --- ADDED
+            sr.role_name AS staff_role -- <<< --- ADDED
         FROM USER u
-        JOIN USER_ROLE ur ON u.role_id = ur.role_id -- Join to get the role
+        JOIN USER_ROLE ur ON u.role_id = ur.role_id
+        -- Added these joins to get staff_role, just like in findAllUsers
+        LEFT JOIN STAFF s ON u.user_id = s.user_id AND ur.role_name = 'Staff' -- <<< --- ADDED
+        LEFT JOIN STAFF_ROLES sr ON s.role_id = sr.role_id -- <<< --- ADDED
         WHERE u.user_id = ?
     `;
     // --- END MODIFICATION ---
@@ -33,7 +38,8 @@ async function findAllUsers(searchTerm, filters = {}, sort = '') {
             ur.role_name AS role,
             u.firstName, 
             u.lastName,
-            sr.role_name AS staff_role 
+            sr.role_name AS staff_role,
+            u.account_status -- <<< --- ADDED
         FROM USER u
         JOIN USER_ROLE ur ON u.role_id = ur.role_id
         LEFT JOIN STAFF s ON u.user_id = s.user_id AND ur.role_name = 'Staff'
@@ -41,12 +47,11 @@ async function findAllUsers(searchTerm, filters = {}, sort = '') {
     `; 
     
     let params = [];
-    let whereClauses = []; // Use an array to build WHERE clauses
+    let whereClauses = []; 
 
     // --- Search Term Clause ---
     if (searchTerm && searchTerm.trim()) {
         const queryTerm = `%${searchTerm}%`;
-        // Add parentheses for correct AND/OR logic
         whereClauses.push(`(u.firstName LIKE ? OR u.lastName LIKE ? OR u.email LIKE ?)`);
         params.push(queryTerm, queryTerm, queryTerm);
     }
@@ -54,29 +59,38 @@ async function findAllUsers(searchTerm, filters = {}, sort = '') {
     // --- Role Filter Clause ---
     const roleFilter = filters.role ? filters.role.split(',') : [];
     if (roleFilter.length > 0) {
-        // 'role' is the param name from userFilterOptions
         whereClauses.push(`ur.role_name IN (?)`);
         params.push(roleFilter);
     }
-    // --- End Role Filter ---
+    
+    // --- (NEW) Status Filter Clause ---
+    // This allows your frontend to filter by 'ACTIVE' or 'DEACTIVATED'
+    // by passing a filter like ?status=ACTIVE
+    const statusFilter = filters.status ? filters.status.split(',') : [];
+    if (statusFilter.length > 0) {
+        whereClauses.push(`u.account_status IN (?)`); // --- ADDED
+        params.push(statusFilter); // --- ADDED
+    }
+    // --- End Status Filter ---
 
     // Assemble the final SQL
     if (whereClauses.length > 0) {
         sql += ` WHERE ${whereClauses.join(' AND ')}`;
     }
 
-   let orderByClause = ' '; // Default
+    // --- Sorting (no changes) ---
+    let orderByClause = ' ORDER BY u.lastName ASC, u.firstName ASC'; // Default sort
     if (sort === 'Fname_desc') {
         orderByClause = ' ORDER BY u.firstName DESC';
-    }   else if (sort === 'Fname_asc') {
+    } else if (sort === 'Fname_asc') {
         orderByClause = ' ORDER BY u.firstName ASC';
-    }   else if (sort === 'Lname_asc') {
+    } else if (sort === 'Lname_asc') {
         orderByClause = ' ORDER BY u.lastName ASC';
-    }   else if (sort === 'Lname_desc') {
+    } else if (sort === 'Lname_desc') {
         orderByClause = ' ORDER BY u.lastName DESC';
     }
     
-    sql += orderByClause; // Append the sort logic
+    sql += orderByClause;
     
     const [rows] = await db.query(sql, params);
     return rows;
@@ -182,6 +196,7 @@ async function findUserProfileById(userId) {
                 u.email, 
                 u.firstName, 
                 u.lastName,
+                u.account_status,
                 r.role_name AS role,
                 r.requires_membership_fee,
                 sr.role_name AS staff_role,
@@ -494,6 +509,40 @@ async function staffDeleteUser(userId) {
     }
 }
 
+/**
+ * Staff deactivates a user. (SOFT DELETE)
+ * Sets their account_status to 'DEACTIVATED'.
+ * @returns {Promise<number>} 1 if successful, 0 if user not found.
+ */
+async function staffDeactivateUser(userId) {
+    
+    // Step 1: First, check if the user actually exists.
+    // This allows us to differentiate "not found" (0) from "success" (1)
+    // even if the user was already deactivated.
+    const [userRows] = await db.query('SELECT user_id FROM USER WHERE user_id = ?', [userId]);
+
+    if (userRows.length === 0) {
+        return 0; // Return 0 to signal "User not found" to the controller
+    }
+
+    // Step 2: User exists, so update their status.
+    const sql = "UPDATE USER SET account_status = 'DEACTIVATED' WHERE user_id = ?";
+    
+    try {
+        // We run the update. We don't need to check affectedRows here,
+        // because we already know the user exists.
+        await db.query(sql, [userId]);
+        
+        // Return 1 to signal "Success"
+        return 1; 
+    } catch (error) {
+        // The foreign key constraint error won't happen,
+        // so we just re-throw any other unexpected db error.
+        console.error("Error in staffDeactivateUser model:", error);
+        throw error;
+    }
+}
+
 async function changeUserPassword(userId, currentPassword, newPassword) {
     // 1. Get the user's email and current password hash
     const userSql = `
@@ -596,6 +645,32 @@ async function changeUserEmail(userId, newEmail) {
     }
 }
 
+/**
+ * Staff activates a user. (SOFT "UNDELETE")
+ * Sets their account_status to 'ACTIVE'.
+ * @returns {Promise<number>} 1 if successful, 0 if user not found.
+ */
+async function staffActivateUser(userId) {
+    
+    // Step 1: First, check if the user actually exists.
+    const [userRows] = await db.query('SELECT user_id FROM USER WHERE user_id = ?', [userId]);
+
+    if (userRows.length === 0) {
+        return 0; // Return 0 to signal "User not found"
+    }
+
+    // Step 2: User exists, so update their status.
+    const sql = "UPDATE USER SET account_status = 'ACTIVE' WHERE user_id = ?";
+    
+    try {
+        await db.query(sql, [userId]);
+        return 1; // Return 1 to signal "Success"
+    } catch (error) {
+        console.error("Error in staffActivateUser model:", error);
+        throw error;
+    }
+}
+
 module.exports = {
     findById,
     findAllUsers,
@@ -606,6 +681,8 @@ module.exports = {
     findHoldHistoryForUser,
     staffUpdateUser,
     staffDeleteUser,
+    staffDeactivateUser,
     changeUserPassword,
-    changeUserEmail
+    changeUserEmail,
+    staffActivateUser
 };

@@ -335,7 +335,22 @@ function ManageUsers() {
                                         <div className="result-description">
                                             <div className="result-details">
                                                 <p><strong>Email:</strong> {user.email || 'N/A'}</p>
-                                                <p><strong>Role:</strong> {user.role} {user.staff_role ? `(${user.staff_role})` : ''}</p>
+                                                <p><strong>Role:</strong> {user.role} {user.staff_role ? `(${user.staff_role})` : ''}
+                                                {user.account_status === 'DEACTIVATED' && (
+                                                    <span style={{
+                                                        backgroundColor: '#777',
+                                                        color: 'white',
+                                                        padding: '2px 8px',
+                                                        fontSize: '0.8rem',
+                                                        fontWeight: '600',
+                                                        borderRadius: '10px',
+                                                        marginLeft: '10px'
+                                                    }}>
+                                                        Deactivated
+                                                    </span>
+                                                )}
+                                                {/* --- END ADD --- */}
+                                                </p>
                                             </div>
                                             {/* --- TODO: Fetch these counts separately if needed --- */}
                                             {/* <div className="result-details">

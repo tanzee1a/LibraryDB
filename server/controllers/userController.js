@@ -208,7 +208,7 @@ async function staffUpdateUser(req, res, userId) {
     }
 }
 
-// @desc Staff deletes a user
+// @desc Staff deactivates a user (Soft Delete)
 // @route DELETE /api/users/:userId
 async function staffDeleteUser(req, res, userId) {
     try {
@@ -218,22 +218,27 @@ async function staffDeleteUser(req, res, userId) {
             return res.end(JSON.stringify({ message: 'Access Denied: Staff cannot delete their own account.' }));
         }
 
-        const affectedRows = await User.staffDeleteUser(userId);
+        
+        // Call the new model function
+        const affectedRows = await User.staffDeactivateUser(userId);
 
         if (affectedRows === 0) {
+            // This now correctly means "User not found"
             res.writeHead(404, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
             return res.end(JSON.stringify({ message: 'User not found' }));
         }
 
+        // Updated success message
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-        return res.end(JSON.stringify({ message: `User ${userId} deleted` }));
+        return res.end(JSON.stringify({ message: `User ${userId} deactivated` }));
 
     } catch (error) {
-        console.error(`Error deleting user ${userId}:`, error);
-        // Handle specific "cannot delete" error
-        const statusCode = error.message.includes('Cannot delete user') ? 409 : 500; // 409 Conflict
-        res.writeHead(statusCode, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-        res.end(JSON.stringify({ message: 'Could not delete user', error: error.message }));
+        console.error(`Error deactivating user ${userId}:`, error);
+        
+        // Simplified the error handling, as the 409 "Conflict"
+        // for foreign keys is no longer a concern.
+        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ message: 'Could not deactivate user', error: error.message }));
     }
 }
 
@@ -347,6 +352,34 @@ async function changeEmail(req, res) {
     }
 }
 
+/**
+ * @desc Staff activates a user
+ * @route PUT /api/users/:userId/activate
+ */
+async function staffActivateUser(req, res, userId) {
+    try {
+        // TODO: Add Auth check - Staff only
+
+        // Call the new model function
+        const affectedRows = await User.staffActivateUser(userId);
+
+        if (affectedRows === 0) {
+            // This means "User not found"
+            res.writeHead(404, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+            return res.end(JSON.stringify({ message: 'User not found' }));
+        }
+
+        // Updated success message
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        return res.end(JSON.stringify({ message: `User ${userId} reactivated` }));
+
+    } catch (error) {
+        console.error(`Error activating user ${userId}:`, error);
+        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ message: 'Could not activate user', error: error.message }));
+    }
+}
+
 
 
 // Update exports
@@ -361,5 +394,6 @@ module.exports = {
     staffUpdateUser,
     staffDeleteUser,
     changePassword,
-    changeEmail
+    changeEmail,
+    staffActivateUser
 };

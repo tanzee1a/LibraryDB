@@ -24,7 +24,7 @@ const {
 } = require('./controllers/notificationController');
 const { registerUser, loginUser } = require('./controllers/loginRegisterController');
 const { saveItem, unsaveItem, getMyWishlist } = require('./controllers/wishlistController');
-const { getMyProfile, getAllUsers, staffCreateUser, getUserProfile, getUserBorrowHistory, getUserHoldHistory, getUserFineHistory, staffUpdateUser, staffDeleteUser, changePassword, changeEmail} = require('./controllers/userController');
+const { getMyProfile, getAllUsers, staffCreateUser, getUserProfile, getUserBorrowHistory, getUserHoldHistory, getUserFineHistory, staffUpdateUser, staffDeleteUser, changePassword, changeEmail, staffActivateUser} = require('./controllers/userController');
 const { signup, cancel, renew } = require('./controllers/membershipController');
 const { searchItems } = require('./controllers/searchController');
 const { getPopularGenresReport, getPopularItemsReport, getOverdueItemsReport, getOutstandingFines, getActiveUsersReport, getMembershipReport, getRevenueReport } = require('./controllers/reportController');
@@ -245,14 +245,19 @@ const server = http.createServer((req, res) => {
         else if (req.url === '/api/users' && req.method === 'POST') { 
             staffProtect(req, res, () => staffCreateUser(req, res)); 
         }
-        else if (req.url.match(/\/api\/users\/([a-zA-Z0-9]+)/) && req.method === 'PUT') {
+        else if (req.url.match(/\/api\/users\/([a-zA-Z0-9]+)\/activate/) && req.method === 'PUT') {
+    const userId = req.url.split('/')[3];
+    staffProtect(req, res, () => staffActivateUser(req, res, userId));
+        }
+        else if (req.url.match(/\/api\/users\/([a-zA-Z0-9]+)$/) && req.method === 'PUT') {
             const userId = req.url.split('/')[3]; 
             staffProtect(req, res, () => staffUpdateUser(req, res, userId)); 
         }
-        else if (req.url.match(/\/api\/users\/([a-zA-Z0-9]+)/) && req.method === 'DELETE') {
+        else if (req.url.match(/\/api\/users\/([a-zA-Z0-9]+)$/) && req.method === 'DELETE') {
             const userId = req.url.split('/')[3];
             staffProtect(req, res, () => staffDeleteUser(req, res, userId));
         }
+
         // Use startsWith to ignore potential query strings like '?'
         else if (req.url.startsWith('/api/holds') && req.method === 'GET') { 
             staffProtect(req, res, () => getAllHolds(req, res));
