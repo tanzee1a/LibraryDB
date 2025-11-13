@@ -314,21 +314,75 @@ async function updateDevice(req, res, id){
 
 // --- DELETE Function ---
 
-// @desc Delete an Item
+// @desc Soft Delete an Item (Mark as 'DELETED')
 // @route DELETE /api/items/:id
-async function deleteItem(req, res, id){
+async function deleteItem(req, res, id) {
     try {
         const item = await Item.findById(id);
-        if(!item){
+
+        if (!item) {
             res.writeHead(404, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-            res.end(JSON.stringify({ message: 'Item Not Found'}));
-        } else {
-            await Item.remove(id); // Model handles cascade
-            res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-            res.end(JSON.stringify({message: `Item ${id} removed`}));
+            res.end(JSON.stringify({ message: 'Item Not Found' }));
+            return; // Stop execution
         }
+
+        // --- NEW BUSINESS RULE ---
+        // Check if the item is currently loaned out or on hold
+        if (item.loaned_out > 0 || item.on_hold > 0) {
+            res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+            res.end(JSON.stringify({ 
+                message: 'Cannot delete item. It is currently loaned out or on hold.' 
+            }));
+            return; // Stop execution
+        }
+        
+        // Optional: Check if it's already deleted
+        if (item.status === 'DELETED') {
+             res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+             res.end(JSON.stringify({ message: 'Item is already deleted.' }));
+             return; // Stop execution
+        }
+        // --- END NEW LOGIC ---
+
+        // Call your new model function
+        await Item.softDeleteById(id); // <-- Changed from Item.remove
+
+        // Update the success message
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ message: `Item ${id} marked as deleted` }));
+
     } catch (error) {
-       console.error(`Error deleting item ${id}:`, error);
+        console.error(`Error soft deleting item ${id}:`, error);
+        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ message: 'Server error', error: error.message }));
+    }
+}
+
+// @desc Reactivate an Item (Mark as 'ACTIVE')
+// @route PUT /api/items/:id/reactivate
+async function reactivateItem(req, res, id) {
+    try {
+        const item = await Item.findById(id);
+
+        if (!item) {
+            res.writeHead(404, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+            res.end(JSON.stringify({ message: 'Item Not Found' }));
+            return;
+        }
+
+        if (item.status === 'ACTIVE') {
+            res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+            res.end(JSON.stringify({ message: 'Item is already active.' }));
+            return;
+        }
+
+        await Item.reactivateById(id);
+
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ message: `Item ${id} reactivated` }));
+
+    } catch (error) {
+        console.error(`Error reactivating item ${id}:`, error);
         res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         res.end(JSON.stringify({ message: 'Server error', error: error.message }));
     }
@@ -348,4 +402,5 @@ module.exports = {
     updateMovie,
     createDevice,
     updateDevice,
+    reactivateItem
 };

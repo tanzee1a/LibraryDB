@@ -48,7 +48,9 @@ function ItemDetails({ isStaff }) {
   const [isEditSubmitting, setIsEditSubmitting] = useState(false);
   const [editMessage, setEditMessage] = useState({ type: '', text: '' });
   // --- END ADD ---
-  const [isDeleting, setIsDeleting] = useState(false);
+  // const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeleteSubmitting, setIsDeleteSubmitting] = useState(false);
+  const [isReactivateSubmitting, setIsReactivateSubmitting] = useState(false);
 
   // --- ADD: Function to get headers ---
   const getAuthHeaders = () => {
@@ -350,24 +352,31 @@ function ItemDetails({ isStaff }) {
     }
   };
 
-  const handleDelete = async () => {
-    // 1. Confirm with the user first!
-    if (!window.confirm("Are you sure you want to permanently delete this item? This action cannot be undone.")) {
+  const handleSoftDelete = async () => {
+    // --- NEW: Check if item is currently loaned or on hold ---
+    if (item.loaned_out > 0 || item.on_hold > 0) {
+      setEditMessage({ type: 'error', text: 'Cannot delete item: It is currently loaned out or on hold.' });
       return;
     }
 
-    setIsDeleting(true);
-    setEditMessage({ type: '', text: '' }); // Clear other messages
+    // 1. Confirm with the user
+    if (!window.confirm("Are you sure you want to mark this item as 'Deleted'? Users will no longer see it.")) {
+      return;
+    }
 
-    const headers = getAuthHeaders(); // Use your existing helper
+    setIsDeleteSubmitting(true);
+    setEditMessage({ type: '', text: '' });
+
+    const headers = getAuthHeaders();
     if (!headers) {
       setEditMessage({ type: 'error', text: 'Authentication failed.' });
-      setIsDeleting(false);
+      setIsDeleteSubmitting(false);
       return;
     }
 
     try {
-      // 2. Call the DELETE endpoint
+      // 2. Call the DELETE endpoint. Your backend controller is already
+      // set up to perform a *soft delete* on this route.
       const response = await fetch(`${API_BASE_URL}/api/items/${itemId}`, {
         method: 'DELETE',
         headers: headers
@@ -378,17 +387,60 @@ function ItemDetails({ isStaff }) {
         throw new Error(data.message || 'Failed to delete item.');
       }
       
-      // 3. Handle Success
-      setEditMessage({ type: 'success', text: 'Item deleted successfully. Redirecting...' });
+      // 3. Handle Success: Update state instead of redirecting
+      setEditMessage({ type: 'success', text: 'Item marked as deleted.' });
       
-      // 4. Redirect to the home page (or search page)
-      setTimeout(() => {
-        navigate('/search'); // Redirect to home
-      }, 2000);
+      // Update the main item state, which will cause the button to flip
+      setItem(prev => ({ ...prev, status: 'DELETED' }));
+      // Also update the form data state
+      setFormData(prev => ({ ...prev, status: 'DELETED' }));
 
     } catch (err) {
       setEditMessage({ type: 'error', text: err.message });
-      setIsDeleting(false); // Re-enable button on error
+    } finally {
+      setIsDeleteSubmitting(false); // Re-enable button
+    }
+  };
+
+  const handleReactivate = async () => {
+    if (!window.confirm("Are you sure you want to reactivate this item? It will become visible to users again.")) {
+      return;
+    }
+
+    setIsReactivateSubmitting(true);
+    setEditMessage({ type: '', text: '' });
+
+    const headers = getAuthHeaders();
+    if (!headers) {
+      setEditMessage({ type: 'error', text: 'Authentication failed.' });
+      setIsReactivateSubmitting(false);
+      return;
+    }
+
+    try {
+      // Call the new reactivate endpoint we designed
+      const response = await fetch(`${API_BASE_URL}/api/items/${itemId}/reactivate`, {
+        method: 'PUT',
+        headers: headers
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to reactivate item.');
+      }
+      
+      // Handle Success: Update state
+      setEditMessage({ type: 'success', text: 'Item reactivated successfully.' });
+      
+      // Update the main item state, which will flip the button back
+      setItem(prev => ({ ...prev, status: 'ACTIVE' }));
+      // Also update the form data state
+      setFormData(prev => ({ ...prev, status: 'ACTIVE' }));
+
+    } catch (err) {
+      setEditMessage({ type: 'error', text: err.message });
+    } finally {
+      setIsReactivateSubmitting(false);
     }
   };
   
@@ -715,18 +767,33 @@ function ItemDetails({ isStaff }) {
 
               {/* --- Actions --- */}
               <div className="sheet-actions">
-                <button
-                    type="button"
-                    className="action-button red-button"
-                    onClick={handleDelete}
-                    disabled={isEditSubmitting || isDeleting}
-                >
-                    {isDeleting ? 'Deleting...' : 'Delete Item'}
-                </button>
+                
+                {/* --- NEW: Conditional Delete/Reactivate Buttons --- */}
+                {item.status === 'ACTIVE' ? (
+                  <button
+                      type="button"
+                      className="action-button red-button"
+                      onClick={handleSoftDelete}
+                      disabled={isEditSubmitting || isDeleteSubmitting || isReactivateSubmitting}
+                  >
+                      {isDeleteSubmitting ? 'Deleting...' : 'Delete Item'}
+                  </button>
+                ) : (
+                  <button
+                      type="button"
+                      className="action-button secondary-button" 
+                      onClick={handleReactivate}
+                      disabled={isEditSubmitting || isDeleteSubmitting || isReactivateSubmitting}
+                  >
+                      {isReactivateSubmitting ? 'Reactivating...' : 'Reactivate Item'}
+                  </button>
+                )}
+                {/* --- END NEW --- */}
+
                 <button 
                     type="submit" 
                     className="action-button primary-button" 
-                    disabled={isEditSubmitting || isDeleting}
+                    disabled={isEditSubmitting || isDeleteSubmitting || isReactivateSubmitting}
                 >
                     {isEditSubmitting ? 'Saving...' : 'Save Changes'}
                 </button>
@@ -734,7 +801,7 @@ function ItemDetails({ isStaff }) {
                     type="button"
                     className="action-button secondary-button"
                     onClick={() => setShowEditSheet(false)}
-                    disabled={isEditSubmitting || isDeleting}
+                    disabled={isEditSubmitting || isDeleteSubmitting || isReactivateSubmitting}
                 >
                     Cancel
                 </button>
