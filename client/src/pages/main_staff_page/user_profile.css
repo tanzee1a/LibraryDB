@@ -63,3 +63,28 @@
     color: var(--primary-color);
     text-decoration: none;
 }
+
+/* Add to user_profile.css */
+
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-left: 10px;
+    color: #fff;
+}
+
+.status-badge.status-deactivated {
+    background-color: #777; /* Gray */
+    color: #fff;
+}
+
+/* Green button for "Activate" */
+.green-button {
+    background-color: #28a745; /* Green */
+    color: white;
+}
+.green-button:hover {
+    background-color: #218838; /* Darker Green */
+}

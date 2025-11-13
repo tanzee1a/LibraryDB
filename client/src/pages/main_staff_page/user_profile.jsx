@@ -1,7 +1,7 @@
 import './user_profile.css';
 import React, { useState, useEffect } from 'react'; // --- ADDED useEffect ---
 import { useParams, Link, useNavigate } from 'react-router-dom'; // --- ADD useNavigate ---
-import { IoCheckmark, IoTrash, IoTimeOutline, IoHourglassOutline, IoWalletOutline } from "react-icons/io5"; // --- ADDED History Icons ---
+import { IoCheckmark, IoTrash, IoTimeOutline, IoHourglassOutline, IoWalletOutline, IoReturnUpBackOutline } from "react-icons/io5"; // --- ADDED History Icons ---
 import { MdEdit } from "react-icons/md";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
@@ -186,15 +186,17 @@ function UserProfile() {
 
     // --- End Edit/Save ---
 
+    // Replace your existing handleDeleteUser function
     const handleDeleteUser = async () => {
-        if (window.confirm(`Are you sure you want to delete user ${user.firstName} ${user.lastName}? This cannot be undone.`)) {
+        // Change the confirm message to reflect "deactivation"
+        if (window.confirm(`Are you sure you want to DEACTIVATE user ${user.firstName} ${user.lastName}? This can be undone.`)) {
 
-            setIsSaving(true); // Reuse isSaving to disable buttons
+            setIsSaving(true); 
             setSaveError('');
 
             const token = localStorage.getItem('authToken');
             if (!token) {
-                setSaveError('Authentication required to delete.');
+                setSaveError('Authentication required to deactivate.');
                 setIsSaving(false);
                 return;
             }
@@ -203,25 +205,65 @@ function UserProfile() {
                 const response = await fetch(`${API_BASE_URL}/api/users/${userId}`, { 
                     method: 'DELETE', 
                     headers: { 
-                        'Authorization': `Bearer ${token}` // Add auth header
+                        'Authorization': `Bearer ${token}`
                     } 
                 });
                 if (!response.ok) {
-                    const errData = await response.json(); // Get error from backend
-                    throw new Error(errData.error || 'Failed to delete user');
+                    const errData = await response.json(); 
+                    throw new Error(errData.error || 'Failed to deactivate user');
                 }
 
-                alert('User deleted successfully. Redirecting...'); 
-                navigate('/manage-users'); // Redirect to user list
+                // --- CRITICAL CHANGE ---
+                // DO NOT navigate away. Instead, refresh the user's data.
+                fetchUserProfile(); 
+                // alert('User deactivated successfully.'); // Optional: show a small toast/message
 
             } catch (err) {
-                // Display the error from the backend (e.g., "Cannot delete user...")
                 setSaveError(err.message);
-                setIsSaving(false); // Re-enable buttons on failure
+            } finally {
+                // Re-enable buttons even on success, as we are staying on the page
+                setIsSaving(false); 
             }
         }
     };
-    // --- End Delete ---
+
+    // Add this new function inside your UserProfile component
+    const handleActivateUser = async () => {
+        if (window.confirm(`Are you sure you want to ACTIVATE user ${user.firstName} ${user.lastName}?`)) {
+
+            setIsSaving(true); // Reuse isSaving to disable buttons
+            setSaveError('');
+
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                setSaveError('Authentication required to activate.');
+                setIsSaving(false);
+                return;
+            }
+
+            try {
+                // Calls your NEW backend endpoint
+                const response = await fetch(`${API_BASE_URL}/api/users/${userId}/activate`, { 
+                    method: 'PUT', 
+                    headers: { 
+                        'Authorization': `Bearer ${token}`
+                    } 
+                });
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.error || 'Failed to activate user');
+                }
+
+                // Success: Refresh the profile to show the "Active" status
+                fetchUserProfile();
+
+            } catch (err) {
+                setSaveError(err.message);
+            } finally {
+                setIsSaving(false);
+            }
+        }
+    };
 
     // --- Render History Section ---
     // NOTE: This now uses separate API calls for detailed history.
@@ -383,14 +425,48 @@ function UserProfile() {
                         <h1 className="item-title">{user.firstName} {user.lastName}</h1>
                         )}
 
-                        <button className="action-circle-button primary-button" onClick={handleEditToggle} disabled={isSaving}>
+                        {/* --- ADD THIS BADGE --- */}
+                        {/* Show badge if deactivated and NOT in edit mode */}
+                        {!isEditing && user.account_status === 'DEACTIVATED' && (
+                            <span className="status-badge status-deactivated">Deactivated</span>
+                        )}
+
+                        {/* --- MODIFY THIS BUTTON --- */}
+                        {/* Disable Edit button if user is deactivated */}
+                        <button 
+                            className="action-circle-button primary-button" 
+                            onClick={handleEditToggle} 
+                            disabled={isSaving || user.account_status === 'DEACTIVATED'}
+                            title={user.account_status === 'DEACTIVATED' ? 'Activate user to edit' : 'Edit User'}
+                        >
                             {isEditing ? (isSaving ? '...' : <IoCheckmark />) : <MdEdit />}
                         </button>
-                        {/* Show delete only when NOT editing */}
+                        
+                        {/* --- MODIFY THIS SECTION --- */}
+                        {/* Show delete/activate only when NOT editing */}
                         {!isEditing && (
-                            <button className="action-circle-button red-button" onClick={handleDeleteUser} disabled={isSaving}>
-                                <IoTrash />
-                            </button>
+                            // Check the user's status (assuming 'ACTIVE' is the default)
+                            (user.account_status === 'DEACTIVATED') ? (
+                                // User IS deactivated, show ACTIVATE button
+                                <button 
+                                    className="action-circle-button green-button" 
+                                    onClick={handleActivateUser} 
+                                    disabled={isSaving}
+                                    title="Activate User"
+                                >
+                                    <IoReturnUpBackOutline />
+                                </button>
+                            ) : (
+                                // User is ACTIVE, show DEACTIVATE (trash) button
+                                <button 
+                                    className="action-circle-button red-button" 
+                                    onClick={handleDeleteUser} 
+                                    disabled={isSaving}
+                                    title="Deactivate User"
+                                >
+                                    <IoTrash />
+                                </button>
+                            )
                         )}
                         
                     </div>

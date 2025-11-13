@@ -341,6 +341,34 @@ async function changeEmail(req, res) {
     }
 }
 
+/**
+ * @desc Staff activates a user
+ * @route PUT /api/users/:userId/activate
+ */
+async function staffActivateUser(req, res, userId) {
+    try {
+        // TODO: Add Auth check - Staff only
+
+        // Call the new model function
+        const affectedRows = await User.staffActivateUser(userId);
+
+        if (affectedRows === 0) {
+            // This means "User not found"
+            res.writeHead(404, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+            return res.end(JSON.stringify({ message: 'User not found' }));
+        }
+
+        // Updated success message
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        return res.end(JSON.stringify({ message: `User ${userId} reactivated` }));
+
+    } catch (error) {
+        console.error(`Error activating user ${userId}:`, error);
+        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ message: 'Could not activate user', error: error.message }));
+    }
+}
+
 
 
 // Update exports
@@ -355,5 +383,6 @@ module.exports = {
     staffUpdateUser,
     staffDeleteUser,
     changePassword,
-    changeEmail
+    changeEmail,
+    staffActivateUser
 };
