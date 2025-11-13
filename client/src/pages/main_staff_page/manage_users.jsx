@@ -43,6 +43,11 @@ function ManageUsers() {
             category: 'Role',
             param: 'role', // URL parameter
             options: ['Patron', 'Student', 'Faculty', 'Staff']
+        },
+        {
+            category: 'Account Status',
+            param: 'status', // This will be the URL param
+            options: ['Active', 'Deactivated']
         }
     ];
 
@@ -169,7 +174,6 @@ function ManageUsers() {
         setIsSubmitting(false);
     }
 }
-    // --- END MODIFIED ---
 
     // --- HELPER FUNCTION: Get available roles based on staff permissions ---
     const getAvailableUserRoles = () => {
@@ -277,7 +281,6 @@ function ManageUsers() {
                                 value={sort} // Use state to control the value
                                 onChange={handleSortChange} // Use the new handler
                             >
-                                <option value="" disabled></option>
                                 <option value="Fname_asc">First Name (A–Z)</option>
                                 <option value="Lname_asc">Last Name (A–Z)</option>
                                 <option value="Fname_desc">First Name (Z–A)</option>
@@ -290,7 +293,6 @@ function ManageUsers() {
                                 <hr className='thin-divider divider--tight' />
                                 <ul>
                                     {filterGroup.options.map((option) => {
-                                        // Check if this filter option is in the URL searchParams
                                         const isChecked = (searchParams.get(filterGroup.param) || '')
                                                             .split(',')
                                                             .includes(option);
@@ -300,7 +302,6 @@ function ManageUsers() {
                                                     <input 
                                                         type="checkbox" 
                                                         value={option}
-                                                        // Wire up the checkbox
                                                         checked={isChecked}
                                                         onChange={() => handleFilterChange(filterGroup.param, option)}
                                                     /> {option}
@@ -312,7 +313,6 @@ function ManageUsers() {
                             </div>
                         ))}
                     </div>
-                    {/* --- MODIFIED User List --- */}
                     <div className="search-results-list" style={{width: '100%'}}> {/* Make list full width if no filter */}
                         {loading && <p>Loading users...</p>}
                         {error && <p style={{ color: 'red' }}>{error}</p>}
