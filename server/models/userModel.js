@@ -494,6 +494,40 @@ async function staffDeleteUser(userId) {
     }
 }
 
+/**
+ * Staff deactivates a user. (SOFT DELETE)
+ * Sets their account_status to 'DEACTIVATED'.
+ * @returns {Promise<number>} 1 if successful, 0 if user not found.
+ */
+async function staffDeactivateUser(userId) {
+    
+    // Step 1: First, check if the user actually exists.
+    // This allows us to differentiate "not found" (0) from "success" (1)
+    // even if the user was already deactivated.
+    const [userRows] = await db.query('SELECT user_id FROM USER WHERE user_id = ?', [userId]);
+
+    if (userRows.length === 0) {
+        return 0; // Return 0 to signal "User not found" to the controller
+    }
+
+    // Step 2: User exists, so update their status.
+    const sql = "UPDATE USER SET account_status = 'DEACTIVATED' WHERE user_id = ?";
+    
+    try {
+        // We run the update. We don't need to check affectedRows here,
+        // because we already know the user exists.
+        await db.query(sql, [userId]);
+        
+        // Return 1 to signal "Success"
+        return 1; 
+    } catch (error) {
+        // The foreign key constraint error won't happen,
+        // so we just re-throw any other unexpected db error.
+        console.error("Error in staffDeactivateUser model:", error);
+        throw error;
+    }
+}
+
 async function changeUserPassword(userId, currentPassword, newPassword) {
     // 1. Get the user's email and current password hash
     const userSql = `
@@ -606,6 +640,7 @@ module.exports = {
     findHoldHistoryForUser,
     staffUpdateUser,
     staffDeleteUser,
+    staffDeactivateUser,
     changeUserPassword,
     changeUserEmail
 };
