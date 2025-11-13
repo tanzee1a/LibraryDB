@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { IoPersonCircleOutline } from 'react-icons/io5';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
 
-// NOTE: This component is for staff to see their OWN profile.
+// for staff to see their OWN profile.
 export default function StaffProfile() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -23,7 +23,7 @@ export default function StaffProfile() {
     if (!token) {
         console.error("Authentication Error: No token found. Staff needs to log in.");
         setLoading(false);
-        navigate('/staff-login'); // Redirect staff to staff login page
+        navigate('/staff-login'); 
         return null;
     }
     return token;
@@ -36,12 +36,10 @@ export default function StaffProfile() {
 
     const headers = {
       'Content-Type': 'application/json',
-      // Attach the token for authentication
       'Authorization': `Bearer ${token}` 
     };
     
-    // 💡 KEY CHANGE: Use the staff-specific endpoint
-    // (This endpoint should return user details + staffRole)
+
     fetch(`${API_BASE_URL}/api/staff/my-profile`, { headers })
     .then(res => res.ok ? res.json() : Promise.reject('Failed to fetch staff profile'))
       .then(data => {
@@ -51,11 +49,9 @@ export default function StaffProfile() {
       .catch(err => {
         console.error("Fetch staff profile error:", err);
         setLoading(false);
-        // Optional: Navigate to an error page if fetching fails
       });
   }, [navigate]);
 
-  // Handle the password change logic (same as UserProfile)
   function handlePasswordChange(e) {
     e.preventDefault();
     setPasswordChangeMessage({ type: '', text: '' });
@@ -67,7 +63,6 @@ export default function StaffProfile() {
         return;
     }
 
-    // Basic password strength check (optional)
     if (newPassword.length < 6) {
         setPasswordChangeMessage({ type: 'error', text: 'New password must be at least 6 characters.' });
         return;
@@ -86,8 +81,6 @@ export default function StaffProfile() {
         newPassword 
     });
 
-    // 💡 NOTE: The endpoint is the same as it is user-specific, but the 
-    // staff member's JWT token will grant them access.
     fetch(`${API_BASE_URL}/api/my-profile/change-password`, {
         method: 'POST',
         headers,
@@ -111,9 +104,7 @@ export default function StaffProfile() {
   }
 
 
-  // Render the Password Change Form
   function renderPasswordChangeSection() {
-      // NOTE: We don't need the role check here since this is explicitly the Staff profile page
       return (
           <>
               <p className='small-spacing'>Update your account password below.</p>
@@ -153,11 +144,9 @@ export default function StaffProfile() {
       );
     }
   
-  // --- Loading and Error States ---
   if (loading) {
     return (
       <div 
-        // 💡 ADDED STYLE: Pushes content down past a fixed nav/header (adjust 80px as needed)
         style={{ marginTop: '80px', padding: '20px' }} 
         className="profile-card"
       >
@@ -170,7 +159,6 @@ export default function StaffProfile() {
   if (!user) {
      return (
        <div 
-         // 💡 ADDED STYLE: Pushes content down past a fixed nav/header (adjust 80px as needed)
          style={{ marginTop: '80px', padding: '20px' }} 
          className="profile-card"
        >
@@ -180,9 +168,7 @@ export default function StaffProfile() {
      );
   }
 
-  // --- Main Render ---
   return (
-    // 💡 ADDED WRAPPER DIV WITH INLINE STYLE
     <div style={{ marginTop: '80px', padding: '20px' }}> 
       <div className="item-title">Staff Profile: {user.firstName} {user.lastName}</div>
       <div className="profile-meta">

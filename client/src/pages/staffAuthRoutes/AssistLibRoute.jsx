@@ -5,9 +5,8 @@ import { Navigate, Outlet } from 'react-router-dom';
 const AssistLibRoute = ({ children }) => {
   const token = localStorage.getItem('authToken');
   const userRole = localStorage.getItem('userRole');
-  const staffRole = localStorage.getItem('staffRole'); // CRITICAL: Read the specific staff role
+  const staffRole = localStorage.getItem('staffRole'); 
 
-  // Define valid staff roles for this route (Assistant Librarian and above)
   const validStaffRoles = ['Assistant Librarian', 'Librarian'];
   
   // Check 1: Must be authenticated
@@ -21,7 +20,6 @@ const AssistLibRoute = ({ children }) => {
 
   // DEBUG: Check the role being read from local storage
   if (token && userRole) {
-      // This debug log is helpful for verification
       console.log(`AssistantLibrarianRoute: User Role: '${userRole}', Staff Role: '${staffRole}'. Access granted: ${hasAccess}`);
   }
 

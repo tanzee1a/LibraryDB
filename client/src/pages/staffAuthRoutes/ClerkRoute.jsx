@@ -5,7 +5,7 @@ import { Navigate, Outlet } from 'react-router-dom';
 const AssistantLibrarianRoute = ({ children }) => {
   const token = localStorage.getItem('authToken');
   const userRole = localStorage.getItem('userRole');
-  const staffRole = localStorage.getItem('staffRole'); // CRITICAL: Read the specific staff role
+  const staffRole = localStorage.getItem('staffRole'); 
 
   // Define valid staff roles for this route (Assistant Librarian and above)
   const validStaffRoles = ['Assistant Librarian', 'Librarian', 'Clerk'];

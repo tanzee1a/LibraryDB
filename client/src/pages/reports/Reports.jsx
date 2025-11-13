@@ -1,4 +1,3 @@
-// pages/reports/Reports.jsx
 import React, { useState, useEffect } from 'react';
 import './Reports.css';
 
@@ -76,7 +75,6 @@ function Reports() {
         return reportTypeOptions;
     }, [isAssistantLibrarian, selectedType]);
 
-    // Fetch data when selectedReportKey changes (NO CHANGES NEEDED HERE)
     useEffect(() => {
         fetchReportData();
     }, [selectedType]);
@@ -214,7 +212,6 @@ function Reports() {
         );
     }
 
-    // Fetch report data from backend based on selected type and filters
     const fetchReportData = async () => {
         setLoading(true);
         setError('');
@@ -275,7 +272,6 @@ function Reports() {
         }
     };
 
-    // Helper to format cells
     const formatCell = (value, headerKey) => {
         if (value === null || value === undefined) return '-';
         if (headerKey.toLowerCase().includes('date') && value) {
@@ -288,7 +284,6 @@ function Reports() {
         return value;
     };
 
-    // Sort and filter handling
     const sortedReportData = React.useMemo(() => {
         if (!reportData || reportData.length === 0) return [];
 
@@ -548,7 +543,6 @@ function Reports() {
         );
     };
 
-    // --- UPDATED RETURN BLOCK ---
     return (
         <div className="page-container">
             <div className='reports-container'>
@@ -569,7 +563,6 @@ function Reports() {
                     <h3><IoInformationCircleOutline /></h3>
                     <p>{reportTypeOptions.find(t => t.key === selectedType)?.description}</p>
                 </div>
-                {/* Filter Section */}
                 {renderFilterOptions()}
                 {renderPieChart()}
                 

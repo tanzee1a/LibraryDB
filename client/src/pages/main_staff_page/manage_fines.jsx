@@ -29,7 +29,6 @@ function ManageFines() {
         currency: 'USD',
     });
 
-    // Helper to filter options (uses fineStatus state)
     const filterOptions = () => {
         return [{
             category: 'Status',
@@ -38,7 +37,6 @@ function ManageFines() {
         }]
     };
 
-    // Fetches possible fine status options from API
     const fetchFineStatus = async () => {
         try {
             const response = await fetch(`${API_BASE_URL}/api/status/fine`);
@@ -50,7 +48,6 @@ function ManageFines() {
         }
     };
 
-    // 🌟 CORRECTED: Added Auth Token to fetchFines 🌟
     const fetchFines = () => {
         setLoading(true);
         setError('');
@@ -65,7 +62,7 @@ function ManageFines() {
         fetch(`${API_BASE_URL}/api/fines`, { 
             method: 'GET',
             headers: {
-                'Authorization': `Bearer ${token}`, // CRITICAL: Authorization header
+                'Authorization': `Bearer ${token}`, 
                 'Content-Type': 'application/json'
             }
         }) 
@@ -96,21 +93,19 @@ function ManageFines() {
         fetchFineStatus()
     }, []);
 
-    // 🌟 CORRECTED: Added Auth Token to handleMarkPaid 🌟
     const handleMarkPaid = (fineId) => {
         const token = localStorage.getItem('authToken');
         if (!token) { alert('Authentication required.'); return; }
 
          fetch(`${API_BASE_URL}/api/fines/${fineId}/pay`, { 
              method: 'POST',
-             headers: {'Authorization': `Bearer ${token}`} // <-- Added Token
+             headers: {'Authorization': `Bearer ${token}`} 
          })
             .then(r => { if (!r.ok) throw new Error('Marking paid failed'); return r.json(); })
-            .then(() => fetchFines()) // Refresh list
+            .then(() => fetchFines()) 
             .catch(err => alert(`Error marking paid: ${err.message}`));
     };
 
-    // 🌟 CORRECTED: Added Auth Token to handleWaive 🌟
     const handleWaive = (fineId) => {
         const token = localStorage.getItem('authToken');
         if (!token) { alert('Authentication required.'); return; }
@@ -125,7 +120,7 @@ function ManageFines() {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}` // <-- Added Token
+                'Authorization': `Bearer ${token}` 
             },
             body: JSON.stringify({ reason: reason.trim() }) 
         })
@@ -144,10 +139,8 @@ function ManageFines() {
 
     const handleSortChange = (sortType) => {
         console.log("Sort by:", sortType);
-        // Sorting logic remains the same (placeholder)
     };
 
-    // 🌟 CORRECTED: Added Auth Token to handleAddFineSubmit 🌟
     async function handleAddFineSubmit(e) {
         e.preventDefault();
         setIsSubmitting(true);
@@ -169,7 +162,7 @@ function ManageFines() {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}` // <-- Added Token
+                    'Authorization': `Bearer ${token}` 
                 },
                 body: JSON.stringify({
                     borrow_id: newFine.borrow_id,

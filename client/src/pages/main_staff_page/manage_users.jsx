@@ -17,36 +17,30 @@ function ManageUsers() {
 
     const [sort, setSort] = useState(searchParams.get('sort') || '');
 
-    // --- Add User Sheet state/handlers ---
     const [showAddUserSheet, setShowAddUserSheet] = useState(false);
     const initialUserState = {
-        firstName: '', // Changed from first_name
-        lastName: '',  // Changed from last_name
+        firstName: '', 
+        lastName: '',  
         email: '',
-        role: 'Patron', // Matches USER.role enum
+        role: 'Patron', 
         staffRole: 'Clerk',
-        temporaryPassword: '', // Added password field
-        user_id: '' // Added User ID field
+        temporaryPassword: '', 
+        user_id: '' 
     };
     const [newUser, setNewUser] = useState(initialUserState);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState('');
-    // --- End Keep ---
 
-    // --- Currency Formatter (keep as is) ---
     const currencyFormatter = new Intl.NumberFormat('en-US', { /* ... */ });
 
-    // This is now just a static definition of what filters are available.
-    // We could make this dynamic later by fetching from USER_ROLE table.
     const userFilterOptions = [
         {
             category: 'Role',
-            param: 'role', // URL parameter
+            param: 'role', 
             options: ['Patron', 'Student', 'Faculty', 'Staff']
         }
     ];
 
-    // --- Fetch Users Logic ---
     const fetchUsers = () => {
         setLoading(true);
         setError('');
@@ -59,14 +53,13 @@ function ManageUsers() {
         
         if (!token) {
             setError('Authentication token missing. Please log in.');
-            setLoading(false); // Corrected from setLoadingStats
+            setLoading(false); 
             return;
         }
 
-        // Get the full query string from state
         const queryString = searchParams.toString();
 
-        fetch(`${API_BASE_URL}/api/users?${queryString}`, { // <-- Pass the query string
+        fetch(`${API_BASE_URL}/api/users?${queryString}`, { 
             method: 'GET',
             headers: authHeaders
         })
@@ -88,10 +81,8 @@ function ManageUsers() {
         const token = localStorage.getItem('authToken'); 
         if (!token) return;
 
-        // Fetch User List (will use searchParams)
         fetchUsers();
 
-        // ... (Fetch Logged-in Staff Profile logic remains the same) ...
         fetch(`${API_BASE_URL}/api/staff/my-profile`, { headers: { 'Authorization': `Bearer ${token}` } })
             .then(res => res.ok ? res.json() : Promise.reject('Failed to fetch staff profile'))
             .then(data => {
@@ -109,29 +100,24 @@ function ManageUsers() {
             .catch(err => {
                 console.error("Fetch Staff Profile Error:", err);
             });
-    // --- Re-run this effect if the search parameters in the URL change ---
     }, [searchParams]);
-    // --- End Fetch ---
 
-    // --- handleInputChange (remains the same) ---
-    // Inside ManageUsers component
     function handleInputChange(e) {
         const { name, value } = e.target;
-        // Log to check if it fires
         console.log(`Input changed: Name=${name}, Value=${value}`); 
         setNewUser(prev => ({ 
-            ...prev, // Keep the rest of the state
-            [name]: value // Update the specific field that changed
+            ...prev, 
+            [name]: value 
         }));
     }
 
-    // --- MODIFIED: handleAddUserSubmit ---
-    async function handleAddUserSubmit(e) { // Make async
+    // --- handleAddUserSubmit ---
+    async function handleAddUserSubmit(e) { 
         e.preventDefault();
     setIsSubmitting(true);
     setSubmitError('');
 
-    // --- 1. Get the Auth Token ---
+    //Get the Auth Token
     const token = localStorage.getItem('authToken');
     if (!token) {
         setSubmitError('Authentication token missing. Cannot add user.');
@@ -144,10 +130,8 @@ function ManageUsers() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                // --- 2. Add the Authorization Header ---
                 'Authorization': `Bearer ${token}` 
             },
-            // Send the state directly (ensure names match backend expectations)
             body: JSON.stringify(newUser) 
         });
 
@@ -156,7 +140,6 @@ function ManageUsers() {
             throw new Error(errorData.error || `HTTP error ${response.status}`);
         }
 
-        // Success
         console.log("New User Added:", await response.json());
         setShowAddUserSheet(false);
         setNewUser(initialUserState); // Reset form
@@ -169,11 +152,9 @@ function ManageUsers() {
         setIsSubmitting(false);
     }
 }
-    // --- END MODIFIED ---
 
-    // --- HELPER FUNCTION: Get available roles based on staff permissions ---
     const getAvailableUserRoles = () => {
-        let roles = ['Patron', 'Student', 'Faculty']; // Base roles available to Assistant Librarian
+        let roles = ['Patron', 'Student', 'Faculty']; 
         
         if (isLibrarian) {
             // Librarian can add anyone, including staff (Clerk/Assistant Librarian)
@@ -189,14 +170,11 @@ function ManageUsers() {
             event.preventDefault();
             const term = localSearchTerm.trim();
             
-            // Get current filters to preserve them
             const currentParams = Object.fromEntries(searchParams.entries());
 
             if (term) {
-                // Set the 'q' param, keeping other filters
                 setSearchParams({ ...currentParams, q: term });
             } else {
-                // If search is cleared, remove 'q' but keep other filters
                 delete currentParams.q;
                 setSearchParams(currentParams);
             }
@@ -206,18 +184,15 @@ function ManageUsers() {
     const handleFilterChange = (param, option) => {
         const currentValues = (searchParams.get(param) || '')
             .split(',')
-            .filter(Boolean); // filter(Boolean) removes empty strings
+            .filter(Boolean); 
 
         let newValues;
         if (currentValues.includes(option)) {
-            // Remove option if already selected
             newValues = currentValues.filter(v => v !== option);
         } else {
-            // Add option if not selected
             newValues = [...currentValues, option];
         }
 
-        // Push new filter state back to URL, which triggers useEffect to refetch
         const next = new URLSearchParams(searchParams);
         if (newValues.length) {
             next.set(param, newValues.join(','));
@@ -229,19 +204,17 @@ function ManageUsers() {
 
     const handleSortChange = (event) => {
         const sortType = event.target.value;
-        setSort(sortType); // Update local state for the dropdown
+        setSort(sortType); 
 
-        // Get current params to preserve filters/search
         const currentParams = Object.fromEntries(searchParams.entries());
         const next = new URLSearchParams(currentParams);
 
         if (sortType) {
             next.set('sort', sortType);
         } else {
-            next.delete('sort'); // Fallback, though dropdown has no empty option
+            next.delete('sort'); 
         }
         
-        // Set the new URL, which triggers useEffect to refetch
         setSearchParams(next);
     };
 
@@ -274,8 +247,8 @@ function ManageUsers() {
                             Sort by:
                             <select
                                 className="sort-select"
-                                value={sort} // Use state to control the value
-                                onChange={handleSortChange} // Use the new handler
+                                value={sort} 
+                                onChange={handleSortChange} 
                             >
                                 <option value="" disabled></option>
                                 <option value="Fname_asc">First Name (A–Z)</option>
@@ -290,7 +263,6 @@ function ManageUsers() {
                                 <hr className='thin-divider divider--tight' />
                                 <ul>
                                     {filterGroup.options.map((option) => {
-                                        // Check if this filter option is in the URL searchParams
                                         const isChecked = (searchParams.get(filterGroup.param) || '')
                                                             .split(',')
                                                             .includes(option);
@@ -300,7 +272,6 @@ function ManageUsers() {
                                                     <input 
                                                         type="checkbox" 
                                                         value={option}
-                                                        // Wire up the checkbox
                                                         checked={isChecked}
                                                         onChange={() => handleFilterChange(filterGroup.param, option)}
                                                     /> {option}
@@ -312,25 +283,20 @@ function ManageUsers() {
                             </div>
                         ))}
                     </div>
-                    {/* --- MODIFIED User List --- */}
-                    <div className="search-results-list" style={{width: '100%'}}> {/* Make list full width if no filter */}
+                    <div className="search-results-list" style={{width: '100%'}}> 
                         {loading && <p>Loading users...</p>}
                         {error && <p style={{ color: 'red' }}>{error}</p>}
                         {!loading && !error && users.length === 0 && <p>No users found.</p>}
 
-                        {/* Map over fetched 'users' state */}
                         {!loading && !error && users.map((user) => (
                             // Use user_id for the key
                             <div key={user.user_id} className="search-result-item"> 
                                 <div className="result-info">
                                     <div className='result-text-info'>
-                                        {/* Link to a user profile page (optional) */}
                                         <h2 className='result-title'>
-                                           {/* --- MODIFIED: Use Link with dynamic user_id --- */}
                                             <Link to={`/user/${user.user_id}`} className="result-link">
                                                 {user.firstName} {user.lastName}
                                             </Link>
-                                            {/* --- END MODIFIED --- */}
                                         </h2>
                                         <div className="result-description">
                                             <div className="result-details">
@@ -349,7 +315,6 @@ function ManageUsers() {
                                                         Deactivated
                                                     </span>
                                                 )}
-                                                {/* --- END ADD --- */}
                                                 </p>
                                             </div>
                                             {/* --- TODO: Fetch these counts separately if needed --- */}
@@ -369,11 +334,9 @@ function ManageUsers() {
                             </div>
                         ))}
                     </div>
-                    {/* --- END MODIFIED User List --- */}
                 </div>
             </div>
         </div>
-        {/* --- MODIFIED Add User Sheet Form --- */}
         {showAddUserSheet && (isLibrarian || isAssistantLibrarian) && (
             <div className="sheet-overlay" onClick={() => !isSubmitting && setShowAddUserSheet(false)}>
                 <div className="sheet-container" onClick={(e) => e.stopPropagation()}>
@@ -385,7 +348,6 @@ function ManageUsers() {
                     <label> Email: <input type="email" className="edit-input" name="email" value={newUser.email} onChange={handleInputChange} required /> </label>
                     <label> Temporary Password: <input type="password" className="edit-input" name="temporaryPassword" value={newUser.temporaryPassword} onChange={handleInputChange} required /> </label>
                     
-                    {/* 💡 MODIFIED: Role Selection Dropdown */}
                     <label> Role:
                         <select name="role" className="edit-input" value={newUser.role} onChange={handleInputChange} required>
                             {getAvailableUserRoles().map(role => (
@@ -398,7 +360,6 @@ function ManageUsers() {
                     {newUser.role === 'Staff' && isLibrarian && (
                         <label> Staff Role:
                             <select name="staffRole" className="edit-input" value={newUser.staffRole} onChange={handleInputChange} required>
-                                {/* These values MUST match the 'role_name' in your STAFF_ROLES table */}
                                 <option value="Clerk">Clerk</option>
                                 <option value="Assistant Librarian">Assistant Librarian</option>
                             </select>
