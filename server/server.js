@@ -10,7 +10,7 @@ const {
     createBook, updateBook, 
     createMovie, updateMovie, 
     createDevice, updateDevice,
-    deleteItem 
+    deleteItem, reactivateItem 
 } = require('./controllers/itemController');
 
 const { 
@@ -84,6 +84,10 @@ const server = http.createServer((req, res) => {
         } else if (req.url.match(/^\/api\/items\/([a-zA-Z0-9-]+)$/) && req.method === 'DELETE') {
             const id = req.url.split('/')[3];
             staffProtect(req, res, () => deleteItem(req, res, id));
+        }
+        else if (req.url.match(/^\/api\/items\/([a-zA-Z0-9-]+)\/reactivate$/) && req.method === 'PUT') {
+            const id = req.url.split('/')[3];
+            staffProtect(req, res, () => reactivateItem(req, res, id));
         }
 
         else if (req.url.match(/^\/api\/users\/([a-zA-Z0-9-]+)$/) && req.method === 'GET') { 

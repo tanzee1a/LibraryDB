@@ -169,6 +169,29 @@ async function remove(id) {
     await db.query(sql, [id]);
 }
 
+// --- SOFT DELETE ITEM (Mark as 'DELETED') ---
+async function softDeleteById(id) {
+    // This updates the item's status instead of permanently deleting it
+    const sql = "UPDATE ITEM SET status = 'DELETED' WHERE item_id = ?";
+    
+    // We can also add a check to only update if it's currently active
+    // const sql = "UPDATE ITEM SET status = 'DELETED' WHERE item_id = ? AND status = 'ACTIVE'";
+    
+    // The simpler query above is also fine.
+    await db.query(sql, [id]);
+}
+
+// --- REACTIVATE ITEM (Mark as 'ACTIVE') ---
+async function reactivateById(id) {
+    // This query sets the status back to 'ACTIVE'
+    // It's also a good idea to only update it if it's currently 'DELETED'
+    const sql = "UPDATE ITEM SET status = 'ACTIVE' WHERE item_id = ? AND status = 'DELETED'";
+    
+    // We can use db.query and check affectedRows
+    const [result] = await db.query(sql, [id]);
+    return result.affectedRows; // Will be 1 if successful, 0 if not found or already active
+}
+
 async function findAllLanguages() {
     // Select only the needed columns from the LANGUAGE table
     const sql = 'SELECT language_id, name FROM LANGUAGE ORDER BY name'; // Order by name
@@ -540,6 +563,8 @@ module.exports = {
     findAllMovieFormats,
     findAllTags,
     remove,
+    softDeleteById,
+    reactivateById,
     createBook,
     updateBook,
     createMovie,
