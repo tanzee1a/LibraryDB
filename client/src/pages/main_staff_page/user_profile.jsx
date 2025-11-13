@@ -43,7 +43,7 @@ function UserProfile() {
     const [loggedInUserStaffRole, setLoggedInUserStaffRole] = useState(null); 
     const [loggedInUserId, setLoggedInUserId] = useState(null);
     const isSelf = String(userId) === String(loggedInUserId);
-
+    
 
 
     // --- Currency Formatter ---
@@ -164,6 +164,10 @@ function UserProfile() {
     function handleEditToggle() {
         if (isSelf) { 
             alert("You cannot edit your own details from Manage Users. Please go to account dashboard.");
+            return; // Stop the function immediately
+        }
+        if (isBlockedFromEditing) {
+            alert("You do not have the necessary permissions to edit this user's details.");
             return; // Stop the function immediately
         }
         if (isEditing) {
@@ -417,10 +421,14 @@ function UserProfile() {
     if (!user) return <div className="page-container"><p>User not found.</p></div>; // Should not happen if fetch works
     // --- End States ---
 
-    const isOriginalRoleStaff = user.role === 'Staff' || user.role === 'Admin';
+    const isOriginalRoleStaff = user?.role === 'Staff' || user.role === 'Admin';
 
     const isAssistantLibrarian = loggedInUserStaffRole === 'Assistant Librarian';
     const shouldHideStaffRoleEdit = isAssistantLibrarian && isOriginalRoleStaff;
+
+    const isHeadLibrarian = user?.staff_role === 'Librarian';
+    const isBlockedFromEditing = isAssistantLibrarian && isHeadLibrarian;
+
 
     return (
         <div>
@@ -481,7 +489,6 @@ function UserProfile() {
                             /* CASE 2: User IS staff */
                             <>
                                 {shouldHideStaffRoleEdit ? (
-                                // 🛑 RENDER NOTHING or a Note if restricted
                                 null
                             ) : (
                                 <>
