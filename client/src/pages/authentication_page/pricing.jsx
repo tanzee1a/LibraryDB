@@ -1,16 +1,15 @@
 import { Link } from 'react-router-dom'
 import './pricing.css'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 import Logo from "../../assets/logo-dark.webp"
 import { BsPeopleFill } from "react-icons/bs";
-import { FaTicket } from "react-icons/fa6";
 import { FaGraduationCap, FaSchool } from "react-icons/fa";
+import { FaStar } from "react-icons/fa6";
 
 function Pricing() {
     const tiers = [
         { icon: <BsPeopleFill />, name: 'Guest', price: 'Free', borrowLimits: 0 },
-        { icon: <FaTicket />, name: 'Patron', price: '$10', borrowLimits: 10, monthly: true },
+        { icon: <FaStar />, name: 'Patron', price: '$10', borrowLimits: 10, monthly: true },
         { icon: <FaGraduationCap />, name: 'Student', price: 'Free*', borrowLimits: 10, },
         { icon: <FaSchool />, name: 'Faculty', price: 'Free*', borrowLimits: 25, },
     ]
