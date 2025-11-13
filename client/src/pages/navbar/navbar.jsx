@@ -101,10 +101,6 @@ const Navbar = ({
                         </div>
                     </li>
                     ))}
-                    {/* <li><Link to="/search?category=BOOK">Books</Link></li>
-                    <li><Link to="/search?category=MOVIE">Movies</Link></li>
-                    <li><Link to="/search?category=DEVICE">Devices</Link></li> */}
-
                     {/* Search Dropdown */}
                     {renderSearchDropdown()}
                     {/* Login/Register Links */}
@@ -164,12 +160,15 @@ const Navbar = ({
                                 <a
                                     href="#"
                                         onClick={(e) => {
-                                        e.preventDefault(); // 🛑 Critical Fix: Prevents browser race condition
+                                        e.preventDefault(); 
                                         localStorage.removeItem('authToken');
                                         localStorage.removeItem('userRole');
+                                        localStorage.removeItem('staffRole');
+                                        localStorage.removeItem('userFirstName');
+                                        localStorage.removeItem('userId');
                                         setIsStaff(false);
                                         setIsLoggedIn(false); 
-                                        navigate('/login');                                    
+                                        navigate('/login');
                                     }}
                                 >
                                 Log out
@@ -255,7 +254,9 @@ const Navbar = ({
                                             e.preventDefault(); 
                                             localStorage.removeItem('authToken');
                                             localStorage.removeItem('userRole');
+                                            localStorage.removeItem('staffRole');
                                             localStorage.removeItem('userFirstName');
+                                            localStorage.removeItem('userId');
                                             setIsStaff(false);
                                             setIsLoggedIn(false); 
                                             navigate('/login');
