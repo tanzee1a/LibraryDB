@@ -13,8 +13,8 @@ const reportTypeOptions = [
   { key: 'items', label: 'Popular Items', endpoint: '/api/reports/popular-items', description: 'List the most borrowed items.' },
   { key: 'overdues', label: 'Overdue Items', endpoint: '/api/reports/overdue-items', description: 'List of items that are currently overdue along with borrower details.' },
   { key: 'fines', label: 'Outstanding Fines', endpoint: '/api/reports/outstanding-fines', description: 'Summarizes outstanding fines owed by users. Our goal is to minimize this list as much as we can by reaching out to them to encourage timely payment.' },
-  { key: 'active_users', label: 'Active Users', endpoint: '/api/reports/active-users', description: 'We measure how active users are using how many times they borrow within a specified period.' },
-  { key: 'memberships', label: 'Memberships', endpoint: '/api/reports/memberships', description: 'Provide an overview of patron memberships. Used to active/expired memberships.' },
+  { key: 'active_users', label: 'Users', endpoint: '/api/reports/active-users', description: 'We measure how active users are using how many times they borrow within a specified period.' },
+  { key: 'memberships', label: 'Patrons', endpoint: '/api/reports/memberships', description: 'Provide an overview of patron memberships.' },
   { key: 'revenue', label: 'Revenue', endpoint: '/api/reports/revenue', description: 'Breakdown of revenue generated from fines and memberships.' },
 ];
 
@@ -27,7 +27,8 @@ function Reports() {
     const [dateRange, setDateRange] = useState({ from: '', to: '' });
     const [monthRange, setMonthRange] = useState({ from: '1', to: '12' });
     const [yearRange, setYearRange] = useState({ from: '2023', to: '2024' });
-    const [category, setCategory] = useState('');
+    const [param1, setParam1] = useState('');
+    const [param2, setParam2] = useState('');
     const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -86,7 +87,7 @@ function Reports() {
                 specificFilters.push(
                     <div className="filter-group" key="category-filter">
                         <label>Category:</label>
-                        <select value={category} onChange={e => setCategory(e.target.value)}>
+                        <select value={param1} onChange={e => setParam1(e.target.value)}>
                             <option value="">ALL</option>
                             <option value="BOOK">Book</option>
                             <option value="MOVIE">Movie</option>
@@ -99,7 +100,7 @@ function Reports() {
                 specificFilters.push(
                     <div className="filter-group" key="category-filter">
                         <label>User Role:</label>
-                        <select value={category} onChange={e => setCategory(e.target.value)}>
+                        <select value={param1} onChange={e => setParam1(e.target.value)}>
                             <option value="">All</option>
                             <option value="1">Student</option>
                             <option value="2">Patron</option>
@@ -107,15 +108,28 @@ function Reports() {
                         </select>
                     </div>
                 );
+                specificFilters.push(
+                    <div className="filter-group" key="category-filter">
+                        <label>Min Borrow Count:</label>
+                        <input
+                            type="number"
+                            min="0"
+                            value={param2}
+                            onChange={e => setParam2(e.target.value)}
+                        />
+                    </div>
+                );
                 break;
             case 'memberships':
                 specificFilters.push(
                     <div className="filter-group" key="category-filter">
                         <label>Status:</label>
-                        <select value={category || "ACTIVE"} onChange={e => setCategory(e.target.value)}>
+                        <select value={param1 || ""} onChange={e => setParam1(e.target.value)}>
                             <option value="">All</option>
-                            <option value="ACTIVE">Active</option>
-                            <option value="EXPIRED">Expired</option>
+                            <option value="Not Enrolled">Not Enrolled</option>
+                            <option value="Active">Active</option>
+                            <option value="Canceled">Canceled</option>
+                            <option value="Expired">Expired</option>
                         </select>
                     </div>
                 );
@@ -146,7 +160,7 @@ function Reports() {
                         setDateRange({ from: '', to: '' });
                         setMonthRange({ from: '1', to: '12' });
                         setYearRange({ from: '2023', to: '2024' });
-                        setCategory('');
+                        setParam1('');
                         }}
                     >
                         Clear Filters
@@ -183,13 +197,14 @@ function Reports() {
             switch (selectedType) {
                 case 'genres':
                 case 'items':
-                    if (category) params.append('category', category);
+                    if (param1) params.append('category', param1);
                     break;
                 case 'active_users':
-                    if (category) params.append('role', category);
+                    if (param1) params.append('role', param1);
+                    if (param2) params.append('minBorrow', param2);
                     break;
                 case 'memberships':
-                    if (category) params.append('status', category);
+                    if (param1) params.append('status', param1);
                     break;
                 default:
                     break;
@@ -340,7 +355,7 @@ function Reports() {
                 if (!userSummary) return null;
                 return (
                     <div className="revenue-summary">
-                        <h3>Total Active Users: {userSummary.totalUsers}</h3>
+                        <h3>Total Users: {userSummary.totalUsers}</h3>
                         <Pie
                             data={{
                                 labels: Object.keys(userSummary.totals),
@@ -374,7 +389,7 @@ function Reports() {
                 if (!membershipSummary) return null;
                 return (
                     <div className="revenue-summary">
-                        <h3>Total Memberships: {membershipSummary.totalMemberships}</h3>
+                        <h3>Total Patrons: {membershipSummary.totalMemberships}</h3>
                         <Pie
                             data={{
                                 labels: Object.keys(membershipSummary.totals),
