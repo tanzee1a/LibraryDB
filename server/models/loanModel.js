@@ -641,12 +641,13 @@ async function findAllBorrows(searchTerm, filters = {}, sort = 'borrow_newest') 
             u.firstName LIKE ? OR
             u.lastName LIKE ? OR
             u.email LIKE ? OR
+            i.item_id LIKE ? OR
             bk.title LIKE ? OR
             m.title LIKE ? OR
             d.device_name LIKE ?
         )`);
-        // Add 7 params for each ?
-        params.push(queryTerm, queryTerm, queryTerm, queryTerm, queryTerm, queryTerm, queryTerm);
+        // Add 8 params for each ?
+        params.push(queryTerm, queryTerm, queryTerm, queryTerm, queryTerm, queryTerm, queryTerm, queryTerm);
     }
 
     // --- Filter Logic ---
@@ -685,11 +686,13 @@ async function findAllBorrows(searchTerm, filters = {}, sort = 'borrow_newest') 
     return rows;
 }
 
-async function findAllHolds(filters = {}) {
+async function findAllHolds(searchTerm, filters = {}, sort = 'requested_newest') {
     let whereClauses = [];
     let queryParams = [];
+    
+    const statusFilters = filters.status ? filters.status.split(',') : [];
 
-    const sql = `
+    const baseSql = `
         SELECT 
             h.hold_id, 
             h.item_id,
@@ -717,20 +720,75 @@ async function findAllHolds(filters = {}) {
         LEFT JOIN BOOK bk ON i.item_id = bk.item_id AND i.category = 'BOOK'
         LEFT JOIN MOVIE m ON i.item_id = m.item_id AND i.category = 'MOVIE'
         LEFT JOIN DEVICE d ON i.item_id = d.item_id AND i.category = 'DEVICE'
-        ORDER BY h.created_at DESC;
     `;
-    console.log("findAllHolds: Fetching all holds..."); 
-    const [rows] = await db.query(sql, queryParams); 
 
-    let filteredRows = rows;
-    if (filters.status) {
-        const statusFilters = filters.status.split(',');
-         console.log("Filtering by status:", statusFilters); 
-        filteredRows = rows.filter(row => statusFilters.includes(row.hold_status));
+    // 2. Add Search Term logic
+    if (searchTerm.trim()) {
+        const queryTerm = `%${searchTerm}%`;
+        whereClauses.push(`(
+            u.firstName LIKE ? OR
+            u.lastName LIKE ? OR
+            u.email LIKE ? OR
+            i.item_id LIKE ? OR
+            bk.title LIKE ? OR
+            m.title LIKE ? OR
+            d.device_name LIKE ? OR
+            h.hold_id LIKE ?
+        )`);
+        // Add 8 params for each ?
+        queryParams.push(queryTerm, queryTerm, queryTerm, queryTerm, queryTerm, queryTerm, queryTerm, queryTerm);
+    }
+    
+    // 3. Add Status Filter logic (using HAVING for the calculated column)
+    let havingClauses = [];
+    if (statusFilters.length > 0) {
+        havingClauses.push(`hold_status IN (?)`);
+        queryParams.push(statusFilters); // This param will be added after the search params
     }
 
-    console.log(`findAllHolds: Returning ${filteredRows.length} rows after filtering.`);
-    return filteredRows; 
+    // 4. Assemble Final SQL
+    let finalSql = baseSql;
+    if (whereClauses.length > 0) {
+        finalSql += ` WHERE ${whereClauses.join(' AND ')}`;
+    }
+
+    finalSql += ` GROUP BY h.hold_id`; // GROUP BY is needed to use HAVING
+
+    if (havingClauses.length > 0) {
+        finalSql += ` HAVING ${havingClauses.join(' AND ')}`;
+    }
+
+    let orderByClause = ' ORDER BY h.created_at DESC'; // Default
+    switch (sort) {
+        case 'requested_oldest':
+            orderByClause = ' ORDER BY h.created_at ASC';
+            break;
+        case 'expires_soonest':
+            orderByClause = ' ORDER BY h.expires_at ASC';
+            break;
+        case 'expires_latest':
+            orderByClause = ' ORDER BY h.expires_at DESC';
+            break;
+        case 'title_asc':
+            orderByClause = ' ORDER BY item_title ASC';
+            break;
+        case 'title_desc':
+            orderByClause = ' ORDER BY item_title DESC';
+            break;
+        case 'requested_newest':
+        default:
+            orderByClause = ' ORDER BY h.created_at DESC';
+    }
+    finalSql += orderByClause;
+
+    console.log("findAllHolds: Fetching all holds..."); 
+    console.log("Executing SQL:", finalSql);
+    console.log("With Params:", queryParams);
+
+    const [rows] = await db.query(finalSql, queryParams); 
+
+    console.log(`findAllHolds: Returning ${rows.length} rows.`);
+    return rows; 
 }
 
 async function cancelHold(holdId, staffUserId) {

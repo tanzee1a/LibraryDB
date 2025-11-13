@@ -287,7 +287,7 @@ function ManageBorrows() {
                         </button>
                         <input 
                             type="text" 
-                            placeholder="Search borrows by ID, item title, or user..." 
+                            placeholder="Search borrows (by ID, item, user...)" 
                             className="search-result-search-bar"
                             value={localSearchTerm}
                             onChange={(e) => setLocalSearchTerm(e.target.value)}

@@ -336,13 +336,15 @@ async function getAllStatus(req, res) {
 async function getAllHolds(req, res) {
     try {
         const parsedUrl = url.parse(req.url, true);
+        const searchTerm = parsedUrl.query.q || '';
+        const sort = parsedUrl.query.sort || 'requested_newest'; // Default sort
         const filters = parsedUrl.query;
+        delete filters.q;
+        delete filters.sort;
         
-        // --- ADDED: Log received filters ---
         console.log("getAllHolds controller: Received request. Filters:", filters); 
-        // --- END ADDED ---
 
-        const holds = await Loan.findAllHolds(filters); 
+        const holds = await Loan.findAllHolds(searchTerm, filters, sort);
         
         console.log("getAllHolds controller: Sending response. Count:", holds.length); // Added count
         res.writeHead(200, { /* ... headers ... */ });
