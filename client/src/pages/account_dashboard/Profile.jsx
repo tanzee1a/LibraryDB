@@ -82,10 +82,8 @@ function getStatusFromData(data) {
     const token = getToken();
     const headers = {
       'Content-Type': 'application/json',
-      // KEY FIX: Attach the token to authorize the request
       'Authorization': `Bearer ${token}` 
     };
-    // NOTE: You need to create this '/api/my-profile' endpoint on the backend!
     fetch(`${API_BASE_URL}/api/my-profile`, { headers })
     .then(res => res.ok ? res.json() : Promise.reject('Failed fetch'))
       .then(data => {
@@ -561,7 +559,7 @@ const handleMembershipFormChange = (e) => {
           />
           {membershipErrors.billingAddress && <p style={errorStyle}>{membershipErrors.billingAddress}</p>}
 
-          <button type="submit" className="btn primary-button">Sign Up</button>
+          <button type="submit" className="action-button primary-button">Sign Up</button>
       </form>
     )
   }

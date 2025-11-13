@@ -26,10 +26,8 @@ function Login({ setIsStaff, setIsLoggedIn }) {
        // 1. Persist the data
       localStorage.setItem('authToken', data.token);
       localStorage.setItem('userRole', data.user.role);
-      localStorage.setItem('userFirstName', data.user.firstName);
       localStorage.setItem('staffRole', data.user.staffRole); // Librarian / Assistant Librarian / null
-
-
+      localStorage.setItem('userId', data.user.user_id);
 
       // 2. Update React state immediately (optional, but good practice)
       const isStaffUser = data.user.role === 'Staff';
