@@ -343,6 +343,14 @@ function SearchResults({ isStaff }) {
         setIsSubmitting(true);
         setSubmitError('');
 
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            setSubmitError('Authentication required. Please log in.');
+            setIsSubmitting(false);
+            // This is what likely generated your "Error: Not authorized, no token" log
+            return; 
+        }
+
         // 1. Determine Endpoint and Prepare Base Data
         let endpoint = '';
         const commonData = {
@@ -405,7 +413,10 @@ function SearchResults({ isStaff }) {
         try {
             const response = await fetch(`${API_BASE_URL}${endpoint}`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}` 
+                },
                 body: JSON.stringify(payload)
             });
 
