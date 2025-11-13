@@ -16,27 +16,21 @@ async function searchItems(req, res) {
         delete filters.searchType // Remove 'searchType' itself from filters object
 
 
-        const basicResults = await Search.searchItems(searchTerm, filters, searchType);
+        const results = await Search.searchItems(searchTerm, filters, searchType);
 
         // 3. If no basic results, return empty
-        if (!basicResults || basicResults.length === 0) {
+        if (!results || results.length === 0) {
             res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
             return res.end(JSON.stringify([]));
         }
 
-        // 4. "Hydrate" the basic results with full details using Item.findById
-        const detailedResults = await Promise.all(
-            basicResults.map(item => Item.findById(item.item_id)) //
-        );
-
-        // 5. Send the new, detailed results array
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-        res.end(JSON.stringify(detailedResults));
+        res.end(JSON.stringify(results));
 
     } catch (error) {
-        console.error("Error in searchItems controller:", error); //
-        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }); //
-        res.end(JSON.stringify({ message: 'Search failed', error: error.message })); //
+        console.error("Error in searchItems controller:", error); 
+        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }); 
+        res.end(JSON.stringify({ message: 'Search failed', error: error.message })); 
     }
 }
 

@@ -219,8 +219,6 @@ function SearchResults({ isStaff }) {
         let sorted = [...results];
         if (sortType === "title_asc") sorted.sort((a, b) => a.title.localeCompare(b.title));
         if (sortType === "title_desc") sorted.sort((a, b) => b.title.localeCompare(a.title));
-        if (sortType === "newest") sorted.sort((a, b) => (b.release_year || 0) - (a.release_year || 0));
-        if (sortType === "oldest") sorted.sort((a, b) => (a.release_year || 0) - (b.release_year || 0));
         setResults(sorted);
     };
 
@@ -576,7 +574,6 @@ function SearchResults({ isStaff }) {
                             onChange={(e) => handleSortChange(e.target.value)}
                             defaultValue=""
                         >
-                            <option value="" disabled></option>
                             <option value="title_asc">Title (A–Z)</option>
                             <option value="title_desc">Title (Z–A)</option>
                         </select>
