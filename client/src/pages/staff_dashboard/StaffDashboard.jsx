@@ -173,7 +173,7 @@ function StaffDashboard() {
           <small>View and resolve outstanding fines.</small>
         </Link>
         )}
-        {isHeadLibrarian && (
+        {(isHeadLibrarian || isAssistLibrarian) && (
           <Link to="/reports" className="action-card"> 
             <IoDocumentTextOutline className="action-icon" />
             Generate Reports

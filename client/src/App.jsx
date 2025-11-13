@@ -229,9 +229,9 @@ function App() {
         <Route 
           path="/reports" 
           element={
-            <LibrarianRoute>
+            <AssistLibRoute>
               <Reports />
-            </LibrarianRoute>
+            </AssistLibRoute>
           } 
         />
         

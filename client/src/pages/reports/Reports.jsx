@@ -8,6 +8,20 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
+
+const decodeToken = (token) => {
+    try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        return JSON.parse(jsonPayload);
+    } catch (e) {
+        return null;
+    }
+};
+
 const reportTypeOptions = [
   { key: 'genres', label: 'Popular Genres', endpoint: '/api/reports/popular-genres', description: 'Shows the most popular genres based on borrow counts. Note: An item can have multiple genres. Hence, borrow counts may overlap.' },
   { key: 'items', label: 'Popular Items', endpoint: '/api/reports/popular-items', description: 'List the most borrowed items.' },
@@ -31,6 +45,36 @@ function Reports() {
     const [param2, setParam2] = useState('');
     const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
     const [searchQuery, setSearchQuery] = useState('');
+    const [loggedInUserStaffRole, setLoggedInUserStaffRole] = useState(null); 
+    const isAssistantLibrarian = loggedInUserStaffRole === 'Assistant Librarian';
+
+    useEffect(() => {
+        const token = localStorage.getItem('authToken');
+        if (token) {
+            const decoded = decodeToken(token);
+            if (decoded && decoded.staffRole) {
+                setLoggedInUserStaffRole(decoded.staffRole);
+            }
+        }
+    }, []);
+
+    const availableReportOptions = React.useMemo(() => {
+        if (isAssistantLibrarian) {
+            // Filter out the 'revenue' report
+            const filteredOptions = reportTypeOptions.filter(
+                (option) => option.key !== 'revenue'
+            );
+            
+            // If the currently selected report is 'revenue', default to the first available one
+            if (selectedType === 'revenue') {
+                setSelectedType(filteredOptions[0].key);
+            }
+            
+            return filteredOptions;
+        }
+        // For Admin/Librarian/Clerk, return all options
+        return reportTypeOptions;
+    }, [isAssistantLibrarian, selectedType]);
 
     // Fetch data when selectedReportKey changes (NO CHANGES NEEDED HERE)
     useEffect(() => {
@@ -510,7 +554,7 @@ function Reports() {
             <div className='reports-container'>
                 <h1>Library Reports</h1>
                 <div className="report-tabs">
-                {reportTypeOptions.map(type => (
+                {availableReportOptions.map(type => ( 
                     <button
                     key={type.key}
                     className={`tab-button ${selectedType === type.key ? 'active' : ''}`}
