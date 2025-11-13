@@ -13,17 +13,14 @@ export default function UserProfile() {
     if (!token) {
         console.error("Authentication Error: No token found. User needs to log in.");
         setLoading(false);
-        // You might want to redirect to the login page here
         return; 
     }
 
     // 2. Construct the headers object with the Authorization header
     const headers = {
       'Content-Type': 'application/json',
-      // KEY FIX: Attach the token to authorize the request
       'Authorization': `Bearer ${token}` 
     };
-    // NOTE: You need to create this '/api/my-profile' endpoint on the backend!
     fetch(`${API_BASE_URL}/api/my-profile`, { headers })
     .then(res => res.ok ? res.json() : Promise.reject('Failed fetch'))
       .then(data => {
@@ -59,7 +56,6 @@ export default function UserProfile() {
       <div className="profile-card">
         <IoPersonCircleOutline className="avatar-icon" aria-hidden="true" />
         <div>
-          {/* Use data fetched from the API */}
           <div className="item-title">{user.firstName} {user.lastName}</div>
           <div className="profile-meta">User Email: {user.email}</div>
         </div>

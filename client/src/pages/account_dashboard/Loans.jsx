@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-// Remove IoBookOutline if no longer needed
-// --- ADD THIS LINE AT THE TOP of Loans.jsx ---
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
-// --- END ADD ---
+
 export default function Loans() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -24,7 +23,7 @@ export default function Loans() {
     // 2. Construct the headers object with the Authorization header
     const headers = {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}` // 🔑 KEY FIX: Attach the token
+      'Authorization': `Bearer ${token}`
     };
 
     setLoading(true);
@@ -39,7 +38,6 @@ export default function Loans() {
     fetchLoans();
   }, []); 
 
-  // --- REMOVED handleReturn function ---
 
   // --- Render Logic ---
   if (loading) return <div>Loading your borrowed items…</div>;
@@ -52,20 +50,17 @@ export default function Loans() {
         const due = item.due_date; 
         return (
           <li key={item.borrow_id} className="list-item">
-            {/* Replace Icon with Image */}
             <img 
-              src={item.thumbnail_url || '/placeholder-image.png'} // Use thumbnail or a placeholder
+              src={item.thumbnail_url || '/placeholder-image.png'} 
               alt={item.title} 
-              className="thumb" // Use 'thumb' class from AccountDashboard.css
-              onError={(e) => { e.target.onerror = null; e.target.src='/placeholder-image.png'; }} // Handle broken image links
+              className="thumb" 
+              onError={(e) => { e.target.onerror = null; e.target.src='/placeholder-image.png'; }} 
             />
             <div>
               <div className="item-title"><a className='result-link' href={`/item/${item.item_id}`}>{item.title}</a></div>
               <div className="item-sub">Due by {new Date(due).toLocaleDateString()}</div>
             </div>
-            {/* --- REMOVED BUTTONS --- */}
             <div>
-              {/* No buttons needed here for patrons */}
             </div>
           </li>
         );

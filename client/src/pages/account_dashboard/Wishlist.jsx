@@ -21,7 +21,6 @@ export default function Wishlist() {
     };
   };
 
-  // --- MODIFIED: Fetch Wishlist Only ---
   const fetchWishlist = () => {
     const headers = getAuthHeaders();
 
@@ -34,7 +33,6 @@ export default function Wishlist() {
 
     setLoading(true);
     setError('');
-    // Removed Promise.all, just fetch wishlist
     fetch(`${API_BASE_URL}/api/my-wishlist`, { headers })
       .then(r => {
         if (r.ok) return r.json();
@@ -52,10 +50,9 @@ export default function Wishlist() {
   };
 
   useEffect(() => {
-    fetchWishlist(); // Call the renamed function
+    fetchWishlist(); 
   }, []);
 
-  // --- Handle Remove from Wishlist (No change) ---
   const handleUnsave = (itemId) => {
     const headers = getAuthHeaders();
 
@@ -74,7 +71,7 @@ export default function Wishlist() {
           return r.json(); 
       })
       .then(() => {
-          fetchWishlist(); // Refresh list by calling the renamed function
+          fetchWishlist(); 
       })
       .catch((err) => {
         console.error("Unsave Item Error:", err);
@@ -88,11 +85,6 @@ export default function Wishlist() {
 
   return (
     <div>
-      {/* Removed the entire "Holds" section */}
-
-      {/* Section for Wishlist (Saved Items) */}
-      {/* This h4 is optional, you may want to control it in the dashboard */}
-      {/* <h4 style={{ marginTop: '20px' }}>Saved for Later</h4> */}
       {wishlistItems.length === 0 ? (
         <div className="list-item" style={{ padding: '8px 0' }}>
           <div className="thumb-icon" aria-hidden="true"><IoHeartOutline /></div>

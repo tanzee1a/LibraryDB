@@ -7,9 +7,8 @@ export default function UserProfile() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  // const [membershipStatus, setMembershipStatus] = useState('expired'); // new, active, canceled, expired
-  const [membershipStatus, setMembershipStatus] = useState(null); // <-- Set to null initially
-  const [membershipInfo, setMembershipInfo] = useState(null); // <-- Store membership details
+  const [membershipStatus, setMembershipStatus] = useState(null); 
+  const [membershipInfo, setMembershipInfo] = useState(null); 
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',
     newPassword: '',
@@ -23,16 +22,6 @@ export default function UserProfile() {
   });
   const [emailChangeMessage, setEmailChangeMessage] = useState({ type: '', text: '' });
 
-
-// const membershipSample = { ... } // <-- REMOVE THIS
-/*
-  const membershipSample = {
-    status: 'active', // 'active', 'canceled', 'expired'
-    cardNumber: '1234567891234',
-    signupDate: '2024-01-15T12:00:00Z',
-    expireDate: '2024-02-15T12:00:00Z',
-  }
-*/
   // Membership form state
   const [membershipForm, setMembershipForm] = useState({
     name: '',
@@ -54,10 +43,9 @@ export default function UserProfile() {
     return token;
   }
 
-   // Add this helper function inside your Profile component
   function getStatusFromData(data) {
       if (!data.membership_status) {
-          return 'new'; // User has never had a membership
+          return 'new'; 
       }
 
       const isExpired = new Date(data.expires_at) < new Date();
@@ -88,8 +76,8 @@ export default function UserProfile() {
     .then(res => res.ok ? res.json() : Promise.reject('Failed fetch'))
       .then(data => {
         setUser(data);
-        setMembershipStatus(data.membership_status); // <-- Use backend status
-        setMembershipInfo({ // Store the details for rendering
+        setMembershipStatus(data.membership_status); 
+        setMembershipInfo({ 
           cardNumber: data.card_last_four,
           expireDate: data.expires_at
         });
@@ -122,7 +110,7 @@ export default function UserProfile() {
 
     const body = JSON.stringify({ 
         currentPassword, 
-        newPassword // Only send necessary fields
+        newPassword 
     });
 
     fetch(`${API_BASE_URL}/api/my-profile/change-password`, {
@@ -133,7 +121,6 @@ export default function UserProfile() {
     .then(async res => {
         const data = await res.json();
         if (!res.ok) {
-            // Backend sends 401 for incorrect current password or 500 for server error
             throw new Error(data.message || 'Failed to change password.');
         }
         return data;
@@ -149,7 +136,7 @@ export default function UserProfile() {
     }); 
   }
 
-   // --- NEW RENDER FUNCTION ---
+   // --- RENDER FUNCTION ---
   function renderPasswordChangeSection() {
       if (user?.role === 'Staff' || user?.role === 'Admin') {
           return <p className='small-spacing'>Staff password management is handled internally.</p>;
@@ -219,7 +206,7 @@ export default function UserProfile() {
   
       const body = JSON.stringify({ newEmail });
   
-      fetch(`${API_BASE_URL}/api/my-profile/email`, { // <-- NEW ENDPOINT
+      fetch(`${API_BASE_URL}/api/my-profile/email`, { 
           method: 'POST',
           headers,
           body,
@@ -227,7 +214,6 @@ export default function UserProfile() {
       .then(async res => {
           const data = await res.json();
           if (!res.ok) {
-              // Backend sends 400 for duplicate/invalid email or 500
               throw new Error(data.message || 'Failed to change email.');
           }
           return data;
@@ -239,7 +225,6 @@ export default function UserProfile() {
               text: data.message || 'Email updated successfully. Please log out and log back in with your new email.' 
           });
           setEmailForm({ newEmail: '', confirmNewEmail: '' });
-          // Optionally: localStorage.removeItem('authToken'); navigate('/login'); for immediate logout
       })
       .catch(err => {
           console.error("Email change error:", err);
@@ -247,10 +232,8 @@ export default function UserProfile() {
       }); 
   }
 
-  // UserProfile.jsx (after renderPasswordChangeSection)
 
 function renderEmailChangeSection() {
-  // Prevent staff from using this form, as their email might be tied to internal systems.
   if (user?.role === 'Staff' || user?.role === 'Admin') {
       return <p className='small-spacing'>Staff email updates are handled by administration.</p>;
   }
@@ -302,20 +285,15 @@ function renderEmailChangeSection() {
   function handleMembershipSignup(e) {
     e.preventDefault();
 
-    // 1. Clear old errors
     setMembershipErrors({});
 
-    // 2. Validate the form
     const errors = validateMembershipForm();
     
-    // 3. If there are errors, update state and stop
     if (Object.keys(errors).length > 0) {
       setMembershipErrors(errors);
       return; // Stop the submission
     }
 
-    // --- 4. THIS IS THE LOGIC THAT WAS IN THE WRONG PLACE ---
-    // Get the data we need for the UI *before* the fetch
     const lastFour = membershipForm.cardNumber.slice(-4);
     
     // Convert the "MM/YY" string into a full ISO date string
@@ -325,10 +303,7 @@ function renderEmailChangeSection() {
         Number(expMonth), 
         0 
     ).toISOString();
-    // --- End of new logic ---
 
-
-    // 5. Submit new membership details to backend
     const token = getToken();
     if (!token) return;
     const headers = {
@@ -349,9 +324,6 @@ function renderEmailChangeSection() {
     .then(data => {
       setMembershipStatus('active'); 
       
-      // *** 6. THE FIX for "XXXX" ***
-      // Use the API response if it exists,
-      // otherwise fall back to the form data we saved.
       setMembershipInfo({
         cardNumber: data.card_last_four || lastFour, 
         expireDate: data.expires_at || newExpiryDateISO 
@@ -389,8 +361,8 @@ const handleMembershipFormChange = (e) => {
     // 3. Expiry Date: Format as MM/YY
     if (name === 'expDate') {
       processedValue = value
-        .replace(/\D/g, '') // Remove non-digits
-        .replace(/(\d{2})(\d)/, '$1/$2') // Add slash after first 2 digits
+        .replace(/\D/g, '') 
+        .replace(/(\d{2})(\d)/, '$1/$2') 
         .slice(0, 5); // Max 5 chars (MM/YY)
     }
 
@@ -413,7 +385,6 @@ const handleMembershipFormChange = (e) => {
     const errors = {};
     const { name, cardNumber, expDate, cvv, billingAddress } = membershipForm;
 
-    // Basic "required" checks (though 'required' on input helps)
     if (!name) errors.name = 'Name on card is required.';
     if (!billingAddress) errors.billingAddress = 'Billing address is required.';
 
@@ -493,7 +464,6 @@ const handleMembershipFormChange = (e) => {
   }
 
   function renderMembershipForm() {
-    // A simple helper style for errors
     const errorStyle = { color: 'red', fontSize: '0.9em', marginTop: '-5px' };
 
     return (
@@ -502,34 +472,33 @@ const handleMembershipFormChange = (e) => {
             className="input-field"
             type="text"
             placeholder="Name on Card"
-            name="name" // <-- ADD NAME
+            name="name" 
             value={membershipForm.name}
-            onChange={handleMembershipFormChange} // <-- USE NEW HANDLER
+            onChange={handleMembershipFormChange} 
             required
           />
           {membershipErrors.name && <p style={errorStyle}>{membershipErrors.name}</p>}
 
           <input
             className="input-field"
-            type="text" // <-- Use "text" to allow our formatting
+            type="text" 
             placeholder="Card Number"
-            name="cardNumber" // <-- ADD NAME
+            name="cardNumber" 
             value={membershipForm.cardNumber}
-            onChange={handleMembershipFormChange} // <-- USE NEW HANDLER
+            onChange={handleMembershipFormChange} 
             required
           />
           {membershipErrors.cardNumber && <p style={errorStyle}>{membershipErrors.cardNumber}</p>}
 
           <div className='flex'>
-            {/* Wrap inputs in a div to keep error messages with them */}
             <div style={{ flex: 1, marginRight: '5px' }}>
               <input
                 className="input-field input-field-small"
                 type="text" // <-- Use "text" for MM/YY
                 placeholder="Exp Date (MM/YY)"
-                name="expDate" // <-- ADD NAME
+                name="expDate"
                 value={membershipForm.expDate}
-                onChange={handleMembershipFormChange} // <-- USE NEW HANDLER
+                onChange={handleMembershipFormChange} 
                 required
               />
               {membershipErrors.expDate && <p style={errorStyle}>{membershipErrors.expDate}</p>}
@@ -538,11 +507,11 @@ const handleMembershipFormChange = (e) => {
             <div style={{ flex: 1, marginLeft: '5px' }}>
               <input
                 className="input-field input-field-small"
-                type="text" // <-- Use "text"
+                type="text" 
                 placeholder="CVV"
-                name="cvv" // <-- ADD NAME
+                name="cvv" 
                 value={membershipForm.cvv}
-                onChange={handleMembershipFormChange} // <-- USE NEW HANDLER
+                onChange={handleMembershipFormChange} 
                 required
               />
               {membershipErrors.cvv && <p style={errorStyle}>{membershipErrors.cvv}</p>}
@@ -552,9 +521,9 @@ const handleMembershipFormChange = (e) => {
             className="input-field"
             type="text"
             placeholder="Billing Address"
-            name="billingAddress" // <-- ADD NAME
+            name="billingAddress" 
             value={membershipForm.billingAddress}
-            onChange={handleMembershipFormChange} // <-- USE NEW HANDLER
+            onChange={handleMembershipFormChange} 
             required
           />
           {membershipErrors.billingAddress && <p style={errorStyle}>{membershipErrors.billingAddress}</p>}
@@ -574,7 +543,6 @@ const handleMembershipFormChange = (e) => {
           </>
         );
       case 'active': {
-        // Use membershipInfo from state, not membershipSample
         const cardEnding = membershipInfo?.cardNumber || 'XXXX'; 
         const expireDate = new Date(membershipInfo?.expireDate || Date.now());
         const nextBillingStr = expireDate.toLocaleDateString();
@@ -591,13 +559,11 @@ const handleMembershipFormChange = (e) => {
         );
       }
       case 'canceled': {
-        // Use membershipInfo from state, not membershipSample
         const expireDateC = new Date(membershipInfo?.expireDate || Date.now());
         const expireStr = expireDateC.toLocaleDateString();
         
         return (
           <>
-            {/* FIX: Was </Do>, changed to </p> */}
             <p>Your membership is expiring on {expireStr}.</p>
             <button className="btn primary" onClick={handleRenewMembership}>Join Back</button>
           </>
@@ -611,7 +577,6 @@ const handleMembershipFormChange = (e) => {
           </>
         );
       default:
-        // This handles the initial 'null' state while loading
         return <p>Loading membership details...</p>;
     }
   }

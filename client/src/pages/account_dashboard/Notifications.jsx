@@ -8,13 +8,12 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000
 function Notifications({ setUnreadCount = () => {} }) {
   const [allNotifications, setAllNotifications] = useState([]);
 
-  // Helper to get token (replace with your auth context/storage)
   const getToken = () => localStorage.getItem('authToken');
 
   const fetchNotifications = async () => {
     try {
       const token = getToken();
-      if (!token) return; // Don't fetch if not logged in
+      if (!token) return; 
 
       const res = await fetch(`${API_BASE_URL}/api/my-notifications`, {
         headers: {
@@ -80,7 +79,6 @@ function Notifications({ setUnreadCount = () => {} }) {
             <li key={notif.notification_id} className="list-item">
               <div className="thumb-icon" aria-hidden="true"><IoNotificationsOutline /></div>
               <div>
-                {/* Wrap title in Link if notif.link exists */}
                 {notif.link ? (
                   <Link to={notif.link} className="result-link">
                     <div className="item-title">{notif.title}</div>
@@ -112,7 +110,6 @@ function Notifications({ setUnreadCount = () => {} }) {
               <li key={notif.notification_id} className="list-item">
                 <div className="thumb-icon" aria-hidden="true"><IoNotificationsOutline /></div>
                 <div>
-                  {/* Wrap title in Link if notif.link exists */}
                   {notif.link ? (
                     <Link to={notif.link} className="result-link">
                       <div className="item-title">{notif.title}</div>

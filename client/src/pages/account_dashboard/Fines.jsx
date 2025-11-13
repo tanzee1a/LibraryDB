@@ -34,12 +34,12 @@ const Fines = () => {
     // 2. Construct the headers object with the Authorization header
     const headers = {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}` // 🔑 KEY FIX: Attach the token
+      'Authorization': `Bearer ${token}` 
     };
 
     setLoading(true);
     setError(null);
-    fetch(`${API_BASE_URL}/api/my-fines`, { headers }) // Fetch from your fines endpoint
+    fetch(`${API_BASE_URL}/api/my-fines`, { headers }) 
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch fines');
         return res.json();
@@ -73,17 +73,16 @@ const Fines = () => {
     // 2. Construct the headers object
     const headers = {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}` // 🔑 KEY FIX: Attach the token
+      'Authorization': `Bearer ${token}`
     };
 
     // 3. Call the new user-specific endpoint
-    return fetch(`${API_BASE_URL}/api/my-fines/${fineId}/pay`, { // 🔑 KEY FIX: Changed URL
+    return fetch(`${API_BASE_URL}/api/my-fines/${fineId}/pay`, { 
       method: 'POST',
-      headers: headers // 🔑 KEY FIX: Added headers
+      headers: headers
     }) 
       .then(res => {
         if (!res.ok) {
-           // Try to get a specific error message from the backend
            return res.json().then(errData => {
                throw new Error(errData.message || 'Payment failed');
            });
@@ -91,7 +90,7 @@ const Fines = () => {
         return res.json();
       })
       .then(() => {
-        fetchFines(); // Refresh list after paying
+        fetchFines(); 
       });
   };
 

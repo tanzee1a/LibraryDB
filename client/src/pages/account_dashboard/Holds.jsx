@@ -66,7 +66,7 @@ export default function Holds() {
         return;
     }
 
-    setCancelingId(holdId); // Set loading state for this specific item
+    setCancelingId(holdId); 
     setCancelError('');
 
     try {
@@ -117,7 +117,6 @@ export default function Holds() {
           {holds.map(h => (
             <li key={`hold-${h.hold_id}`} className="list-item">
               
-              {/* --- CHANGE 1: Wrap image in a Link --- */}
               <Link to={`/item/${h.item_id}`}>
                 <img 
                   src={h.thumbnail_url || '/placeholder-image.png'} 
@@ -128,25 +127,22 @@ export default function Holds() {
               </Link>
               
               <div>
-                {/* --- CHANGE 2: Change div to Link --- */}
                 <Link to={`/item/${h.item_id}`} className="item-title result-link">
                   {h.title}
                 </Link>
-                {/* --- End Changes --- */}
                 
                 <div className="item-sub">Requested: {new Date(h.created_at).toLocaleDateString()}</div>
                 <div className="item-sub">Pickup Expires: {new Date(h.expires_at).toLocaleDateString()}</div>
               </div>
-              <div className="item-actions"> {/* Added a wrapper div */}
+              <div className="item-actions"> 
                 <button
                   className="btn danger"
                   onClick={() => handleCancelHold(h.hold_id)}
-                  disabled={cancelingId === h.hold_id} // Disable button while this item is being canceled
+                  disabled={cancelingId === h.hold_id} 
                 >
                   {cancelingId === h.hold_id ? 'Canceling...' : 'Cancel Hold'}
                 </button>
               </div>
-              {/* --- END NEW --- */}
             </li>
           ))}
         </ul>
