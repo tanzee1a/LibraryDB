@@ -476,29 +476,26 @@ function UserProfile() {
                         <h1 className="item-title">{user.firstName} {user.lastName}</h1>
                         )}
 
-                        {/* --- ADD THIS BADGE --- */}
-                        {/* Show badge if deactivated and NOT in edit mode */}
                         {!isEditing && user.account_status === 'DEACTIVATED' && (
                             <span className="status-badge status-deactivated">Deactivated</span>
                         )}
 
-                        {/* --- MODIFY THIS BUTTON --- */}
-                        {/* Disable Edit button if user is deactivated */}
-                        <button 
-                            className="action-circle-button primary-button" 
-                            onClick={handleEditToggle} 
-                            disabled={isSaving || user.account_status === 'DEACTIVATED'}
-                            title={user.account_status === 'DEACTIVATED' ? 'Activate user to edit' : 'Edit User'}
-                        >
-                            {isEditing ? (isSaving ? '...' : <IoCheckmark />) : <MdEdit />}
-                        </button>
+                        {/* --- CHANGE #1 --- */}
+                        {/* This is the cleaner logic: Hide the Edit button entirely if the user is not active */}
+                        { user.account_status === 'ACTIVE' && (
+                            <button 
+                                className="action-circle-button primary-button" 
+                                onClick={handleEditToggle} 
+                                disabled={isSaving}
+                                title={isEditing ? "Save Changes" : "Edit User"}
+                            >
+                                {isEditing ? (isSaving ? '...' : <IoCheckmark />) : <MdEdit />}
+                            </button>
+                        )}
                         
-                        {/* --- MODIFY THIS SECTION --- */}
-                        {/* Show delete/activate only when NOT editing */}
                         {!isEditing && (
-                            // Check the user's status (assuming 'ACTIVE' is the default)
                             (user.account_status === 'DEACTIVATED') ? (
-                                // User IS deactivated, show ACTIVATE button
+                                // This is the "Activate" button, it's correct
                                 <button 
                                     className="action-circle-button green-button" 
                                     onClick={handleActivateUser} 
@@ -508,10 +505,13 @@ function UserProfile() {
                                     <IoReturnUpBackOutline />
                                 </button>
                             ) : (
-                                // User is ACTIVE, show DEACTIVATE (trash) button
+                                // --- CHANGE #2 ---
+                                // This is the "Deactivate" button.
+                                // It now calls your teammate's "handleDeleteUserClick" function
+                                // which contains the "isSelf" check.
                                 <button 
                                     className="action-circle-button red-button" 
-                                    onClick={handleDeleteUser} 
+                                    onClick={handleDeleteUserClick} // <-- This is the merged line
                                     disabled={isSaving}
                                     title="Deactivate User"
                                 >
@@ -521,7 +521,8 @@ function UserProfile() {
                         )}
                         
                     </div>
-                     {/* Display Save Error */}
+                     
+                     {/* This error message now works for Edit, Deactivate, and Activate errors */}
                      {saveError && <p style={{ color: 'red', marginTop: '5px' }}>{saveError}</p>}
 
 
@@ -530,26 +531,20 @@ function UserProfile() {
                         {isEditing ? (
                             <>
                             <p> <strong>Email:</strong> <input type="email" name="email" value={editedUser.email} onChange={handleInputChange} className="edit-input" required/> </p>
-                            {/* CASE 1: User is NOT staff */}
                             {!isOriginalRoleStaff ? (
                                 <p> <strong>Role:</strong>
                                     <select name="role" value={editedUser.role} onChange={handleInputChange} className="edit-input" required>
-                                        {/* Only show non-staff roles */}
                                         <option value="Patron">Patron</option>
                                         <option value="Student">Student</option>
                                         <option value="Faculty">Faculty</option>
                                     </select>
                                 </p>
                             ) : (
-                                
-                            /* CASE 2: User IS staff */
                             <>
                                 {shouldHideStaffRoleEdit ? (
-                                // 🛑 RENDER NOTHING or a Note if restricted
-                                null
+                                null 
                             ) : (
                                 <>
-                                    {/* This is the regular Role input (which is disabled by default for staff) */}
                                     <p> <strong>Role:</strong>
                                         <input 
                                             type="text" 
@@ -560,7 +555,6 @@ function UserProfile() {
                                         />
                                     </p>
                                     
-                                    {/* This is the editable Staff Role input */}
                                     <p> 
                                         <strong>Staff Role:</strong>
                                         <select 
@@ -572,7 +566,6 @@ function UserProfile() {
                                         >
                                             <option value="Clerk">Clerk</option>
                                             <option value="Assistant Librarian">Assistant Librarian</option>
-                                            {/* Add Admin option if necessary */}
                                         </select>
                                     </p>
                                 </>
@@ -583,13 +576,11 @@ function UserProfile() {
                         ) : (
                             <>
                             <p><strong>Email:</strong> {user.email || 'N/A'}</p>
-                            {/* Display staff role if applicable */}
                             <p><strong>Role:</strong> {user.role} {user.staff_role ? `(${user.staff_role})` : ''}</p>
                             </>
                         )}
                         </div>
 
-                        {/* Display Counts from API */}
                         <div className="result-details">
                             <p><strong>Current Borrows:</strong> {user.current_borrows}</p>
                             <p><strong>Active Holds:</strong> {user.active_holds}</p>
