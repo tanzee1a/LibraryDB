@@ -27,6 +27,7 @@ function Login({ setIsStaff, setIsLoggedIn }) {
       localStorage.setItem('authToken', data.token);
       localStorage.setItem('userRole', data.user.role);
       localStorage.setItem('staffRole', data.user.staffRole); // Librarian / Assistant Librarian / null
+      localStorage.setItem('userFirstName', data.user.firstName);
       localStorage.setItem('userId', data.user.user_id);
 
       // 2. Update React state immediately (optional, but good practice)
@@ -60,7 +61,7 @@ function Login({ setIsStaff, setIsLoggedIn }) {
         <div className='login-form-container fade-in'>
           <h2 className='login-form-title'><img className="logo-image-medium" src={Logo} alt="" /></h2>
           <div>
-            <form className="info-form" onSubmit={handleSubmit}>
+            <form className="info-form info-form-wide" onSubmit={handleSubmit}>
               <input 
                 id="email"
                 type="text"
@@ -79,7 +80,7 @@ function Login({ setIsStaff, setIsLoggedIn }) {
                 required
               />
               <div>
-                <p>New user? <a className='result-link' href="/register">Create an account</a></p>
+                <p >New user? <a className='result-link' href="/register">Create an account</a></p>
                 <button type="submit" className='action-button primary-button'>Login</button>
               </div>
       

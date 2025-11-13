@@ -6,7 +6,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000
 
 function Homepage() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchType, setSearchType] = useState('Title'); 
+  const [searchType, setSearchType] = useState('Title');
   const [userProfile, setUserProfile] = useState({});
   const navigate = useNavigate();
 
@@ -25,6 +25,7 @@ function Homepage() {
   };
 
   useEffect(() => {
+    setUserProfile({firstName: localStorage.getItem('userFirstName') || null});
     const token = localStorage.getItem('authToken');
         if (token) {
             const fetchUserProfile = async () => {
@@ -83,8 +84,8 @@ function Homepage() {
     if (userProfile.is_suspended) {
       return (
         <div className="home-action-section fade-in">
-          <button className="red-button" disabled={true}>Account Suspended</button>
-          <p>Your account is suspended. Please contact support to resolve any issues and regain access.</p>
+          <button className="red-button" onClick={() => navigate('/account?section=fines')}>Go to Fines</button>
+          <p>Your account is suspended due to too many outstanding fines. Please pay off your fines to regain access.</p>
         </div>
       );
     }

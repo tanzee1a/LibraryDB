@@ -55,27 +55,27 @@ export default function UserProfile() {
   }
 
    // Add this helper function inside your Profile component
-function getStatusFromData(data) {
-    if (!data.membership_status) {
-        return 'new'; // User has never had a membership
-    }
+  function getStatusFromData(data) {
+      if (!data.membership_status) {
+          return 'new'; // User has never had a membership
+      }
 
-    const isExpired = new Date(data.expires_at) < new Date();
+      const isExpired = new Date(data.expires_at) < new Date();
 
-    if (isExpired) {
-        return 'expired';
-    }
+      if (isExpired) {
+          return 'expired';
+      }
 
-    if (data.membership_status === 'ACTIVE' && data.auto_renew === 0) {
-        return 'canceled';
-    }
+      if (data.membership_status === 'ACTIVE' && data.auto_renew === 0) {
+          return 'canceled';
+      }
 
-    if (data.membership_status === 'ACTIVE') {
-        return 'active';
-    }
+      if (data.membership_status === 'ACTIVE') {
+          return 'active';
+      }
 
-    return 'expired'; // Default fallback
-}
+      return 'expired'; // Default fallback
+  }
 
 
   useEffect(() => {

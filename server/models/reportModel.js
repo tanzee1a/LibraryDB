@@ -55,12 +55,8 @@ async function popularItemReport({ filterType = 'date', start = null, end = null
             i.item_id,
             i.category,
             COALESCE(bk.title, m.title, d.device_name) AS item_name,
-            i.available,
-            i.on_hold,
-            i.loaned_out,
             i.quantity,
-            COUNT(DISTINCT b.borrow_id) AS total_borrows,
-            COUNT(DISTINCT CASE WHEN b.return_date IS NULL THEN b.borrow_id END) AS total_returns,
+            COUNT(DISTINCT b.borrow_id) AS borrow_count,
             COUNT(DISTINCT w.user_id) AS total_wishlist
         FROM ITEM i
         LEFT JOIN BOOK bk ON i.item_id = bk.item_id AND i.category = 'BOOK'
@@ -99,8 +95,8 @@ async function popularItemReport({ filterType = 'date', start = null, end = null
     }
 
     sql += `
-        GROUP BY i.item_id, i.category, item_name, i.available, i.on_hold, i.loaned_out, i.quantity
-        ORDER BY total_borrows DESC;
+        GROUP BY i.item_id, i.category, item_name, i.quantity
+        ORDER BY borrow_count DESC;
     `;
 
     const [rows] = await db.query(sql, params);
@@ -216,7 +212,7 @@ async function outstandingFinesReport({ filterType = 'date', start = null, end =
     return rows;
 }
 
-async function activeUsersReport({ filterType = 'date', start = null, end = null, role = null } = {}) {
+async function activeUsersReport({ filterType = 'date', start = null, end = null, role = null, minBorrow = null } = {}) {
     let sql = `
         SELECT 
             u.email,
@@ -225,7 +221,7 @@ async function activeUsersReport({ filterType = 'date', start = null, end = null
             r.role_name,
             COUNT(b.borrow_id) AS total_borrows
         FROM USER u
-        JOIN BORROW b ON u.user_id = b.user_id
+        LEFT JOIN BORROW b ON u.user_id = b.user_id
         JOIN USER_ROLE r ON u.role_id = r.role_id
         WHERE 1=1
         AND u.role_id != 4
@@ -260,6 +256,12 @@ async function activeUsersReport({ filterType = 'date', start = null, end = null
 
     sql += `
         GROUP BY u.user_id, u.email, u.firstName, u.lastName, r.role_name
+    `;
+    if (minBorrow) {
+        sql += ` HAVING COUNT(b.borrow_id) >= ?`;
+        params.push(minBorrow);
+    }
+    sql += `
         ORDER BY total_borrows DESC;
     `;
 
@@ -269,35 +271,42 @@ async function activeUsersReport({ filterType = 'date', start = null, end = null
 
 async function membershipReport({ filterType = 'date', start = null, end = null, status = null } = {}) {
     let sql = `
-        SELECT 
+        SELECT
             u.email,
             u.firstName,
             u.lastName,
-            p.membership_status,
-            p.auto_renew,
-            p.signup_date,
-            p.expires_at AS expires_on
-        FROM PATRON_MEMBERSHIP p
-        JOIN USER u ON p.user_id = u.user_id
-        WHERE 1=1
+            CASE
+                WHEN r.requires_membership_fee = 0 THEN NULL
+                WHEN pm.user_id IS NULL THEN 'Not Enrolled'
+                WHEN pm.expires_at < NOW() THEN 'Expired'
+                WHEN pm.auto_renew = 0 THEN 'Canceled'
+                ELSE 'Active'
+            END AS membership_status,
+            pm.auto_renew,
+            pm.signup_date,
+            pm.expires_at AS expires_on
+        FROM USER u
+        JOIN USER_ROLE r ON u.role_id = r.role_id
+        LEFT JOIN PATRON_MEMBERSHIP pm ON u.user_id = pm.user_id
+        WHERE r.requires_membership_fee = 1
     `;
 
     const params = [];
 
     if (filterType === 'date') {
-        if (start && end) sql += ' AND p.signup_date BETWEEN ? AND ?';
-        else if (start) sql += ' AND p.signup_date >= ?';
-        else if (end) sql += ' AND p.signup_date <= ?';
+        if (start && end) sql += ' AND pm.signup_date BETWEEN ? AND ?';
+        else if (start) sql += ' AND pm.signup_date >= ?';
+        else if (end) sql += ' AND pm.signup_date <= ?';
     } 
     else if (filterType === 'month') {
-        if (start && end) sql += ' AND MONTH(p.signup_date) BETWEEN ? AND ?';
-        else if (start) sql += ' AND MONTH(p.signup_date) >= ?';
-        else if (end) sql += ' AND MONTH(p.signup_date) <= ?';
+        if (start && end) sql += ' AND MONTH(pm.signup_date) BETWEEN ? AND ?';
+        else if (start) sql += ' AND MONTH(pm.signup_date) >= ?';
+        else if (end) sql += ' AND MONTH(pm.signup_date) <= ?';
     } 
     else if (filterType === 'year') {
-        if (start && end) sql += ' AND YEAR(p.signup_date) BETWEEN ? AND ?';
-        else if (start) sql += ' AND YEAR(p.signup_date) >= ?';
-        else if (end) sql += ' AND YEAR(p.signup_date) <= ?';
+        if (start && end) sql += ' AND YEAR(pm.signup_date) BETWEEN ? AND ?';
+        else if (start) sql += ' AND YEAR(pm.signup_date) >= ?';
+        else if (end) sql += ' AND YEAR(pm.signup_date) <= ?';
     }
 
     if (start && end) params.push(start, end);
@@ -305,12 +314,22 @@ async function membershipReport({ filterType = 'date', start = null, end = null,
     else if (end) params.push(end);
 
     if (status) {
-        sql += ' AND p.membership_status = ?';
+        sql += `
+            AND (
+                CASE
+                    WHEN r.requires_membership_fee = 0 THEN NULL
+                    WHEN pm.user_id IS NULL THEN 'Not Enrolled'
+                    WHEN pm.expires_at < NOW() THEN 'Expired'
+                    WHEN pm.auto_renew = 0 THEN 'Canceled'
+                    ELSE 'Active'
+                END
+            ) = ?
+        `;
         params.push(status);
     }
 
     sql += `
-        ORDER BY p.signup_date DESC;
+        ORDER BY pm.signup_date DESC;
     `;
 
     const [rows] = await db.query(sql, params);
