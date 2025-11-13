@@ -65,8 +65,8 @@ function Homepage() {
               value={searchType} 
               onChange={(e) => setSearchType(e.target.value)}
             >
+              <option value="Description">Description</option>
               <option value="Title">Title</option>
-              <option value="Description">By All</option>
               <option value="Manufacturer">Manufacturer</option>
               <option value="Author">Author</option>
               <option value="Director">Director</option>
