@@ -1,389 +1,117 @@
 {
-  "item_categories": ["BOOK", "MEDIA", "DEVICE"],
   "item_filters": [
     {
       "category": "Books",
-      "topics": [
-        {
-          "name": "Popular & Trending",
-          "options": [
-            "Romance",
-            "Mystery, Thriller & Suspense",
-            "Science Fiction & Fantasy",
-            "Teen & Young Adult"
-          ]
-        },
-        {
-          "name": "Literature & Culture",
-          "options": ["Fiction", "Diversity & Inclusion", "History", "Nonfiction"]
-        },
-        {
-          "name": "Learning & Growth",
-          "options": [
-            "Self-Help",
-            "Education & Teaching",
-            "Reference",
-            "Test Preparation"
-          ]
-        },
-        {
-          "name": "Lifestyle & Creativity",
-          "options": [
-            "Arts & Photography",
-            "Cookbooks, Food & Wine",
-            "Crafts, Hobbies & Home",
-            "Health, Fitness & Dieting"
-          ]
-        }
-      ]
-    },
-    {
-      "category": "Media",
+      "raw_category": "BOOK",
       "topics": [
         {
           "name": "Genres",
-          "options": ["Action & Adventure", "Comedy", "Drama", "Horror"]
+          "options": [
+            "Fiction",
+            "Non-Fiction",
+            "Fantasy",
+            "Sci-Fi"
+          ]
         },
         {
           "name": "Formats",
-          "options": ["DVD", "Blu-ray", "4K Ultra HD", "Digital"]
+          "options": [
+            "Manga",
+            "Anime"
+          ]
+        },
+        {
+          "name": "Themes",
+          "options": [
+            "Dark",
+            "Dark Comedy",
+            "Mature",
+            "Kids"
+          ]
+        },
+        {
+          "name": "Learning & Education",
+          "options": [
+            "History",
+            "Science",
+            "Physics",
+            "Self-Help"
+          ]
         }
       ]
     },
+
+    {
+      "category": "Media",
+      "raw_category": "MOVIE",
+      "topics": [
+        {
+          "name": "Genres",
+          "options": [
+            "Action",
+            "Adventure",
+            "Comedy",
+            "Drama"
+          ]
+        },
+        {
+          "name": "Themes",
+          "options": [
+            "Dark",
+            "Dark Comedy",
+            "Mature",
+            "Kids"
+          ]
+        },
+        {
+          "name": "Animation",
+          "options": [
+            "Animation",
+            "Anime"
+          ]
+        }
+      ]
+    },
+
     {
       "category": "Devices",
+      "raw_category": "DEVICE",
       "topics": [
         {
           "name": "Device Types",
-          "options": ["Laptops", "Tablets", "Cameras", "Headphones"]
+          "options": [
+            "Laptop",
+            "Tablet",
+            "Camera",
+            "Headphones"
+          ]
         },
         {
           "name": "Operating Systems",
-          "options": ["macOS", "Windows", "Linux", "ChromeOS"]
-        }
-      ]
-    }
-  ],
-
-  "items": [
-    {
-      "item_id": 1,
-      "category": "BOOK",
-      "thumbnail": "bookThumbnail",
-      "title": "The Dreaming City",
-      "description": "This small, portable book presents a unique perspective on the human body for artists to study and implement in their drawing work. In this book, artist and teacher Michel Lauricella simplifies the human body into basic shapes and forms, offering profound insight for artists of all kinds, sparking the imagination and improving one’s observational abilities. Rather than going the traditional route of memorizing a repertoire of poses, Lauricella instead stresses learning this small collection of forms, which can then be combined and shaped into the more complex and varied forms and postures we see in the living body.\n\nGeared toward artists of all levels—from beginners through professionals—this handy, pocket-sized book will help spark your imagination and creativity. Whether your interest is in figure drawing, fine arts, fashion design, game design, or creating comic book or manga art, you will find this helpful book filled with actionable insights.",
-      "authors": ["John Doe", "Emily Johnson"],
-      "pages": 320,
-      "language": "English",
-      "publisher": "Fiction House",
-      "publicationDate": "2021",
-      "isbn": "123-4567890123",
-      "shelf_location": "Aisle 3, Shelf B",
-      "tags": ["Fiction", "Fantasy", "Adventure"],
-      "available": 3,
-      "holds": 1,
-      "loanedOut": 2,
-      "earliestAvailable": "2 day(s)"
-    },
-    {
-      "item_id": 2,
-      "category": "MEDIA",
-      "thumbnail": "mediaThumbnail",
-      "title": "The Great Adventure",
-      "description": "This small, portable book presents a unique perspective on the human body for artists to study and implement in their drawing work. In this book, artist and teacher Michel Lauricella simplifies the human body into basic shapes and forms, offering profound insight for artists of all kinds, sparking the imagination and improving one’s observational abilities. Rather than going the traditional route of memorizing a repertoire of poses, Lauricella instead stresses learning this small collection of forms, which can then be combined and shaped into the more complex and varied forms and postures we see in the living body.\n\nGeared toward artists of all levels—from beginners through professionals—this handy, pocket-sized book will help spark your imagination and creativity. Whether your interest is in figure drawing, fine arts, fashion design, game design, or creating comic book or manga art, you will find this helpful book filled with actionable insights.",
-      "directors": ["John Doe", "Emily Johnson"],
-      "format": "DVD",
-      "language": "English",
-      "rating": "PG-13",
-      "release_year": "2020",
-      "runtime": "2h 15m",
-      "tags": ["Fiction", "Fantasy", "Adventure"],
-      "shelf_location": "Aisle 2, Shelf C",
-      "available": 0,
-      "holds": 2,
-      "loanedOut": 2,
-      "earliestAvailable": "3 day(s)"
-    },
-    {
-      "item_id": 3,
-      "category": "DEVICE",
-      "thumbnail": "deviceThumbnail",
-      "title": "MacBook Pro 16”",
-      "description": "This powerful laptop is designed for professionals and creatives who need high performance on the go.\nWith its stunning Retina display, advanced graphics, and fast processors, it can handle demanding tasks with ease.",
-      "manufacturer": "Apple",
-      "software": "macOS",
-      "device_type": "Laptop",
-      "shelf_location": "Aisle 1, Shelf A",
-      "tags": ["Apple", "macOS", "Laptop"],
-      "available": 1,
-      "holds": 0,
-      "loanedOut": 2,
-      "earliestAvailable": "1 day(s)"
-    }
-  ],
-  "role_filters": [
-    {
-      "category": "Roles",
-      "options": ["Patron", "Staff", "Admin"]
-      
-    }
-  ],
-  "users": [
-    {
-      "user_id": 1,
-      "email": "alex.johnson@student.university.edu",
-      "role": "Patron",
-      "first_name": "Alex",
-      "last_name": "Johnson",
-      "current_borrows": 2,
-      "active_holds": 1,
-      "outstanding_fines": 5.00
-    },
-    {
-      "user_id": 2,
-      "email": "maria.gonzalez@faculty.university.edu",
-      "role": "Staff",
-      "first_name": "Maria",
-      "last_name": "Gonzalez",
-      "current_borrows": 1,
-      "active_holds": 0,
-      "outstanding_fines": 0
-    },
-    {
-      "user_id": 3,
-      "email": "thomas.nguyen@library.org",
-      "role": "Patron",
-      "first_name": "Thomas",
-      "last_name": "Nguyen",
-      "current_borrows": 3,
-      "active_holds": 1,
-      "outstanding_fines": 15.00
-    }
-  ],
-  "user_filters": [
-    {
-      "category": "Borrows",
-      "topics": [
+          "options": [
+            "Windows",
+            "macOS",
+            "Linux",
+            "ChromeOS"
+          ]
+        },
         {
-          "name": "Status",
-          "options": ["Loaned Out", "Pending", "Returned", "Lost", "Ready for Pickup"]
-        }
-      ]
-    },
-    {
-      "category": "Holds",
-      "topics": [
+          "name": "Camera Brands",
+          "options": [
+            "Canon",
+            "Sony",
+            "Nikon",
+            "Fujifilm"
+          ]
+        },
         {
-          "name": "Status",
-          "options": ["Active", "Fulfilled", "Canceled"]
+          "name": "Audio Brands",
+          "options": [
+            "Bose",
+            "Sennheiser"
+          ]
         }
       ]
-    },
-    {
-      "category": "Fines",
-      "topics": [
-        {
-          "name": "Status",
-          "options": ["Paid", "Awaiting Payment", "Canceled"]
-        }
-      ]
-    }
-  ],
-  "borrows": [
-    {
-      "borrow_id": 1,
-      "borrow_date": "2025-09-10",
-      "return_date": "2025-09-24",
-      "status_id": "Returned",
-      "user_id": 1,
-      "item_id": 101,
-      "item": {
-        "item_id": 101,
-        "item_category": "BOOK",
-        "title": "The Dreaming City",
-        "thumbnail": "bookThumbnail"
-      },
-      "user": {
-        "user_id": 1,
-        "user_first_name": "Alex",
-        "user_last_name": "Johnson"
-      }
-    },
-    {
-      "borrow_id": 2,
-      "borrow_date": "2025-10-01",
-      "return_date": null,
-      "status_id": "Loaned Out",
-      "user_id": 2,
-      "item_id": 204,
-      "item": {
-        "item_id": 204,
-        "item_category": "MEDIA",
-        "title": "The Great Adventure",
-        "thumbnail": "mediaThumbnail"
-      },
-      "user": {
-        "user_id": 1,
-        "user_first_name": "Alex",
-        "user_last_name": "Johnson"
-      }
-    },
-    {
-      "borrow_id": 3,
-      "borrow_date": null,
-      "return_date": null,
-      "status_id": "Pending",
-      "user_id": 1,
-      "item_id": 307,
-      "item": {
-        "item_id": 307,
-        "item_category": "DEVICE",
-        "title": "MacBook Pro 16”",
-        "thumbnail": "deviceThumbnail"
-      },
-      "user": {
-        "user_id": 1,
-        "user_first_name": "Alex",
-        "user_last_name": "Johnson"
-      }
-    },
-    {
-      "borrow_id": 4,
-      "borrow_date": "2025-10-01",
-      "return_date": null,
-      "status_id": "Lost",
-      "user_id": 1,
-      "item_id": 307,
-      "item": {
-        "item_id": 307,
-        "item_category": "BOOK",
-        "title": "The Dreaming City",
-        "thumbnail": "deviceThumbnail"
-      },
-      "user": {
-        "user_id": 1,
-        "user_first_name": "Alex",
-        "user_last_name": "Johnson"
-      }
-    },
-    {
-      "borrow_id": 5,
-      "borrow_date": null,
-      "return_date": null,
-      "status_id": "Ready for Pickup",
-      "user_id": 1,
-      "item_id": 307,
-      "item": {
-        "item_id": 307,
-        "item_category": "MEDIA",
-        "title": "The Great Adventure",
-        "thumbnail": "deviceThumbnail"
-      },
-      "user": {
-        "user_id": 1,
-        "user_first_name": "Alex",
-        "user_last_name": "Johnson"
-      }
-    }
-  ],
-  "holds": [
-    {
-      "hold_id": 1,
-      "requested_date": "2025-09-15",
-      "request_completed_date": null,
-      "status_id": "Active",
-      "item_id": 101,
-      "item": {
-        "item_id": 101,
-        "item_category": "BOOK",
-        "title": "The Dreaming City",
-        "thumbnail": "bookThumbnail"
-      },
-      "user": {
-        "user_id": 1,
-        "user_first_name": "Alex",
-        "user_last_name": "Johnson"
-      }
-    },
-    {
-      "hold_id": 2,
-      "requested_date": "2025-08-05",
-      "request_completed_date": "2025-08-20",
-      "status_id": "Canceled",
-      "item_id": 205,
-      "item": {
-        "item_id": 205,
-        "item_category": "MEDIA",
-        "title": "The Great Adventure",
-        "thumbnail": "mediaThumbnail"
-      },
-      "user": {
-        "user_id": 1,
-        "user_first_name": "Alex",
-        "user_last_name": "Johnson"
-      }
-    },
-    {
-      "hold_id": 3,
-      "requested_date": "2025-06-11",
-      "request_completed_date": null,
-      "status_id": "Fulfilled",
-      "item_id": 309,
-      "item": {
-        "item_id": 309,
-        "item_category": "DEVICE",
-        "title": "MacBook Pro 16”",
-        "thumbnail": "deviceThumbnail"
-      },
-      "user": {
-        "user_id": 1,
-        "user_first_name": "Alex",
-        "user_last_name": "Johnson"
-      }
-    }
-  ],
-  "fines": [
-    {
-      "fine_id": 1,
-      "borrow_id": 1,
-      "user_id": 1,
-      "date_issued": "2025-09-25",
-      "amount": 2.50,
-      "date_paid": "2025-09-30",
-      "status_id": "Paid",
-      "user": {
-        "user_id": 1,
-        "user_first_name": "Alex",
-        "user_last_name": "Johnson"
-      }
-    },
-    {
-      "fine_id": 2,
-      "borrow_id": 2,
-      "user_id": 1,
-      "date_issued": "2025-07-20",
-      "amount": 15.00,
-      "date_paid": null,
-      "status_id": "Awaiting Payment",
-      "user": {
-        "user_id": 1,
-        "user_first_name": "Alex",
-        "user_last_name": "Johnson"
-      }
-    },
-    {
-      "fine_id": 3,
-      "borrow_id": 3,
-      "user_id": 2,
-      "date_issued": "2025-08-01",
-      "amount": 5.00,
-      "date_paid": "2025-08-05",
-      "status_id": "Canceled",
-      "user": {
-        "user_id": 1,
-        "user_first_name": "Alex",
-        "user_last_name": "Johnson"
-      }
     }
   ]
 }
