@@ -6,6 +6,19 @@ import { MdEdit } from "react-icons/md";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
 
+const decodeToken = (token) => {
+    try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        return JSON.parse(jsonPayload);
+    } catch (e) {
+        return null;
+    }
+};
+
 function UserProfile() {
     // --- State for fetched user, loading, error, editing ---
     const { userId } = useParams(); // Get user ID from URL
@@ -25,6 +38,11 @@ function UserProfile() {
     const [fineHistory, setFineHistory] = useState([]);
     const [loadingHistory, setLoadingHistory] = useState(false);
     const [historyError, setHistoryError] = useState('');
+
+    const [loggedInUserId, setLoggedInUserId] = useState(null);
+    const isSelf = String(userId) === String(loggedInUserId);
+
+
 
     // --- Currency Formatter ---
     const currencyFormatter = new Intl.NumberFormat('en-US', { /* ... */ });
@@ -71,6 +89,14 @@ function UserProfile() {
     };
 
     useEffect(() => {
+        const token = localStorage.getItem('authToken');
+        if (token) {
+            const decoded = decodeToken(token);
+            if (decoded && decoded.id) {
+                setLoggedInUserId(decoded.id);
+            }
+        }
+        
         fetchUserProfile();
     }, [userId]); // Refetch if userId changes
     // --- End Fetch ---
@@ -126,6 +152,10 @@ function UserProfile() {
 
     // --- Edit/Save Logic ---
     function handleEditToggle() {
+        if (isSelf) { 
+            alert("You cannot edit your own details from Manage Users. Please go to account dashboard.");
+            return; // Stop the function immediately
+        }
         if (isEditing) {
             handleSaveChanges(); // Call save function when toggling off
         } else {
@@ -186,6 +216,16 @@ function UserProfile() {
 
     // --- End Edit/Save ---
 
+    const handleDeleteUserClick = () => {
+        if (isSelf) {
+            alert("You cannot delete your own profile from Manage Users. Please contact your IT department.");
+            return;
+        }
+        
+        // If not self, proceed with the actual delete logic (the async one)
+        handleDeleteUser();
+    };
+
     const handleDeleteUser = async () => {
         if (window.confirm(`Are you sure you want to delete user ${user.firstName} ${user.lastName}? This cannot be undone.`)) {
 
@@ -222,6 +262,7 @@ function UserProfile() {
         }
     };
     // --- End Delete ---
+    
 
     // --- Render History Section ---
     // NOTE: This now uses separate API calls for detailed history.
@@ -383,15 +424,24 @@ function UserProfile() {
                         <h1 className="item-title">{user.firstName} {user.lastName}</h1>
                         )}
 
-                        <button className="action-circle-button primary-button" onClick={handleEditToggle} disabled={isSaving}>
-                            {isEditing ? (isSaving ? '...' : <IoCheckmark />) : <MdEdit />}
-                        </button>
-                        {/* Show delete only when NOT editing */}
-                        {!isEditing && (
-                            <button className="action-circle-button red-button" onClick={handleDeleteUser} disabled={isSaving}>
-                                <IoTrash />
-                            </button>
-                        )}
+                                <button 
+                                    className="action-circle-button primary-button" 
+                                    onClick={handleEditToggle} 
+                                    disabled={isSaving} // Only disable if saving is in progress
+                                >
+                                    {isEditing ? (isSaving ? '...' : <IoCheckmark />) : <MdEdit />}
+                                </button>
+
+                                {/* DELETE BUTTON: Disable if viewing own account */}
+                                {!isEditing && (
+                                    <button 
+                                        className="action-circle-button red-button" 
+                                        onClick={handleDeleteUserClick} 
+                                        disabled={isSaving}
+                                    >
+                                        <IoTrash />
+                                    </button>
+                                )}
                         
                     </div>
                      {/* Display Save Error */}

@@ -178,6 +178,12 @@ async function staffUpdateUser(req, res, userId) {
     let body;
     let userData;
     try {
+        const loggedInUserId = req.userId; 
+        if (userId === loggedInUserId) {
+            res.writeHead(403, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+            return res.end(JSON.stringify({ message: 'Access Denied: Staff cannot update their own account via this endpoint.' }));
+        }
+
         // 1. Get the raw request body string
         body = await getPostData(req); 
 
@@ -206,7 +212,12 @@ async function staffUpdateUser(req, res, userId) {
 // @route DELETE /api/users/:userId
 async function staffDeleteUser(req, res, userId) {
     try {
-        // TODO: Add Auth check - Staff only
+        const loggedInUserId = req.userId;
+        if (userId === loggedInUserId) {
+            res.writeHead(403, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+            return res.end(JSON.stringify({ message: 'Access Denied: Staff cannot delete their own account.' }));
+        }
+
         const affectedRows = await User.staffDeleteUser(userId);
 
         if (affectedRows === 0) {
