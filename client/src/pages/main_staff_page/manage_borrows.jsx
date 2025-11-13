@@ -2,7 +2,7 @@ import './manage_borrows.css'
 
 import { useState, useEffect } from 'react';
 import { FaPlus } from 'react-icons/fa'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
 function ManageBorrows() {
 
@@ -19,7 +19,12 @@ function ManageBorrows() {
     const [newBorrow, setNewBorrow] = useState(initialBorrowState);
     const [isSubmitting, setIsSubmitting] = useState(false); // Add submitting state
     const [submitError, setSubmitError] = useState('');     // Add error state
-    // --- END MODIFIED ---
+
+    const [searchParams, setSearchParams] = useSearchParams();
+    const query = searchParams.get('q') || '';
+    const [localSearchTerm, setLocalSearchTerm] = useState(query);
+    const [sort, setSort] = useState(searchParams.get('sort') || 'borrow_newest');
+    
 
     const filterOptions = () => {
         return [{
@@ -40,15 +45,18 @@ function ManageBorrows() {
         }
     };
 
-    const handleSortChange = (sortType) => {
-        console.log("Sort by:", sortType);
-        // Example: apply sorting logic to results
-        let sorted = [...borrows];
-        if (sortType === "title_asc") sorted.sort((a, b) => a.title.localeCompare(b.title));
-        if (sortType === "title_desc") sorted.sort((a, b) => b.title.localeCompare(a.title));
-        if (sortType === "newest") sorted.sort((a, b) => (b.release_year || 0) - (a.release_year || 0));
-        if (sortType === "oldest") sorted.sort((a, b) => (a.release_year || 0) - (b.release_year || 0));
-        setBorrows(sorted);
+    const handleSortChange = (event) => {
+        const sortType = event.target.value;
+        setSort(sortType); // Update local state for the dropdown
+
+        // Get current params to preserve filters/search
+        const currentParams = Object.fromEntries(searchParams.entries());
+        const next = new URLSearchParams(currentParams);
+
+        next.set('sort', sortType);
+        
+        // Set the new URL, which triggers useEffect to refetch
+        setSearchParams(next);
     };
 
     const renderBorrowActionButtons = (borrow) => {
@@ -188,7 +196,6 @@ function ManageBorrows() {
         setLoading(true);
         setError('');
         
-        // 1. Get Token and Check
         const token = localStorage.getItem('authToken'); 
         if (!token) {
             setError('Authentication token missing. Please log in.');
@@ -196,16 +203,17 @@ function ManageBorrows() {
             return;
         }
 
-        // 2. Execute Fetch with Headers
-        fetch(`${API_BASE_URL}/api/borrows`, {
+        // Get the full query string from state
+        const queryString = searchParams.toString();
+
+        fetch(`${API_BASE_URL}/api/borrows?${queryString}`, { // <-- Pass the query string
             method: 'GET',
             headers: {
-                'Authorization': `Bearer ${token}`, // CRITICAL: Authorization header
+                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             }
-        }) // Fetch all borrows
+        })
             .then(r => {
-                // Check for explicit 401/403 errors
                 if (r.status === 401 || r.status === 403) {
                     throw new Error('Unauthorized access or insufficient privileges.');
                 }
@@ -224,9 +232,45 @@ function ManageBorrows() {
     };
 
     useEffect(() => {
-        fetchBorrows(); // Fetch on initial mount
+        fetchBorrows(); // Fetch on initial mount & search/filter change
         fetchBorrowStatus(); // Fetch borrow status options
-    }, []);
+    }, [searchParams]);
+
+    const handleSearch = (event) => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            const term = localSearchTerm.trim();
+            const currentParams = Object.fromEntries(searchParams.entries());
+
+            if (term) {
+                setSearchParams({ ...currentParams, q: term });
+            } else {
+                delete currentParams.q;
+                setSearchParams(currentParams);
+            }
+        }
+    };
+
+    const handleFilterChange = (param, option) => {
+        const currentValues = (searchParams.get(param) || '')
+            .split(',')
+            .filter(Boolean);
+
+        let newValues;
+        if (currentValues.includes(option)) {
+            newValues = currentValues.filter(v => v !== option);
+        } else {
+            newValues = [...currentValues, option];
+        }
+
+        const next = new URLSearchParams(searchParams);
+        if (newValues.length) {
+            next.set(param, newValues.join(','));
+        } else {
+            next.delete(param);
+        }
+        setSearchParams(next);
+    };
 
     return (
         <div>
@@ -241,7 +285,14 @@ function ManageBorrows() {
                         >
                             <FaPlus />
                         </button>
-                        <input type="text" placeholder="Search borrows..." className="search-result-search-bar" />
+                        <input 
+                            type="text" 
+                            placeholder="Search borrows (by ID, item, user...)" 
+                            className="search-result-search-bar"
+                            value={localSearchTerm}
+                            onChange={(e) => setLocalSearchTerm(e.target.value)}
+                            onKeyDown={handleSearch}
+                        />
                     </div>
                 </div>
                 <div className="search-results-contents">
@@ -250,14 +301,13 @@ function ManageBorrows() {
                             Sort by:
                             <select
                                 className="sort-select"
-                                onChange={(e) => handleSortChange(e.target.value)}
-                                defaultValue=""
+                                value={sort} // Use state to control the value
+                                onChange={handleSortChange} // Use new handler
                             >
-                                <option value="" disabled></option>
-                                <option value="title_asc">Title (A–Z)</option>
-                                <option value="title_desc">Title (Z–A)</option>
-                                <option value="newest">Newest First</option>
-                                <option value="oldest">Oldest First</option>
+                                <option value="borrow_newest">Newest Borrows</option>
+                                <option value="borrow_oldest">Oldest Borrows</option>
+                                <option value="due_soonest">Due Soonest</option>
+                                <option value="due_latest">Due Latest</option>
                             </select>
                         </div>
                         {filterOptions().map((filterGroup) => (
@@ -266,20 +316,25 @@ function ManageBorrows() {
                                 <hr className='thin-divider divider--tight' />
                                 <ul>
                                     {filterGroup.options.map((option) => {
-                                        return ( // Start returning the list item
+                                        const isChecked = (searchParams.get(filterGroup.param) || '')
+                                                            .split(',')
+                                                            .includes(option);
+                                        return (
                                             <li key={option}>
                                                 <label>
                                                     <input 
                                                         type="checkbox" 
                                                         value={option}
+                                                        checked={isChecked}
+                                                        onChange={() => handleFilterChange(filterGroup.param, option)}
                                                     /> {option}
                                                 </label>
                                             </li>
-                                        ); // End returning list item
-                                    })} {/* End options.map */}
+                                        );
+                                    })}
                                 </ul>
                             </div>
-                        ))} {/* End filterOptions.map */}
+                        ))}
                     </div>
                     <div className="search-results-list">
                         {loading && <p>Loading borrows...</p>}

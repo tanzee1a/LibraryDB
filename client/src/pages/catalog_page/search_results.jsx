@@ -1,7 +1,6 @@
 import './search_results.css'
 import React, { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom';
-import { v4 as uuidv4 } from 'uuid';
 
 import { FaPlus } from "react-icons/fa"
 import { BiSort } from "react-icons/bi"
@@ -70,6 +69,7 @@ function SearchResults({ isStaff }) {
     useEffect(() => {
         setLoading(true);
         setError('');
+        setSelectedFilters(initialFilters());
     
         // 1. Search Results Fetch (Existing Logic)
         const params = new URLSearchParams();
@@ -79,8 +79,9 @@ function SearchResults({ isStaff }) {
         if (searchType) {
             params.set('searchType', searchType);
         }
+        const freshFilters = initialFilters();
 
-        Object.entries(selectedFilters).forEach(([key, values]) => {
+        Object.entries(freshFilters).forEach(([key, values]) => {
             if (values.length > 0) {
                 params.set(key, values.join(','));
             }
@@ -195,7 +196,7 @@ function SearchResults({ isStaff }) {
             setUserProfileLoading(false);
         }
     
-    }, [query, searchParams, isStaff]); // Added isStaff to the dependency array
+    }, [searchParams, isStaff]); // Depend on string value of params for rerun on any URL change
 
 
     const handleSearch = (event) => {
@@ -260,9 +261,9 @@ function SearchResults({ isStaff }) {
         // --- Authentication ---
         const token = localStorage.getItem('authToken'); 
         if (!token) {
-        // Set the message for this specific item
-        setActionMessage({ type: 'error', text: 'You must be logged in.', itemId: itemId });
-        return;
+            // Set the message for this specific item
+            setActionMessage({ type: 'error', text: 'You must be logged in.', itemId: itemId });
+            return;
         }
         // ------------------------
 

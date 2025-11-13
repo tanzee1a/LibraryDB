@@ -13,9 +13,10 @@ function ManageHolds() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [searchParams, setSearchParams] = useSearchParams(); // --- ADDED ---
-    // under: const [error, setError] = useState('');
+    const query = searchParams.get('q') || '';
+    const [localSearchTerm, setLocalSearchTerm] = useState(query);
+    const [sort, setSort] = useState(searchParams.get('sort') || 'requested_newest');
 
-    // --- END ADDED ---
 
     const filterOptions = () => {
         return [{
@@ -120,7 +121,6 @@ function ManageHolds() {
         fetchHoldStatus();
     }, [searchParams]); // Depend ONLY on searchParams
 
-    // --- END MODIFIED ---
 
     // --- ADDED Action Handlers ---
     const handlePickup = (holdId) => {
@@ -163,43 +163,56 @@ function ManageHolds() {
             .catch(err => alert(`Error canceling hold: ${err.message}`));
     };
 
-    const handleSortChange = (sortType) => {
-        console.log("Sort by:", sortType);
-        // Example: apply sorting logic to results
-        let sorted = [...holds];
-        if (sortType === "title_asc") sorted.sort((a, b) => a.title.localeCompare(b.title));
-        if (sortType === "title_desc") sorted.sort((a, b) => b.title.localeCompare(a.title));
-        if (sortType === "newest") sorted.sort((a, b) => (b.release_year || 0) - (a.release_year || 0));
-        if (sortType === "oldest") sorted.sort((a, b) => (a.release_year || 0) - (b.release_year || 0));
-        setHolds(sorted);
+    const handleSortChange = (event) => {
+        const sortType = event.target.value;
+        setSort(sortType); // Update local state for the dropdown
+
+        // Get current params to preserve filters/search
+        const currentParams = Object.fromEntries(searchParams.entries());
+        const next = new URLSearchParams(currentParams);
+
+        next.set('sort', sortType);
+        
+        // Set the new URL, which triggers useEffect to refetch
+        setSearchParams(next);
     };
-    // --- END ADDED ---
-
-    // --- REMOVED getThumbnail function ---
-
-    // --- REMOVED old renderHoldActionButtons function ---
 
     // --- ADDED: Filter Change Handler ---
     const handleFilterChange = (param, option) => {
-    const currentValues = (searchParams.get(param) || '')
-        .split(',')
-        .filter(Boolean);
+        const currentValues = (searchParams.get(param) || '')
+            .split(',')
+            .filter(Boolean);
 
-    let newValues;
-    if (currentValues.includes(option)) {
-        newValues = currentValues.filter(v => v !== option);
-    } else {
-        newValues = [...currentValues, option];
-    }
+        let newValues;
+        if (currentValues.includes(option)) {
+            newValues = currentValues.filter(v => v !== option);
+        } else {
+            newValues = [...currentValues, option];
+        }
 
-    // Push back to URL so useEffect + fetchHolds run
-    const next = new URLSearchParams(searchParams);
-    if (newValues.length) {
-        next.set(param, newValues.join(','));
-    } else {
-        next.delete(param);
-    }
-    setSearchParams(next);
+        // Push back to URL so useEffect + fetchHolds run
+        const next = new URLSearchParams(searchParams);
+        if (newValues.length) {
+            next.set(param, newValues.join(','));
+        } else {
+            next.delete(param);
+        }
+        setSearchParams(next);
+    };
+
+    const handleSearch = (event) => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            const term = localSearchTerm.trim();
+            const currentParams = Object.fromEntries(searchParams.entries());
+
+            if (term) {
+                setSearchParams({ ...currentParams, q: term });
+            } else {
+                delete currentParams.q;
+                setSearchParams(currentParams);
+            }
+        }
     };
 
 
@@ -211,9 +224,14 @@ function ManageHolds() {
                 <div className="search-result-header">
                     <h1>Manage Holds (Pending Pickups)</h1>
                     <div className="search-result-search-bar-container">
-                        {/* --- REMOVED Add Button --- */}
-                        {/* TODO: Implement search/filter functionality */}
-                        <input type="text" placeholder="Search holds (by user, item...)" className="search-result-search-bar" />
+                        <input 
+                            type="text" 
+                            placeholder="Search holds (by user, item...)" 
+                            className="search-result-search-bar"
+                            value={localSearchTerm}
+                            onChange={(e) => setLocalSearchTerm(e.target.value)}
+                            onKeyDown={handleSearch}
+                        />
                     </div>
                 </div>
                 <div className="search-results-contents"> 
@@ -223,14 +241,15 @@ function ManageHolds() {
                             Sort by:
                             <select
                                 className="sort-select"
-                                onChange={(e) => handleSortChange(e.target.value)}
-                                defaultValue=""
+                                value={sort} // Use state
+                                onChange={handleSortChange} // Use handler
                             >
-                                <option value="" disabled></option>
+                                <option value="requested_newest">Requested Date (Newest)</option>
+                                <option value="requested_oldest">Requested Date (Oldest)</option>
+                                <option value="expires_soonest">Expires Soonest</option>
+                                <option value="expires_latest">Expires Latest</option>
                                 <option value="title_asc">Title (A–Z)</option>
                                 <option value="title_desc">Title (Z–A)</option>
-                                <option value="newest">Newest First</option>
-                                <option value="oldest">Oldest First</option>
                             </select>
                         </div>
                         {filterOptions().map((filterGroup) => (

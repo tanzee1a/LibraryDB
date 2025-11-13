@@ -20,7 +20,7 @@ const {
 } = require('./controllers/loanController');
 
 const { 
-    getMyNotifications, getStaffNotifications, markNotificationAsRead, getStaffUnreadCount 
+    getMyNotifications, getStaffNotifications, markNotificationAsRead, getStaffUnreadCount, getPatronUnreadCount 
 } = require('./controllers/notificationController');
 const { registerUser, loginUser } = require('./controllers/loginRegisterController');
 const { saveItem, unsaveItem, getMyWishlist } = require('./controllers/wishlistController');
@@ -224,7 +224,7 @@ const server = http.createServer((req, res) => {
         }
 
         // --- STAFF manages BORROW ROUTE ---
-        else if (req.url === '/api/borrows' && req.method === 'GET') {
+        else if (req.url.startsWith('/api/borrows') && req.method === 'GET') {
             staffProtect(req, res, () => getAllBorrows(req, res));
         }
         else if (req.url === '/api/staff/dashboard-stats' && req.method === 'GET') {

@@ -11,7 +11,6 @@ async function getStatusId(conn, statusName) {
   return rows[0].status_id;
 }
 
-// --- MODIFIED: Helper to get all rules from LOAN_POLICY ---
 // This function is now the single source of truth for all rules.
 // It needs the user_id to find their role.
 async function getLoanPolicy(conn, userId, itemId) {
@@ -32,9 +31,7 @@ async function getLoanPolicy(conn, userId, itemId) {
   }
   return rows[0];
 }
-// --- END MODIFICATION ---
 
-// --- NEW HELPER: Check user's global borrow limit ---
 async function checkBorrowLimit(conn, userEmail) {
     // 1. Get the user's limit from their role
     const [roleRows] = await conn.query(`
@@ -69,8 +66,6 @@ async function checkBorrowLimit(conn, userEmail) {
     // If we're here, the user is clear to borrow/hold one more item.
     return true; 
 }
-// --- END NEW HELPER ---
-
 
 // --- MODIFIED: User requests pickup for an AVAILABLE item ---
 async function requestPickup(itemId, userId) {
@@ -190,7 +185,6 @@ async function pickupHold(holdId, staffUserId) { // staffUserId not used yet, bu
         conn.release();
     }
 }
-
 
 // --- MODIFIED: User returns a LOANED OUT item ---
 async function returnItem(borrowId, staffUserId) { // staffUserId for auth later
@@ -349,7 +343,6 @@ async function markFound(borrowId, staffUserId) {
     }
 }
 
-
 // --- MODIFIED: User places a hold on an UNAVAILABLE item (Waitlist) ---
 async function placeWaitlistHold(itemId, userId) {
     const conn = await db.getConnection();
@@ -395,7 +388,6 @@ async function placeWaitlistHold(itemId, userId) {
         conn.release();
     }
 }
-
 
 // --- MODIFIED: Staff directly checks out an available item to a user. ---
 async function staffCheckoutItem(itemId, userEmail, staffUserId) { // staffUserId for logging/auth later
@@ -450,10 +442,7 @@ async function staffCheckoutItem(itemId, userEmail, staffUserId) { // staffUserI
     }
 }
 
-
-// --- NO CHANGES NEEDED for any of the functions below ---
 // They only query by user_id or fine_id, or they don't depend on loan policies.
-
 async function findLoansByUserId(userId) {
     const loanedOutStatusId = await getStatusId(db, 'Loaned Out');
     const sql = `
@@ -615,8 +604,12 @@ async function findAllStatus(type) {
     return rows;
 }
 
-async function findAllBorrows(filters = {}) {
-    const sql = `
+async function findAllBorrows(searchTerm, filters = {}, sort = 'borrow_newest') {
+
+    let params = [];
+    let whereClauses = [];
+
+    const baseSql = `
         SELECT 
             b.borrow_id, 
             b.item_id,
@@ -638,17 +631,68 @@ async function findAllBorrows(filters = {}) {
         LEFT JOIN BOOK bk ON i.item_id = bk.item_id AND i.category = 'BOOK'
         LEFT JOIN MOVIE m ON i.item_id = m.item_id AND i.category = 'MOVIE'
         LEFT JOIN DEVICE d ON i.item_id = d.item_id AND i.category = 'DEVICE'
-        ORDER BY b.borrow_date DESC;
     `;
-    const [rows] = await db.query(sql);
+
+    // --- Search Term Logic ---
+    if (searchTerm && searchTerm.trim()) {
+        const queryTerm = `%${searchTerm}%`;
+        whereClauses.push(`(
+            b.borrow_id LIKE ? OR
+            u.firstName LIKE ? OR
+            u.lastName LIKE ? OR
+            u.email LIKE ? OR
+            i.item_id LIKE ? OR
+            bk.title LIKE ? OR
+            m.title LIKE ? OR
+            d.device_name LIKE ?
+        )`);
+        // Add 8 params for each ?
+        params.push(queryTerm, queryTerm, queryTerm, queryTerm, queryTerm, queryTerm, queryTerm, queryTerm);
+    }
+
+    // --- Filter Logic ---
+    const statusFilter = filters.status ? filters.status.split(',') : [];
+    if (statusFilter.length > 0) {
+        whereClauses.push(`bs.status_name IN (?)`);
+        params.push(statusFilter);
+    }
+
+    // --- Assemble Final SQL ---
+    let finalSql = baseSql;
+    if (whereClauses.length > 0) {
+        finalSql += ` WHERE ${whereClauses.join(' AND ')}`;
+    }
+    
+    // --- Dynamic ORDER BY logic ---
+    let orderByClause = ' ORDER BY b.borrow_date DESC'; // Default
+    switch (sort) {
+        case 'borrow_oldest':
+            orderByClause = ' ORDER BY b.borrow_date ASC';
+            break;
+        case 'due_soonest':
+            // Show nulls (returned items) last when sorting by due date
+            orderByClause = ' ORDER BY b.due_date IS NULL ASC, b.due_date ASC';
+            break;
+        case 'due_latest':
+            orderByClause = ' ORDER BY b.due_date DESC';
+            break;
+        case 'borrow_newest':
+        default:
+            orderByClause = ' ORDER BY b.borrow_date DESC';
+    }
+    finalSql += orderByClause;
+
+    const [rows] = await db.query(finalSql, params);
     return rows;
 }
 
-async function findAllHolds(filters = {}) {
+async function findAllHolds(searchTerm, filters = {}, sort = 'requested_newest') {
     let whereClauses = [];
     let queryParams = [];
+    
+    const statusFilters = filters.status ? filters.status.split(',') : [];
 
-    const sql = `
+    const baseSql = `
         SELECT 
             h.hold_id, 
             h.item_id,
@@ -676,20 +720,75 @@ async function findAllHolds(filters = {}) {
         LEFT JOIN BOOK bk ON i.item_id = bk.item_id AND i.category = 'BOOK'
         LEFT JOIN MOVIE m ON i.item_id = m.item_id AND i.category = 'MOVIE'
         LEFT JOIN DEVICE d ON i.item_id = d.item_id AND i.category = 'DEVICE'
-        ORDER BY h.created_at DESC;
     `;
-    console.log("findAllHolds: Fetching all holds..."); 
-    const [rows] = await db.query(sql, queryParams); 
 
-    let filteredRows = rows;
-    if (filters.status) {
-        const statusFilters = filters.status.split(',');
-         console.log("Filtering by status:", statusFilters); 
-        filteredRows = rows.filter(row => statusFilters.includes(row.hold_status));
+    // 2. Add Search Term logic
+    if (searchTerm.trim()) {
+        const queryTerm = `%${searchTerm}%`;
+        whereClauses.push(`(
+            u.firstName LIKE ? OR
+            u.lastName LIKE ? OR
+            u.email LIKE ? OR
+            i.item_id LIKE ? OR
+            bk.title LIKE ? OR
+            m.title LIKE ? OR
+            d.device_name LIKE ? OR
+            h.hold_id LIKE ?
+        )`);
+        // Add 8 params for each ?
+        queryParams.push(queryTerm, queryTerm, queryTerm, queryTerm, queryTerm, queryTerm, queryTerm, queryTerm);
+    }
+    
+    // 3. Add Status Filter logic (using HAVING for the calculated column)
+    let havingClauses = [];
+    if (statusFilters.length > 0) {
+        havingClauses.push(`hold_status IN (?)`);
+        queryParams.push(statusFilters); // This param will be added after the search params
     }
 
-    console.log(`findAllHolds: Returning ${filteredRows.length} rows after filtering.`);
-    return filteredRows; 
+    // 4. Assemble Final SQL
+    let finalSql = baseSql;
+    if (whereClauses.length > 0) {
+        finalSql += ` WHERE ${whereClauses.join(' AND ')}`;
+    }
+
+    finalSql += ` GROUP BY h.hold_id`; // GROUP BY is needed to use HAVING
+
+    if (havingClauses.length > 0) {
+        finalSql += ` HAVING ${havingClauses.join(' AND ')}`;
+    }
+
+    let orderByClause = ' ORDER BY h.created_at DESC'; // Default
+    switch (sort) {
+        case 'requested_oldest':
+            orderByClause = ' ORDER BY h.created_at ASC';
+            break;
+        case 'expires_soonest':
+            orderByClause = ' ORDER BY h.expires_at ASC';
+            break;
+        case 'expires_latest':
+            orderByClause = ' ORDER BY h.expires_at DESC';
+            break;
+        case 'title_asc':
+            orderByClause = ' ORDER BY item_title ASC';
+            break;
+        case 'title_desc':
+            orderByClause = ' ORDER BY item_title DESC';
+            break;
+        case 'requested_newest':
+        default:
+            orderByClause = ' ORDER BY h.created_at DESC';
+    }
+    finalSql += orderByClause;
+
+    console.log("findAllHolds: Fetching all holds..."); 
+    console.log("Executing SQL:", finalSql);
+    console.log("With Params:", queryParams);
+
+    const [rows] = await db.query(finalSql, queryParams); 
+
+    console.log(`findAllHolds: Returning ${rows.length} rows.`);
+    return rows; 
 }
 
 async function cancelHold(holdId, staffUserId) {

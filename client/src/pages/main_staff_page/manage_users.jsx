@@ -258,10 +258,9 @@ function ManageUsers() {
                             >
                             <FaPlus />
                         </button>
-                        {/* TODO: Implement user search */}
                         <input 
                             type="text" 
-                            placeholder="Search users (by name or email)..." 
+                            placeholder="Search users (by name or email)" 
                             className="search-result-search-bar"
                             value={localSearchTerm}
                             onChange={(e) => setLocalSearchTerm(e.target.value)}

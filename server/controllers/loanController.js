@@ -1,6 +1,6 @@
 const Loan = require('../models/loanModel');
 const { getPostData } = require('../utils');
-const url = require('url'); // <<< ADD THIS LINE
+const url = require('url');
 const userModel = require('../models/userModel');
 
 
@@ -149,7 +149,6 @@ async function placeWaitlistHold(req, res, itemId) {
     }
 }
 
-
 // --- GET Endpoints for User Dashboard ---
 
 // @desc Get all active loans for the current user
@@ -293,9 +292,16 @@ async function waiveFine(req, res, fineId) {
 // @route GET /api/borrows
 async function getAllBorrows(req, res) {
     try {
-        // TODO: Add authentication check - only staff allowed
-        // TODO: Get filter parameters from req.url query string
-        const borrows = await Loan.findAllBorrows(/* pass filters */);
+
+        const parsedUrl = url.parse(req.url, true);
+        const searchTerm = parsedUrl.query.q || '';
+        const sort = parsedUrl.query.sort || 'borrow_newest'; // Default sort
+        const filters = parsedUrl.query;
+        delete filters.q;
+        delete filters.sort;
+        
+        const borrows = await Loan.findAllBorrows(searchTerm, filters, sort);
+
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         return res.end(JSON.stringify(borrows));
     } catch (error) {
@@ -330,13 +336,15 @@ async function getAllStatus(req, res) {
 async function getAllHolds(req, res) {
     try {
         const parsedUrl = url.parse(req.url, true);
+        const searchTerm = parsedUrl.query.q || '';
+        const sort = parsedUrl.query.sort || 'requested_newest'; // Default sort
         const filters = parsedUrl.query;
+        delete filters.q;
+        delete filters.sort;
         
-        // --- ADDED: Log received filters ---
         console.log("getAllHolds controller: Received request. Filters:", filters); 
-        // --- END ADDED ---
 
-        const holds = await Loan.findAllHolds(filters); 
+        const holds = await Loan.findAllHolds(searchTerm, filters, sort);
         
         console.log("getAllHolds controller: Sending response. Count:", holds.length); // Added count
         res.writeHead(200, { /* ... headers ... */ });
