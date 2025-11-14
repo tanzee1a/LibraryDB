@@ -363,7 +363,15 @@ async function staffCheckoutItem(req, res) {
             throw new Error('User Email and Item ID are required.');
         }
 
-        const result = await Loan.staffCheckoutItem(itemId, userEmail, staff_user_id);
+        // --- FIX: Find user by email *before* calling the model ---
+        const user = await Loan.findByEmail(userEmail);
+        if (!user) {
+            throw new Error('User not found with that email.');
+        }
+        // --- End Fix ---
+
+        // --- FIX: Pass the user.user_id, not the email ---
+        const result = await Loan.staffCheckoutItem(itemId, user.user_id, staff_user_id);
         
         res.writeHead(201, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         return res.end(JSON.stringify(result));
@@ -517,31 +525,29 @@ async function staffCancelWaitlistEntry(req, res, waitlistId) {
 // @route   POST /api/staff/waitlist
 async function staffPlaceWaitlistHold(req, res) {
     try {
-        // --- THIS IS THE FIX ---
-        const rawData = await getPostData(req); // 1. Get the raw string body
-        const body = JSON.parse(rawData);       // 2. Parse the JSON string
-        const { itemId, email } = body;         // 3. Destructure from the parsed object
-        // --- END FIX ---
+        const rawData = await getPostData(req);
+        const body = JSON.parse(rawData);
+        const { itemId, email } = body;
 
         if (!itemId || !email) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
             return res.end(JSON.stringify({ message: 'Both itemId and email are required.' }));
         }
 
-        // --- 1. Find the user by email ---
-        // (You need a findByEmail function in your userModel)
-        const user = await userModel.findByEmail(email); 
+        // --- FIX: Use Loan.findByEmail instead of userModel.findByEmail ---
+        const user = await Loan.findByEmail(email); 
         if (!user) {
             res.writeHead(404, { 'Content-Type': 'application/json' });
             return res.end(JSON.stringify({ message: 'User not found with that email.' }));
         }
         const userId = user.user_id;
+        // --- End Fix ---
 
-        // --- 2. Call the existing waitlist logic ---
-        // (This re-uses all your checks for availability, duplicates, etc.)
+        // This part is now correct because it has a valid userId
         const result = await Loan.placeWaitlistHold(itemId, userId); 
         
         res.writeHead(201, { 'Content-Type': 'application/json' });
+        
         return res.end(JSON.stringify(result));
 
     } catch (error) {

@@ -2,7 +2,7 @@ import './manage_waitlist.css';
 import React, { useState, useEffect } from 'react'; 
 import { Link, useSearchParams } from 'react-router-dom';
 import { IoListOutline } from 'react-icons/io5';
-import { FaPlus } from 'react-icons/fa'; // --- 1. FaPlus icon is imported ---
+import { FaPlus } from 'react-icons/fa';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
@@ -168,7 +168,6 @@ function ManageWaitlist() {
                     <h1> Manage Waitlist</h1>
                     <div className="search-result-search-bar-container">
                         
-                        {/* --- 5. "Add" Button --- */}
                         <button
                             className="action-circle-button primary-button"
                             onClick={() => setShowAddWaitlistSheet(true)}
@@ -248,7 +247,6 @@ function ManageWaitlist() {
             </div>
         </div>
         
-        {/* --- 6. "Add" Sheet JSX --- */}
         {showAddWaitlistSheet && (
             <div className="sheet-overlay" onClick={() => !isSubmitting && setShowAddWaitlistSheet(false)}>
                 <div className="sheet-container" onClick={(e) => e.stopPropagation()}>
@@ -270,7 +268,6 @@ function ManageWaitlist() {
                 </div>
             </div>
         )}
-        {/* --- End new JSX --- */}
 
         </div>
     )

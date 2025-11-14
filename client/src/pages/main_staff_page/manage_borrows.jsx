@@ -157,10 +157,17 @@ function ManageBorrows() {
         setIsSubmitting(true);
         setSubmitError('');
 
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            setSubmitError('Authentication failed. Please log in again.');
+            setIsSubmitting(false);
+            return;
+        }
+
         try {
             const response = await fetch(`${API_BASE_URL}/api/borrows/checkout`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({
                     userEmail: newBorrow.user_email, 
                     itemId: newBorrow.item_id  

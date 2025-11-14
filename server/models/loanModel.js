@@ -395,14 +395,14 @@ async function cancelWaitlist(waitlistId, userId) {
 }
 
 // --- Staff directly checks out an available item to a user. ---
-async function staffCheckoutItem(itemId, userEmail, staffUserId) { 
+async function staffCheckoutItem(itemId, userId, staffUserId) { 
     const conn = await db.getConnection();
     try {
         await conn.beginTransaction();
         const loanedOutStatusId = await getStatusId(conn, 'Loaned Out');
 
         // --- STEP 1: Check user's borrow limit ---
-        await checkBorrowLimit(conn, userEmail);
+        await checkBorrowLimit(conn, userId);
 
         // 2. Check Availability & Lock Item
         const [items] = await conn.query(
