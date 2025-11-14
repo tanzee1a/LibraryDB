@@ -638,8 +638,14 @@ function SearchResults({ isStaff }) {
                                         <span className="status-tag deleted-tag">DELETED</span>
                                     )}
                                     </h3>
+                                    
                                     <div className="result-description">
                                         <div className='result-details'>
+                                            {isStaff && (
+                                                <p className="result-item-id">
+                                                    <strong>Item ID:</strong> {item.item_id}
+                                                </p>
+                                            )}
                                             {renderItemDetails(item)}
                                         </div>
                                         <div className="availability-status">
@@ -648,6 +654,7 @@ function SearchResults({ isStaff }) {
                                             {item.available <= 0 && (
                                                 <p><strong>Earliest Available:</strong> <span>{item.earliest_available_date ? new Date(item.earliest_available_date).toLocaleDateString() : 'N/A'}</span></p>
                                             )}
+                                            
                                         </div>
                                     </div>
                                 </div>
