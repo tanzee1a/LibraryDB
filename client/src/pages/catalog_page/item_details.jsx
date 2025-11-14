@@ -46,6 +46,7 @@ function ItemDetails({ isStaff }) {
   const [editMessage, setEditMessage] = useState({ type: '', text: '' });
   const [isDeleteSubmitting, setIsDeleteSubmitting] = useState(false);
   const [isReactivateSubmitting, setIsReactivateSubmitting] = useState(false);
+  const [editSheetView, setEditSheetView] = useState('form'); // 'form', 'confirm_delete', 'confirm_reactivate'
 
 
   const staffRole = localStorage.getItem('staffRole');
@@ -215,7 +216,18 @@ function ItemDetails({ isStaff }) {
     });
     
     setEditMessage({ type: '', text: '' }); 
+    setEditSheetView('form');
     setShowEditSheet(true); 
+  };
+
+  const handleDeleteClick = () => {
+    setEditMessage({ type: '', text: '' });
+    setEditSheetView('confirm_delete');
+  };
+
+  const handleReactivateClick = () => {
+    setEditMessage({ type: '', text: '' });
+    setEditSheetView('confirm_reactivate');
   };
 
   const handleFormChange = (e) => {
@@ -317,13 +329,9 @@ function ItemDetails({ isStaff }) {
     }
   };
 
-  const handleSoftDelete = async () => {
+  const handleConfirmDelete = async () => {
     if (item.loaned_out > 0 || item.on_hold > 0) {
       setEditMessage({ type: 'error', text: 'Cannot delete item: It is currently loaned out or on hold.' });
-      return;
-    }
-
-    if (!window.confirm("Are you sure you want to mark this item as 'Deleted'? Users will no longer see it.")) {
       return;
     }
 
@@ -352,6 +360,7 @@ function ItemDetails({ isStaff }) {
       
       setItem(prev => ({ ...prev, status: 'DELETED' }));
       setFormData(prev => ({ ...prev, status: 'DELETED' }));
+      setEditSheetView('form');
 
     } catch (err) {
       setEditMessage({ type: 'error', text: err.message });
@@ -360,10 +369,7 @@ function ItemDetails({ isStaff }) {
     }
   };
 
-  const handleReactivate = async () => {
-    if (!window.confirm("Are you sure you want to reactivate this item? It will become visible to users again.")) {
-      return;
-    }
+  const handleConfirmReactivate = async () => {
 
     setIsReactivateSubmitting(true);
     setEditMessage({ type: '', text: '' });
@@ -390,6 +396,7 @@ function ItemDetails({ isStaff }) {
       
       setItem(prev => ({ ...prev, status: 'ACTIVE' }));
       setFormData(prev => ({ ...prev, status: 'ACTIVE' }));
+      setEditSheetView('form');
 
     } catch (err) {
       setEditMessage({ type: 'error', text: err.message });
@@ -573,9 +580,6 @@ function ItemDetails({ isStaff }) {
             <div className="availability-info">
               <p><strong>Available:</strong> <span>{item.available}</span></p>
               {item.available <= 0 && item.on_hold > 0 && <p><strong>On Hold:</strong> <span>{item.on_hold}</span></p>}
-               {item.available <= 0 && (
-                  <p><strong>Earliest Available:</strong> <span>{item.earliest_available_date ? new Date(item.earliest_available_date).toLocaleDateString() : 'N/A'}</span></p>
-              )}
             </div>
 
             {(userProfileLoading && !isStaff) && (
@@ -672,79 +676,149 @@ function ItemDetails({ isStaff }) {
         </div>
       </div>
       {showEditSheet && formData && (
-        <div className="sheet-overlay" onClick={() => !(isEditSubmitting || isDeleting) && setShowEditSheet(false)}>
+        <div className="sheet-overlay" onClick={() => !(isEditSubmitting || isDeleteSubmitting || isReactivateSubmitting) && setShowEditSheet(false)}>
           <div className="sheet-container" onClick={(e) => e.stopPropagation()}>
-            <h2>Edit Item: {item.title || item.device_name}</h2>
-            
-            {editMessage.text && (
-              <p className={`action-message ${editMessage.type}`}>
-                {editMessage.text}
-              </p>
-            )}
-            
-            <form onSubmit={handleFormSubmit}>
-              <label> Title: 
-                <input type="text" name="title" value={formData.title || ''} onChange={handleFormChange} required className="edit-input" />
-              </label>
-              <label> Description: 
-                <textarea name="description" value={formData.description || ''} onChange={handleFormChange} className="edit-input" />
-              </label>
-              <label> Thumbnail URL: 
-                <input type="url" name="thumbnail_url" value={formData.thumbnail_url || ''} onChange={handleFormChange} className="edit-input" />
-              </label>
-              <label> Shelf Location: 
-                <input type="text" name="shelf_location" value={formData.shelf_location || ''} onChange={handleFormChange} className="edit-input" />
-              </label>
-              <label> Quantity (Total): 
-                <input type="number" name="quantity" min="0" value={formData.quantity || 0} onChange={handleFormChange} required className="edit-input" />
-              </label>
-              <label> Tags (comma-separated): 
-                <input type="text" name="tags" value={formData.tags || ''} onChange={handleFormChange} className="edit-input" />
-              </label>
-
-              {item.category === 'BOOK' && renderBookFields()}
-              {item.category === 'MOVIE' && renderMovieFields()}
-              {item.category === 'DEVICE' && renderDeviceFields()}
-
-              <div className="sheet-actions">
+            {/* VIEW 1: THE EDIT FORM (DEFAULT) */}
+            {editSheetView === 'form' && (
+              <>
+                <h2>Edit Item: {item.title || item.device_name}</h2>
                 
-                {item.status === 'ACTIVE' ? (
-                  <button
-                      type="button"
-                      className="action-button red-button"
-                      onClick={handleSoftDelete}
-                      disabled={isEditSubmitting || isDeleteSubmitting || isReactivateSubmitting}
-                  >
-                      {isDeleteSubmitting ? 'Deleting...' : 'Delete Item'}
-                  </button>
-                ) : (
-                  <button
-                      type="button"
-                      className="action-button secondary-button" 
-                      onClick={handleReactivate}
-                      disabled={isEditSubmitting || isDeleteSubmitting || isReactivateSubmitting}
-                  >
-                      {isReactivateSubmitting ? 'Reactivating...' : 'Reactivate Item'}
-                  </button>
+                {editMessage.text && (
+                  <p className={`action-message ${editMessage.type}`}>
+                    {editMessage.text}
+                  </p>
+                )}
+                
+                <form onSubmit={handleFormSubmit}>
+                  <label> Title: 
+                    <input type="text" name="title" value={formData.title || ''} onChange={handleFormChange} required className="edit-input" />
+                  </label>
+                  <label> Description: 
+                    <textarea name="description" value={formData.description || ''} onChange={handleFormChange} className="edit-input" />
+                  </label>
+                  <label> Thumbnail URL: 
+                    <input type="url" name="thumbnail_url" value={formData.thumbnail_url || ''} onChange={handleFormChange} className="edit-input" />
+                  </label>
+                  <label> Shelf Location: 
+                    <input type="text" name="shelf_location" value={formData.shelf_location || ''} onChange={handleFormChange} className="edit-input" />
+                  </label>
+                  <label> Quantity (Total): 
+                    <input type="number" name="quantity" min="0" value={formData.quantity || 0} onChange={handleFormChange} required className="edit-input" />
+                  </label>
+                  <label> Tags (comma-separated): 
+                    <input type="text" name="tags" value={formData.tags || ''} onChange={handleFormChange} className="edit-input" />
+                  </label>
+
+                  {item.category === 'BOOK' && renderBookFields()}
+                  {item.category === 'MOVIE' && renderMovieFields()}
+                  {item.category === 'DEVICE' && renderDeviceFields()}
+
+                  <div className="sheet-actions">
+                    
+                    {item.status === 'ACTIVE' ? (
+                      <button
+                          type="button"
+                          className="action-button red-button"
+                          onClick={handleDeleteClick} 
+                          disabled={isEditSubmitting || isDeleteSubmitting || isReactivateSubmitting}
+                      >
+                          Delete Item
+                      </button>
+                    ) : (
+                      <button
+                          type="button"
+                          className="action-button secondary-button" 
+                          onClick={handleReactivateClick}
+                          disabled={isEditSubmitting || isDeleteSubmitting || isReactivateSubmitting}
+                      >
+                          Reactivate Item
+                      </button>
+                    )}
+
+                    <button 
+                        type="submit" 
+                        className="action-button primary-button" 
+                        disabled={isEditSubmitting || isDeleteSubmitting || isReactivateSubmitting}
+                    >
+                        {isEditSubmitting ? 'Saving...' : 'Save Changes'}
+                    </button>
+                    <button
+                        type="button"
+                        className="action-button secondary-button"
+                        onClick={() => setShowEditSheet(false)}
+                        disabled={isEditSubmitting || isDeleteSubmitting || isReactivateSubmitting}
+                    >
+                        Cancel
+                    </button>
+                  </div>
+                </form>
+              </>
+            )}
+            {/* VIEW 2: CONFIRM DELETE */}
+            {editSheetView === 'confirm_delete' && (
+              <>
+                <h2>Delete Item</h2>
+                <p>Are you sure you want to mark this item as 'Deleted'? Users will no longer see it.</p>
+                
+                {editMessage.text && (
+                  <p className={`action-message ${editMessage.type}`}>
+                    {editMessage.text}
+                  </p>
                 )}
 
-                <button 
-                    type="submit" 
-                    className="action-button primary-button" 
-                    disabled={isEditSubmitting || isDeleteSubmitting || isReactivateSubmitting}
-                >
-                    {isEditSubmitting ? 'Saving...' : 'Save Changes'}
-                </button>
-                <button
+                <div className="sheet-actions">
+                  <button
+                    type="button"
+                    className="action-button red-button"
+                    onClick={handleConfirmDelete}
+                    disabled={isDeleteSubmitting}
+                  >
+                    {isDeleteSubmitting ? 'Deleting...' : 'Yes, Delete'}
+                  </button>
+                  <button
                     type="button"
                     className="action-button secondary-button"
-                    onClick={() => setShowEditSheet(false)}
-                    disabled={isEditSubmitting || isDeleteSubmitting || isReactivateSubmitting}
-                >
+                    onClick={() => setEditSheetView('form')}
+                    disabled={isDeleteSubmitting}
+                  >
                     Cancel
-                </button>
-              </div>
-            </form>
+                  </button>
+                </div>
+              </>
+            )}
+            {/* VIEW 3: CONFIRM REACTIVATE */}
+            {editSheetView === 'confirm_reactivate' && (
+              <>
+                <h2>Reactivate Item</h2>
+                <p>Are you sure you want to reactivate this item? It will become visible to users again.</p>
+                
+                {editMessage.text && (
+                  <p className={`action-message ${editMessage.type}`}>
+                    {editMessage.text}
+                  </p>
+                )}
+
+                <div className="sheet-actions">
+                  <button
+                    type="button"
+                    className="action-button primary-button"
+                    onClick={handleConfirmReactivate}
+                    disabled={isReactivateSubmitting}
+                  >
+                    {isReactivateSubmitting ? 'Reactivating...' : 'Yes, Reactivate'}
+                  </button>
+                  <button
+                    type="button"
+                    className="action-button secondary-button"
+                    onClick={() => setEditSheetView('form')}
+                    disabled={isReactivateSubmitting}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </>
+            )}
+
           </div>
         </div>
       )}
