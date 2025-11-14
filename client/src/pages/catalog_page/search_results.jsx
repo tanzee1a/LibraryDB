@@ -82,6 +82,11 @@ function SearchResults({ isStaff }) {
                 params.set(key, values.join(','));
             }
         });
+
+        if (isStaff) {
+            params.set('view', 'staff');
+        }
+
         const queryString = params.toString();
     
         fetch(`${API_BASE_URL}/api/search?${queryString}`)
@@ -614,7 +619,7 @@ function SearchResults({ isStaff }) {
                      {!loading && !error && results.length === 0 && <p>No results found {query ? `for "${query}"` : ''}.</p>}
                     {!loading && !error && results.map((item) => {
                         return (
-                        <div key={item.item_id} className={`search-result-item ${item.category.toLowerCase()}`}>
+                        <div key={item.item_id} className={`search-result-item ${item.category.toLowerCase()} ${isStaff && item.status === 'DELETED' ? 'deleted-item' : ''}`}>
                             <div className="result-info">
                                 <div>
                                     <img 
@@ -629,6 +634,9 @@ function SearchResults({ isStaff }) {
                                     <Link to={`/item/${item.item_id}`} className="result-link">
                                         {item.title} 
                                     </Link>
+                                    {isStaff && item.status === 'DELETED' && (
+                                        <span className="status-tag deleted-tag">DELETED</span>
+                                    )}
                                     </h3>
                                     <div className="result-description">
                                         <div className='result-details'>

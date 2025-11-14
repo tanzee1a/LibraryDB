@@ -1,6 +1,6 @@
 const db = require('../config/db');
 
-async function searchItems(searchTerm, filters = {}, searchType = 'Description') {
+async function searchItems(searchTerm, filters = {}, searchType = 'Description', view = 'user') {
     const queryTerm = `%${searchTerm}%`;
     const exactTerm = searchTerm;
     const startsWithTerm = `${searchTerm}%`;
@@ -23,7 +23,7 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description')
         let bookWhereClauses = [];
         let bookSelect = `
             SELECT
-                i.item_id, i.category, i.thumbnail_url, i.available, i.on_hold, i.loaned_out, i.earliest_available_date,
+                i.item_id, i.category, i.status, i.thumbnail_url, i.available, i.on_hold, i.loaned_out, i.earliest_available_date,
                 b.title AS title,
                 GROUP_CONCAT(DISTINCT a.first_name, ' ', a.last_name SEPARATOR ', ') AS creators,
                 
@@ -42,6 +42,10 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description')
             `LEFT JOIN AUTHOR a ON ba.author_id = a.author_id`,
             `LEFT JOIN LANGUAGE l ON b.language_id = l.language_id`
         ];
+
+        if (view !== 'staff') {
+            bookWhereClauses.push(`i.status = 'ACTIVE'`);
+        }
         
         if (searchTerm.trim()) {
             if (searchType === 'Title') {
@@ -125,7 +129,7 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description')
 
         let movieSelect = `
             SELECT
-                i.item_id, i.category, i.thumbnail_url, i.available, i.on_hold, i.loaned_out, i.earliest_available_date,
+                i.item_id, i.category, i.status,i.thumbnail_url, i.available, i.on_hold, i.loaned_out, i.earliest_available_date,
                 m.title AS title,
                 GROUP_CONCAT(DISTINCT d.first_name, ' ', d.last_name SEPARATOR ', ') AS creators,
                 
@@ -140,6 +144,10 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description')
                 -- Device Specific field
                 NULL AS device_type_name
         `;
+
+        if (view !== 'staff') {
+            movieWhereClauses.push(`i.status = 'ACTIVE'`);
+        }
 
         if (searchTerm.trim()) {
             if (searchType === 'Title') {
@@ -224,7 +232,7 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description')
 
         let deviceSelect = `
             SELECT
-                i.item_id, i.category, i.thumbnail_url, i.available, i.on_hold, i.loaned_out, i.earliest_available_date,
+                i.item_id, i.category, i.status, i.thumbnail_url, i.available, i.on_hold, i.loaned_out, i.earliest_available_date,
                 d.device_name AS title,
                 d.manufacturer AS creators,
                 
@@ -239,6 +247,10 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description')
                 -- Device-specific fields
                 dt.type_name AS device_type_name
         `;
+
+        if (view !== 'staff') {
+            deviceWhereClauses.push(`i.status = 'ACTIVE'`);
+        }
 
         if (searchTerm.trim()) {
             if (searchType === 'Title') {
