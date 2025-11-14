@@ -157,10 +157,20 @@ function ManageBorrows() {
         setIsSubmitting(true);
         setSubmitError('');
 
+        const token = localStorage.getItem('authToken');
+         if (!token) {
+        setSubmitError('Authentication token missing. Cannot add user.');
+        setIsSubmitting(false);
+        return;
+        }
+
         try {
             const response = await fetch(`${API_BASE_URL}/api/borrows/checkout`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}` 
+                },
                 body: JSON.stringify({
                     userEmail: newBorrow.user_email, 
                     itemId: newBorrow.item_id  
@@ -172,7 +182,13 @@ function ManageBorrows() {
                 throw new Error(errorData.message || `HTTP error ${response.status}`);
             }
 
-            console.log("Borrow Record Added:", await response.json());
+            const data = await response.json();
+            console.log("Borrow Record Added:", data);
+
+            toast.success(`Borrow ${newBorrow.item_id} added successfully!`, {
+                toastId: 'borrow-add-success' 
+            });
+
             setShowAddBorrowSheet(false);     // Close sheet
             setNewBorrow(initialBorrowState); // Reset form
             fetchBorrows();                  // Refresh the main borrow list

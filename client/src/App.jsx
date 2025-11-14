@@ -21,6 +21,8 @@ import StaffRoute from './pages/staffAuthRoutes/StaffRoute.jsx';
 import AssistLibRoute from "./pages/staffAuthRoutes/AssistLibRoute.jsx";
 import ClerkRoute from "./pages/staffAuthRoutes/ClerkRoute.jsx";
 import StaffProfile from './pages/staff_dashboard/StaffProfile.jsx'; 
+import { ToastContainer, toast, Bounce } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { useState, useEffect } from 'react';
 import './App.css';
 
@@ -229,6 +231,19 @@ function App() {
         
       </Routes>
       <Footer />
+      <ToastContainer
+        position="bottom-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick={false}
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+        transition={Bounce} // This is now correctly defined
+      />
     </BrowserRouter>
   );
 }

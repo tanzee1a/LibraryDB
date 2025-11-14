@@ -2,6 +2,8 @@ import './manage_fines.css';
 import React, { useState, useEffect } from 'react';
 import { FaPlus } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
+import { toast } from 'react-toastify'; 
+
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
 
@@ -112,7 +114,7 @@ function ManageFines() {
 
         const reason = prompt("Enter reason for waiving the fine:");
         if (reason === null || reason.trim() === '') {
-            alert("Waive canceled or reason not provided.");
+            toast.error("Waive canceled or reason not provided.");
             return; 
         }
         
@@ -177,8 +179,14 @@ function ManageFines() {
                 const errorData = await response.json();
                 throw new Error(errorData.error || `HTTP error ${response.status}`);
             }
+            
+            const data = await response.json();
+            console.log("New Fine Added:", data);
 
-            console.log("New Fine Added:", await response.json());
+            toast.success(` ${newFine.fee_type} fine for $${newFine.amount} issued successfully`, {
+            toastId: 'fine-add-success' 
+            });
+
             setShowAddFineSheet(false);
             setNewFine(initialFineState); 
             fetchFines();

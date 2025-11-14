@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom'; 
 import { IoCheckmark, IoTrash, IoTimeOutline, IoHourglassOutline, IoWalletOutline, IoReturnUpBackOutline } from "react-icons/io5"; 
 import { MdEdit } from "react-icons/md";
+import { toast } from 'react-toastify'; 
+
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
 
@@ -155,11 +157,11 @@ function UserProfile() {
     // --- Edit/Save Logic ---
     function handleEditToggle() {
         if (isSelf) { 
-            alert("You cannot edit your own details from Manage Users. Please go to account dashboard.");
+            toast.error("You cannot edit your own details from Manage Users. Please go to account dashboard.");
             return; 
         }
         if (isBlockedFromEditingAllStaff) { 
-            alert("You do not have the necessary permissions to edit another staff member's details.");
+            toast.error("You do not have the necessary permissions to edit another staff member's details.");
             return; 
         }
         if (isEditing) {
@@ -227,11 +229,11 @@ function UserProfile() {
 
     const handleDeleteUserClick = () => {
         if (isSelf) {
-            alert("You cannot delete your own profile from Manage Users. Please contact your IT department.");
+            toast.error("You cannot delete your own profile from Manage Users. Please contact your IT department.");
             return;
         }
         if (isBlockedFromEditingAllStaff) {
-            alert("You do not have the necessary permissions to deactivate another staff member.");
+            toast.error("You do not have the necessary permissions to deactivate another staff member.");
             return;
         }
         

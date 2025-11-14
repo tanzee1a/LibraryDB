@@ -2,6 +2,8 @@ import './manage_users.css';
 import React, { useState, useEffect } from 'react';
 import { FaPlus } from "react-icons/fa";
 import { Link, useSearchParams } from 'react-router-dom';
+import { toast } from 'react-toastify'; 
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
 
 function ManageUsers() {
@@ -145,7 +147,13 @@ function ManageUsers() {
             throw new Error(errorData.error || `HTTP error ${response.status}`);
         }
 
-        console.log("New User Added:", await response.json());
+        const data = await response.json();
+        console.log("New User Added:", data);
+        
+        toast.success(`User ${newUser.firstName} ${newUser.lastName} added successfully!`, {
+            toastId: 'user-add-success' 
+        });
+
         setShowAddUserSheet(false);
         setNewUser(initialUserState); // Reset form
         fetchUsers(); // Refresh user list
