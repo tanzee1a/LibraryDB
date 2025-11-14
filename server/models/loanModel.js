@@ -943,6 +943,81 @@ async function cancelMyHold(holdId, userId) {
     }
 }
 
+async function findAllWaitlist(queryParams) {
+    const { q = '', sort = 'requested_oldest' } = queryParams;
+
+    let sql = `
+        SELECT
+            w.waitlist_id,
+            w.item_id,
+            w.user_id,
+            w.start_date,
+            i.thumbnail_url,
+            i.shelf_location,
+            u.firstName,
+            u.lastName,
+            u.email,
+            COALESCE(b.title, m.title, d.device_name) AS item_title
+        FROM WAITLIST w
+        JOIN ITEM i ON w.item_id = i.item_id
+        JOIN USER u ON w.user_id = u.user_id
+        LEFT JOIN BOOK b ON i.item_id = b.item_id AND i.category = 'BOOK'
+        LEFT JOIN MOVIE m ON i.item_id = m.item_id AND i.category = 'MOVIE'
+        LEFT JOIN DEVICE d ON i.item_id = d.item_id AND i.category = 'DEVICE'
+    `;
+
+    // --- Search ---
+    const searchTerms = q.split(' ').filter(Boolean);
+    const whereClauses = [];
+    const params = [];
+
+    if (searchTerms.length > 0) {
+        searchTerms.forEach(term => {
+            const searchTerm = `%${term}%`;
+            whereClauses.push(`
+                (
+                    u.firstName LIKE ? OR
+                    u.lastName LIKE ? OR
+                    u.email LIKE ? OR
+                    COALESCE(b.title, m.title, d.device_name) LIKE ? OR
+                    w.item_id LIKE ? OR
+                    w.user_id LIKE ?
+                )
+            `);
+            params.push(searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm);
+        });
+        sql += ` WHERE ${whereClauses.join(' AND ')}`;
+    }
+
+    // --- Sorting ---
+    let orderBy = '';
+    switch (sort) {
+        case 'requested_newest':
+            orderBy = 'w.start_date DESC';
+            break;
+        case 'title_asc':
+            orderBy = 'item_title ASC';
+            break;
+        case 'title_desc':
+            orderBy = 'item_title DESC';
+            break;
+        case 'requested_oldest':
+        default:
+            orderBy = 'w.start_date ASC';
+            break;
+    }
+    sql += ` ORDER BY ${orderBy}`;
+
+    const [rows] = await db.query(sql, params);
+    return rows;
+}
+
+async function staffCancelWaitlist(waitlistId) {
+    const sql = `DELETE FROM WAITLIST WHERE waitlist_id = ?`;
+    const [result] = await db.query(sql, [waitlistId]);
+    return result;
+}
+
 
 module.exports = {
     requestPickup,
@@ -967,5 +1042,7 @@ module.exports = {
     findAllFines,
     staffCreateFine,
     findAllStatus,
-    cancelMyHold
+    cancelMyHold,
+    findAllWaitlist,
+    staffcancelWaitlist
 };

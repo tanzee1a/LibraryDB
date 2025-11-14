@@ -16,7 +16,8 @@ const {
 const { 
     requestPickup, pickupHold, returnItem, markLost, markFound, placeWaitlistHold, 
     getMyLoans, getMyHistory, getMyHolds, getMyWaitlist, getMyFines, cancelMyWaitlistEntry,
-    payFine, userPayFine, waiveFine, getAllBorrows, getAllHolds, cancelHold, staffCheckoutItem, getAllFines, staffCreateFine, getAllStatus, cancelMyHold
+    payFine, userPayFine, waiveFine, getAllBorrows, getAllHolds, cancelHold, staffCheckoutItem, getAllFines, staffCreateFine, getAllStatus, cancelMyHold, getAllWaitlist,
+    staffCancelWaitlistEntry
 } = require('./controllers/loanController');
 
 const { 
@@ -243,8 +244,8 @@ const server = http.createServer((req, res) => {
             staffProtect(req, res, () => staffCreateUser(req, res)); 
         }
         else if (req.url.match(/\/api\/users\/([a-zA-Z0-9]+)\/activate/) && req.method === 'PUT') {
-    const userId = req.url.split('/')[3];
-    staffProtect(req, res, () => staffActivateUser(req, res, userId));
+        const userId = req.url.split('/')[3];
+        staffProtect(req, res, () => staffActivateUser(req, res, userId));
         }
         else if (req.url.match(/\/api\/users\/([a-zA-Z0-9]+)$/) && req.method === 'PUT') {
             const userId = req.url.split('/')[3]; 
@@ -253,6 +254,14 @@ const server = http.createServer((req, res) => {
         else if (req.url.match(/\/api\/users\/([a-zA-Z0-9]+)$/) && req.method === 'DELETE') {
             const userId = req.url.split('/')[3];
             staffProtect(req, res, () => staffDeleteUser(req, res, userId));
+        }
+        // staff manage waitlist routes
+        else if (req.url.startsWith('/api/waitlist') && req.method === 'GET') {
+            staffProtect(req, res, () => getAllWaitlist(req, res));
+        }
+        else if (req.url.match(/^\/api\/waitlist\/([0-9]+)\/cancel$/) && req.method === 'POST') {
+            const waitlistId = req.url.split('/')[3];
+            staffProtect(req, res, () => staffCancelWaitlistEntry(req, res, waitlistId));
         }
 
         else if (req.url.startsWith('/api/holds') && req.method === 'GET') { 

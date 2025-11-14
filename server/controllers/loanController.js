@@ -469,6 +469,50 @@ async function cancelMyWaitlistEntry(req, res, waitlistId) {
     }
 }
 
+// @desc    Get all waitlist entries (for staff)
+// @route   GET /api/waitlist
+async function getAllWaitlist(req, res) {
+    try {
+        const parsedUrl = url.parse(req.url, true);
+        const queryParams = parsedUrl.query; // e.g., { q: '...', sort: '...' }
+
+        const waitlist = await findAllWaitlist(queryParams);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(waitlist));
+    } catch (error) {
+        console.error("Error in getAllWaitlist:", error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ message: 'Could not fetch waitlist', error: error.message }));
+    }
+}
+
+// @desc    Staff cancels a waitlist entry
+// @route   POST /api/waitlist/:id/cancel
+async function staffCancelWaitlistEntry(req, res, waitlistId) {
+    try {
+        if (!waitlistId) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({ message: 'Waitlist ID is required.' }));
+        }
+        
+        const result = await staffCancelWaitlist(waitlistId);
+
+        if (result.affectedRows === 0) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({ message: 'Waitlist entry not found.' }));
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ message: 'Waitlist entry canceled successfully.' }));
+
+    } catch (error)
+    {
+        console.error("Error in staffCancelWaitlistEntry:", error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ message: 'Could not cancel waitlist entry', error: error.message }));
+    }
+}
+
 module.exports = {
     requestPickup,
     pickupHold,
@@ -492,5 +536,7 @@ module.exports = {
     getAllFines,
     staffCreateFine,
     getAllStatus,
-    cancelMyHold
+    cancelMyHold,
+    getAllWaitlist,
+    staffCancelWaitlistEntry
 };
