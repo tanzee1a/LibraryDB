@@ -1,6 +1,7 @@
 import './manage_holds.css'; 
 import React, { useState, useEffect } from 'react'; 
 import { Link, useSearchParams } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
@@ -13,6 +14,9 @@ function ManageHolds() {
     const query = searchParams.get('q') || '';
     const [localSearchTerm, setLocalSearchTerm] = useState(query);
     const [sort, setSort] = useState(searchParams.get('sort') || 'requested_newest');
+    const [showCancelSheet, setShowCancelSheet] = useState(false);
+    const [cancelTargetHold, setCancelTargetHold] = useState(null); 
+    const [isCanceling, setIsCanceling] = useState(false);
 
 
     const filterOptions = () => {
@@ -110,44 +114,80 @@ function ManageHolds() {
         fetchHoldStatus();
     }, [searchParams]); 
 
-    const handlePickup = (holdId) => {
+    const handlePickup = async (holdId) => {
         const token = localStorage.getItem('authToken');
         if (!token) {
-            alert("Error: You must be logged in to perform this action.");
+            toast.error("Error: You must be logged in to perform this action.");
             return;
         }
 
-        fetch(`${API_BASE_URL}/api/holds/${holdId}/pickup`, { method: 'POST' , headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }})
-            .then(r => { if (!r.ok) throw new Error('Pickup failed'); return r.json(); })
-            .then((data) => {
-                 console.log(data.message); // Log success
-                 fetchHolds(); // Refresh list
-            })
-            .catch(err => alert(`Error processing pickup: ${err.message}`));
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/holds/${holdId}/pickup`, { 
+                method: 'POST' , 
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.message || 'Pickup failed');
+            }
+
+            await response.json();
+            toast.success("Hold marked as picked up!"); // Success toast!
+            fetchHolds(); // Refresh list
+
+        } catch (err) {
+            toast.error(`Error processing pickup: ${err.message}`); // Error toast!
+        }
     };
 
-    const handleCancel = (holdId) => {
-        if (!window.confirm('Are you sure you want to cancel this hold? The item will become available.')) {
-             return;
-        }
+    const handleCancelClick = (hold) => {
+        setCancelTargetHold(hold); // Store the hold object
+        setShowCancelSheet(true);  // Open the sheet
+    };
+
+    const handleConfirmCancel = async () => {
+        if (!cancelTargetHold) return;
+
+        setIsCanceling(true);
+
         const token = localStorage.getItem('authToken');
         if (!token) {
-            alert("Error: You must be logged in to perform this action.");
+            toast.error("Error: You must be logged in.");
+            setIsCanceling(false);
             return;
         }
-        fetch(`${API_BASE_URL}/api/holds/${holdId}/cancel`, { method: 'POST', headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }})
-            .then(r => { if (!r.ok) throw new Error('Cancel failed'); return r.json(); })
-            .then((data) => {
-                console.log(data.message); // Log success
-                fetchHolds(); // Refresh list
-            })
-            .catch(err => alert(`Error canceling hold: ${err.message}`));
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/holds/${cancelTargetHold.hold_id}/cancel`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.message || 'Cancel failed');
+            }
+
+            await response.json();
+            
+            // Success!
+            setShowCancelSheet(false);
+            setCancelTargetHold(null);
+            fetchHolds(); 
+            toast.success("Hold canceled successfully!"); // Success toast!
+
+        } catch (err) {
+            toast.error(`Error canceling hold: ${err.message}`); // Error toast!
+        } finally {
+            setIsCanceling(false);
+        }
     };
 
     const handleSortChange = (event) => {
@@ -300,7 +340,7 @@ function ManageHolds() {
                                         {hold.hold_status === 'Pending Pickup' && (
                                             <>
                                                 <button onClick={() => handlePickup(hold.hold_id)} className="action-button primary-button">Mark Picked Up</button>
-                                                <button onClick={() => handleCancel(hold.hold_id)} className="action-button secondary-button">Cancel Hold</button>
+                                                <button onClick={() => handleCancelClick(hold)} className="action-button secondary-button">Cancel Hold</button>
                                             </>
                                         )}
                                          {hold.hold_status === 'Picked Up' && (
@@ -322,6 +362,36 @@ function ManageHolds() {
                 </div>
             </div>
         </div>
+        {showCancelSheet && cancelTargetHold && (
+            <div className="sheet-overlay" onClick={() => !isCanceling && setShowCancelSheet(false)}>
+                <div className="sheet-container" onClick={(e) => e.stopPropagation()}>
+                    <h2>Cancel Hold Confirmation</h2>
+                    <p>Are you sure you want to cancel <strong>Hold #{cancelTargetHold.hold_id}</strong>?</p>
+                    {/* ...details... */}
+
+                    {/* No need for {cancelError} p tag here anymore */}
+
+                    <div className="sheet-actions">
+                        <button 
+                            type="button" 
+                            className="action-button red-button" 
+                            onClick={handleConfirmCancel} 
+                            disabled={isCanceling}
+                        >
+                            {isCanceling ? 'Canceling...' : 'Yes, Cancel Hold'}
+                        </button>
+                        <button 
+                            type="button" 
+                            className="action-button secondary-button" 
+                            onClick={() => setShowCancelSheet(false)} 
+                            disabled={isCanceling}
+                        >
+                            Nevermind
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
         </div>
     )
 }
