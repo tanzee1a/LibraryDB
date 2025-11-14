@@ -32,6 +32,8 @@ function UserProfile() {
     const [isSaving, setIsSaving] = useState(false);
     const [saveError, setSaveError] = useState('');
     const [activeSection, setActiveSection] = useState('borrows'); 
+    const [showDeactivateSheet, setShowDeactivateSheet] = useState(false);
+    const [showActivateSheet, setShowActivateSheet] = useState(false);
 
     // State for history lists ---
     const [borrowHistory, setBorrowHistory] = useState([]);
@@ -237,13 +239,16 @@ function UserProfile() {
             return;
         }
         
-        // If not self, proceed with the actual delete logic
-        handleDeleteUser();
+        setSaveError('');
+        setShowDeactivateSheet(true);
+    };
+
+    const handleActivateUserClick = () => {
+        setSaveError('');
+        setShowActivateSheet(true);
     };
 
     const handleDeleteUser = async () => {
-        if (window.confirm(`Are you sure you want to DEACTIVATE user ${user.firstName} ${user.lastName}? This can be undone.`)) {
-
             setIsSaving(true); 
             setSaveError('');
 
@@ -267,19 +272,17 @@ function UserProfile() {
                 }
 
                
-                fetchUserProfile(); 
+                fetchUserProfile();
+                setShowDeactivateSheet(false); 
 
             } catch (err) {
                 setSaveError(err.message);
             } finally {
                 setIsSaving(false); 
             }
-        }
     };
 
     const handleActivateUser = async () => {
-        if (window.confirm(`Are you sure you want to ACTIVATE user ${user.firstName} ${user.lastName}?`)) {
-
             setIsSaving(true); 
             setSaveError('');
 
@@ -303,13 +306,13 @@ function UserProfile() {
                 }
 
                 fetchUserProfile();
+                setShowActivateSheet(false);
 
             } catch (err) {
                 setSaveError(err.message);
             } finally {
                 setIsSaving(false);
             }
-        }
     };
     
     function renderHistorySection() {
@@ -479,7 +482,7 @@ function UserProfile() {
                             (user.account_status === 'DEACTIVATED') ? (
                                 <button 
                                     className="action-circle-button green-button" 
-                                    onClick={handleActivateUser} 
+                                    onClick={handleActivateUserClick}
                                     disabled={isSaving}
                                     title="Activate User"
                                 >
@@ -579,6 +582,48 @@ function UserProfile() {
                     </div>
                 </div>
             </div>
+            {/* Deactivate User Confirmation Sheet */}
+        {showDeactivateSheet && (
+            <div className="sheet-overlay" onClick={() => !isSaving && setShowDeactivateSheet(false)}>
+                <div className="sheet-container" onClick={(e) => e.stopPropagation()}>
+                    <h2>Deactivate User</h2>
+                    <p>Are you sure you want to deactivate <strong>{user.firstName} {user.lastName}</strong> ({user.email})?</p>
+                    <p><small>This action can be undone later by reactivating the user.</small></p>
+                    
+                    {saveError && <p style={{color: 'red'}}>{saveError}</p>}
+                    
+                    <div className="sheet-actions">
+                        <button type="button" className="action-button red-button" onClick={handleDeleteUser} disabled={isSaving}>
+                            {isSaving ? 'Deactivating...' : 'Confirm Deactivate'}
+                        </button>
+                        <button type="button" className="action-button secondary-button" onClick={() => setShowDeactivateSheet(false)} disabled={isSaving}>
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {/* Activate User Confirmation Sheet */}
+        {showActivateSheet && (
+            <div className="sheet-overlay" onClick={() => !isSaving && setShowActivateSheet(false)}>
+                <div className="sheet-container" onClick={(e) => e.stopPropagation()}>
+                    <h2>Activate User</h2>
+                    <p>Are you sure you want to reactivate <strong>{user.firstName} {user.lastName}</strong> ({user.email})?</p>
+                    
+                    {saveError && <p style={{color: 'red'}}>{saveError}</p>}
+                    
+                    <div className="sheet-actions">
+                        <button type="button" className="action-button green-button" onClick={handleActivateUser} disabled={isSaving}>
+                            {isSaving ? 'Activating...' : 'Confirm Activate'}
+                        </button>
+                        <button type="button" className="action-button secondary-button" onClick={() => setShowActivateSheet(false)} disabled={isSaving}>
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
         </div>
     )
 }
