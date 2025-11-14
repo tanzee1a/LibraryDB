@@ -374,6 +374,16 @@ async function placeWaitlistHold(itemId, userId) {
     }
 }
 
+async function cancelWaitlist(waitlistId, userId) {
+    const sql = `
+        DELETE FROM WAITLIST 
+        WHERE waitlist_id = ? AND user_id = ?
+    `;
+    const [result] = await db.query(sql, [waitlistId, userId]);
+    // result contains affectedRows, which we can check in the controller
+    return result; 
+}
+
 // --- Staff directly checks out an available item to a user. ---
 async function staffCheckoutItem(itemId, userEmail, staffUserId) { 
     const conn = await db.getConnection();
@@ -494,6 +504,7 @@ async function findWaitlistByUserId(userId) {
             w.waitlist_id, 
             w.item_id,
             w.start_date,
+            i.thumbnail_url,
             COALESCE(bk.title, m.title, d.device_name) AS title
         FROM WAITLIST w
         JOIN ITEM i ON w.item_id = i.item_id
@@ -944,6 +955,7 @@ module.exports = {
     findLoanHistoryByUserId,
     findHoldsByUserId,
     findWaitlistByUserId,
+    cancelWaitlist,
     findFinesByUserId,
     payFine,
     userPayFine,

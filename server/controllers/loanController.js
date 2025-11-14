@@ -441,6 +441,33 @@ async function cancelMyHold(req, res, holdId) {
   }
 }
 
+// @desc Cancel a waitlist entry
+// @route DELETE /api/my-waitlist/:id
+async function cancelMyWaitlistEntry(req, res, waitlistId) {
+    try {
+        const userId = req.userId; // Assumes auth middleware sets this
+
+        if (!waitlistId) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({ message: 'Waitlist ID is required.' }));
+        }
+
+        const result = await Loan.cancelWaitlist(waitlistId, userId);
+
+        if (result.affectedRows === 0) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({ message: 'Waitlist entry not found or you do not have permission to cancel it.' }));
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ message: 'Canceled from waitlist successfully.' }));
+
+    } catch (error) {
+        console.error("Error in cancelMyWaitlistEntry:", error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ message: 'Could not cancel waitlist entry', error: error.message }));
+    }
+}
 
 module.exports = {
     requestPickup,
@@ -449,6 +476,7 @@ module.exports = {
     markLost,
     markFound,
     placeWaitlistHold,
+    cancelMyWaitlistEntry,
     getMyLoans,
     getMyHistory,
     getMyHolds,

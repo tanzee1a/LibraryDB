@@ -15,7 +15,7 @@ const {
 
 const { 
     requestPickup, pickupHold, returnItem, markLost, markFound, placeWaitlistHold, 
-    getMyLoans, getMyHistory, getMyHolds, getMyWaitlist, getMyFines,
+    getMyLoans, getMyHistory, getMyHolds, getMyWaitlist, getMyFines, cancelMyWaitlistEntry,
     payFine, userPayFine, waiveFine, getAllBorrows, getAllHolds, cancelHold, staffCheckoutItem, getAllFines, staffCreateFine, getAllStatus, cancelMyHold
 } = require('./controllers/loanController');
 
@@ -134,6 +134,11 @@ const server = http.createServer((req, res) => {
         else if (req.url.match(/^\/api\/waitlist\/([a-zA-Z0-9-]+)$/) && req.method === 'POST') {
             const itemId = req.url.split('/')[3];
             protect(req, res, () => placeWaitlistHold(req, res, itemId)); 
+            return;
+        }
+        else if (req.url.match(/^\/api\/my-waitlist\/([0-9]+)$/) && req.method === 'DELETE') {
+            const waitlistId = req.url.split('/')[3];
+            protect(req, res, () => cancelMyWaitlistEntry(req, res, waitlistId));
             return;
         }
         else if (req.url.match(/^\/api\/my-fines\/([a-zA-Z0-9]+)\/pay$/) && req.method === 'POST') {
