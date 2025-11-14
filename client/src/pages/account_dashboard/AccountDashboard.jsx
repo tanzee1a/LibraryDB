@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import './AccountDashboard.css';
 import { useLocation } from 'react-router-dom';
-import Navbar from '../navbar/navbar.jsx';
 import ProfileCard from './ProfileCard.jsx';
 import Profile from './Profile.jsx';
 import Fines from './Fines';
@@ -44,14 +43,6 @@ export default function AccountDashboard({ isLoggedIn, setIsLoggedIn, isStaff, s
 
   return (
     <div className="dashboard-container">
-      <Navbar
-        isLoggedIn={isLoggedIn}
-        setIsLoggedIn={setIsLoggedIn}
-        isStaff={isStaff}
-        setIsStaff={setIsStaff}
-        onNavigateDashboard={setActive}
-      />
-
       <div className="dashboard-inner">
         <div className="dashboard-layout">
           {/* Sidebar */}
