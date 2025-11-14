@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { IoBookOutline, IoPeopleOutline, IoSwapHorizontalOutline, IoHourglassOutline, IoWalletOutline, IoDocumentTextOutline, IoPersonCircleOutline, IoNotificationsOutline } from 'react-icons/io5';
+import { IoBookOutline, IoPeopleOutline, IoSwapHorizontalOutline, IoHourglassOutline, IoWalletOutline, IoDocumentTextOutline, IoPersonCircleOutline, IoNotificationsOutline, IoListOutline } from 'react-icons/io5';
 import './StaffDashboard.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
@@ -159,7 +159,12 @@ function StaffDashboard() {
          <Link to="/manage-holds" className="action-card"> 
           <IoHourglassOutline className="action-icon" />
           Manage Holds & Requests
-          <small>Process pending pickups and view waitlists.</small>
+          <small>Process pending pickups.</small>
+        </Link>
+        <Link to="/manage-waitlist" className="action-card"> 
+          <IoListOutline className="action-icon" />
+          Manage Waitlist
+          <small>View users waiting for items.</small>
         </Link>
         {(isHeadLibrarian || isAssistLibrarian) && (
         <Link to="/manage-fines" className="action-card"> 

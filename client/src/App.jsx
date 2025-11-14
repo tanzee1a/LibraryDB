@@ -9,6 +9,7 @@ import UserProfile from './pages/main_staff_page/user_profile.jsx';
 import ManageUsers from './pages/main_staff_page/manage_users.jsx';
 import ManageBorrows from './pages/main_staff_page/manage_borrows.jsx';
 import ManageHolds from './pages/main_staff_page/manage_holds.jsx';
+import ManageWaitlist from './pages/main_staff_page/manage_waitlist.jsx';
 import ManageFines from './pages/main_staff_page/manage_fines.jsx';
 import Notifications from './pages/main_staff_page/notifications.jsx';
 import AccountDashboard from './pages/account_dashboard/AccountDashboard.jsx';
@@ -209,6 +210,15 @@ function App() {
           } 
         />
         
+        <Route 
+          path="/manage-waitlist" 
+          element={
+            <ClerkRoute>
+              <ManageWaitlist />
+            </ClerkRoute>
+          } 
+        />
+
         <Route 
           path="/manage-fines" 
           element={

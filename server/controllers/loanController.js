@@ -476,7 +476,7 @@ async function getAllWaitlist(req, res) {
         const parsedUrl = url.parse(req.url, true);
         const queryParams = parsedUrl.query; // e.g., { q: '...', sort: '...' }
 
-        const waitlist = await findAllWaitlist(queryParams);
+        const waitlist = await Loan.findAllWaitlist(queryParams);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(waitlist));
     } catch (error) {
@@ -495,7 +495,7 @@ async function staffCancelWaitlistEntry(req, res, waitlistId) {
             return res.end(JSON.stringify({ message: 'Waitlist ID is required.' }));
         }
         
-        const result = await staffCancelWaitlist(waitlistId);
+        const result = await Loan.staffCancelWaitlist(waitlistId);
 
         if (result.affectedRows === 0) {
             res.writeHead(404, { 'Content-Type': 'application/json' });

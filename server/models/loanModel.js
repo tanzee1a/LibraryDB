@@ -1044,5 +1044,5 @@ module.exports = {
     findAllStatus,
     cancelMyHold,
     findAllWaitlist,
-    staffcancelWaitlist
+    staffCancelWaitlist,
 };
