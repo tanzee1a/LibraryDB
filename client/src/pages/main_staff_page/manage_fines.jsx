@@ -26,6 +26,12 @@ function ManageFines() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState('');
 
+    const [showWaiveSheet, setShowWaiveSheet] = useState(false);
+    const [waiveTargetId, setWaiveTargetId] = useState(null);
+    const [waiveReason, setWaiveReason] = useState('');
+    const [isWaiving, setIsWaiving] = useState(false);
+    const [waiveError, setWaiveError] = useState('');
+
     const currencyFormatter = new Intl.NumberFormat('en-US', {
         style: 'currency',
         currency: 'USD',
@@ -109,27 +115,11 @@ function ManageFines() {
     };
 
     const handleWaive = (fineId) => {
-        const token = localStorage.getItem('authToken');
-        if (!token) { alert('Authentication required.'); return; }
-
-        const reason = prompt("Enter reason for waiving the fine:");
-        if (reason === null || reason.trim() === '') {
-            toast.error("Waive canceled or reason not provided.");
-            return; 
-        }
-        
-        fetch(`${API_BASE_URL}/api/fines/${fineId}/waive`, { 
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}` 
-            },
-            body: JSON.stringify({ reason: reason.trim() }) 
-        })
-            .then(r => { if (!r.ok) throw new Error('Waiving fine failed'); return r.json(); })
-            .then(() => fetchFines())
-            .catch(err => alert(`Error waiving fine: ${err.message}`));
-    };
+        setWaiveTargetId(fineId);
+        setShowWaiveSheet(true);
+        setWaiveReason('');
+        setWaiveError('');
+    }
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -196,6 +186,54 @@ function ManageFines() {
             setSubmitError(`Failed to add fine: ${err.message}`);
         } finally {
             setIsSubmitting(false);
+        }
+    }
+
+    async function handleWaiveSubmit(e) {
+        e.preventDefault();
+        setIsWaiving(true);
+        setWaiveError('');
+
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            setWaiveError('Authentication required.');
+            setIsWaiving(false);
+            return;
+        }
+
+        if (waiveReason.trim() === '') {
+            setWaiveError('A reason is required to waive the fine.');
+            setIsWaiving(false);
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/fines/${waiveTargetId}/waive`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ reason: waiveReason.trim() })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Waiving fine failed');
+            }
+
+            await response.json();
+            
+            // Success! Close modal and refresh the list
+            setShowWaiveSheet(false);
+            setWaiveTargetId(null);
+            fetchFines(); 
+
+        } catch (err) {
+            console.error("Waive Fine Error:", err);
+            setWaiveError(`Failed to waive fine: ${err.message}`);
+        } finally {
+            setIsWaiving(false);
         }
     }
 
@@ -328,6 +366,37 @@ function ManageFines() {
                     <button type="button" className="action-button secondary-button" onClick={() => setShowAddFineSheet(false)} disabled={isSubmitting}>
                         Cancel
                     </button>
+                    </div>
+                </form>
+                </div>
+            </div>
+        )}
+        {showWaiveSheet && (
+            <div className="sheet-overlay" onClick={() => !isWaiving && setShowWaiveSheet(false)}>
+                <div className="sheet-container" onClick={(e) => e.stopPropagation()}>
+                <h2>Waive Fine #{waiveTargetId}</h2>
+                <p>Please provide a reason for waiving this fine.</p>
+                {waiveError && <p style={{color: 'red'}}>{waiveError}</p>}
+                
+                <form onSubmit={handleWaiveSubmit}>
+                    <label> Reason:
+                        <textarea
+                            className="edit-input"
+                            name="reason"
+                            value={waiveReason}
+                            onChange={(e) => setWaiveReason(e.target.value)}
+                            required
+                            rows="4"
+                        />
+                    </label>
+
+                    <div className="sheet-actions">
+                        <button type="submit" className="action-button primary-button" disabled={isWaiving}>
+                            {isWaiving ? 'Waiving...' : 'Confirm Waive'}
+                        </button>
+                        <button type="button" className="action-button secondary-button" onClick={() => setShowWaiveSheet(false)} disabled={isWaiving}>
+                            Cancel
+                        </button>
                     </div>
                 </form>
                 </div>
