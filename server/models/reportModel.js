@@ -168,16 +168,19 @@ async function overdueItemsReport({ filterType = 'date', start = null, end = nul
 async function outstandingFinesReport({ filterType = 'date', start = null, end = null } = {}) {
     let sql = `
         SELECT 
+            f.fee_type,
+            f.fine_id,
             u.email,
             u.firstName,
             u.lastName,
-            COUNT(f.fine_id) AS number_of_fines,
-            SUM(f.amount) AS total_amount_due
+            f.amount AS amount_due,
+            f.date_issued,
+            f.notes
         FROM FINE f
         JOIN USER u ON f.user_id = u.user_id
         WHERE 
-            f.date_paid IS NULL -- Must be unpaid
-            AND f.waived_at IS NULL -- Must not be waived
+            f.date_paid IS NULL
+            AND f.waived_at IS NULL
     `;
 
     const params = [];
@@ -202,11 +205,7 @@ async function outstandingFinesReport({ filterType = 'date', start = null, end =
     else if (start) params.push(start);
     else if (end) params.push(end);
 
-    sql += `
-        GROUP BY f.user_id, u.firstName, u.lastName
-        HAVING total_amount_due > 0
-        ORDER BY total_amount_due DESC;
-    `;
+    sql += ` ORDER BY f.date_issued DESC; `;
 
     const [rows] = await db.query(sql, params);
     return rows;

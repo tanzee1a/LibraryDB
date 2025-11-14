@@ -5,20 +5,13 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description')
     const exactTerm = searchTerm;
     const startsWithTerm = `${searchTerm}%`;
 
+
     let sqlParts = [];
     let finalParams = [];
 
     const categoryFilter = filters.category ? filters.category.split(',') : [];
     const tagFilter = filters.tag ? filters.tag.split(',') : []; //
     const formatFilter = filters.format ? filters.format.split(',') : [];
-
-
-    const selectClause =
-    `   SELECT
-            i.item_id, i.category, i.thumbnail_url, i.available, i.on_hold, i.loaned_out, i.earliest_available_date,
-            %TITLE_FIELD% AS title,
-            %CREATOR_FIELD% AS creators
-    `;
     const fromItemJoin = `FROM ITEM i `;
 
     // --- 1. Build BOOK Query Part ---
@@ -28,25 +21,43 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description')
     if (searchType !== 'Director' && searchType !== 'Manufacturer' && (categoryFilter.length === 0 || categoryFilter.includes('BOOK'))) {
         let bookParams = [];
         let bookWhereClauses = [];
+        let bookSelect = `
+            SELECT
+                i.item_id, i.category, i.thumbnail_url, i.available, i.on_hold, i.loaned_out, i.earliest_available_date,
+                b.title AS title,
+                GROUP_CONCAT(DISTINCT a.first_name, ' ', a.last_name SEPARATOR ', ') AS creators,
+                
+                -- Book-specific fields
+                b.publisher,
+                l.name AS language_name,
+                
+                -- Placeholders for other types
+                NULL AS release_year,
+                NULL AS format_name,
+                NULL AS device_type_name
+        `;
         let bookJoins = [
             `JOIN BOOK b ON i.item_id = b.item_id`,
             `LEFT JOIN BOOK_AUTHOR ba ON i.item_id = ba.item_id`,
-            `LEFT JOIN AUTHOR a ON ba.author_id = a.author_id`
+            `LEFT JOIN AUTHOR a ON ba.author_id = a.author_id`,
+            `LEFT JOIN LANGUAGE l ON b.language_id = l.language_id`
         ];
-        let bookSelect = selectClause.replace('%TITLE_FIELD%', 'b.title').replace('%CREATOR_FIELD%', `GROUP_CONCAT(DISTINCT a.first_name, ' ', a.last_name SEPARATOR ', ')`);
-
+        
         if (searchTerm.trim()) {
             if (searchType === 'Title') {
-                bookWhereClauses.push(`b.title LIKE ?`);
-                bookParams.push(queryTerm); // Find all matches
+                // Add sorting rank column
                 bookSelect += `,
                     CASE
-                        WHEN b.title = ? THEN 1   -- Exact match
-                        WHEN b.title LIKE ? THEN 2 -- Starts with match
-                        ELSE 3                     -- Contains match
+                        WHEN b.title = ? THEN 1   -- 1st param
+                        WHEN b.title LIKE ? THEN 2 -- 2nd param
+                        ELSE 3                     
                     END AS sort_priority
                 `;
-                bookParams.push(exactTerm, startsWithTerm);
+                bookParams.push(exactTerm, startsWithTerm); // Push 1st and 2nd params
+                // The WHERE clause's param comes last
+                bookWhereClauses.push(`b.title LIKE ?`); // 3rd param
+                bookParams.push(queryTerm); // Push 3rd param
+
             } else if (searchType === 'Author') {
                 bookWhereClauses.push(`(a.first_name LIKE ? OR a.last_name LIKE ?)`);
                 bookParams.push(queryTerm, queryTerm);
@@ -103,17 +114,35 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description')
      if (searchType !== 'Author' && searchType !== 'Manufacturer' && (categoryFilter.length === 0 || categoryFilter.includes('MOVIE'))) {
         let movieParams = [];
         let movieWhereClauses = [];
+
         let movieJoins = [
             `JOIN MOVIE m ON i.item_id = m.item_id`,
             `LEFT JOIN MOVIE_DIRECTOR md ON m.item_id = md.item_id`,
-            `LEFT JOIN DIRECTOR d ON md.director_id = d.director_id`
+            `LEFT JOIN DIRECTOR d ON md.director_id = d.director_id`,
+            `LEFT JOIN LANGUAGE l ON m.language_id = l.language_id`,
+            `LEFT JOIN MOVIE_FORMAT mf ON m.format_id = mf.format_id`
         ];
-        let movieSelect = selectClause.replace('%TITLE_FIELD%', 'm.title').replace('%CREATOR_FIELD%', `GROUP_CONCAT(DISTINCT d.first_name, ' ', d.last_name SEPARATOR ', ')`);
+
+        let movieSelect = `
+            SELECT
+                i.item_id, i.category, i.thumbnail_url, i.available, i.on_hold, i.loaned_out, i.earliest_available_date,
+                m.title AS title,
+                GROUP_CONCAT(DISTINCT d.first_name, ' ', d.last_name SEPARATOR ', ') AS creators,
+                
+                -- Book-specific fields
+                NULL AS publisher,
+                l.name AS language_name,
+                
+                -- Movie-specific fields
+                m.release_year,
+                mf.format_name,
+
+                -- Device Specific field
+                NULL AS device_type_name
+        `;
 
         if (searchTerm.trim()) {
             if (searchType === 'Title') {
-                movieWhereClauses.push(`m.title LIKE ?`);
-                movieParams.push(queryTerm);
                 movieSelect += `,
                     CASE
                         WHEN m.title = ? THEN 1
@@ -122,6 +151,10 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description')
                     END AS sort_priority
                 `;
                 movieParams.push(exactTerm, startsWithTerm);
+
+                movieWhereClauses.push(`m.title LIKE ?`);
+                movieParams.push(queryTerm);
+
             } else if (searchType === 'Director') {
                 movieWhereClauses.push(`(d.first_name LIKE ? OR d.last_name LIKE ?)`);
                 movieParams.push(queryTerm, queryTerm);
@@ -144,11 +177,10 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description')
 
         // Movie Format filter logic
         if (formatFilter.length > 0) {
-            movieJoins.push(`JOIN MOVIE_FORMAT mf ON m.format_id = mf.format_id`);
             movieWhereClauses.push(`mf.format_name IN (?)`);
             movieParams.push(formatFilter);
         }
-
+    
         // Tag filter logic
         if (tagFilter.length > 0 || (searchType === 'Tag' && searchTerm.trim())) {
             movieJoins.push(
@@ -186,14 +218,30 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description')
         let deviceParams = [];
         let deviceWhereClauses = [];
         let deviceJoins = [
-            `JOIN DEVICE d ON i.item_id = d.item_id`
+            `JOIN DEVICE d ON i.item_id = d.item_id`,
+            `LEFT JOIN DEVICE_TYPE dt ON d.device_type = dt.type_id`
         ];
-        let deviceSelect = selectClause.replace('%TITLE_FIELD%', 'd.device_name').replace('%CREATOR_FIELD%', 'd.manufacturer');
+
+        let deviceSelect = `
+            SELECT
+                i.item_id, i.category, i.thumbnail_url, i.available, i.on_hold, i.loaned_out, i.earliest_available_date,
+                d.device_name AS title,
+                d.manufacturer AS creators,
+                
+                -- Book Specific Fields
+                NULL AS publisher,
+                NULL AS language_name,
+
+                -- Movie Specific Fiels
+                NULL AS release_year,
+                NULL AS format_name,
+
+                -- Device-specific fields
+                dt.type_name AS device_type_name
+        `;
 
         if (searchTerm.trim()) {
             if (searchType === 'Title') {
-                deviceWhereClauses.push(`d.device_name LIKE ?`);
-                deviceParams.push(queryTerm);
                 deviceSelect += `,
                     CASE
                         WHEN d.device_name = ? THEN 1
@@ -202,6 +250,10 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description')
                     END AS sort_priority
                 `;
                 deviceParams.push(exactTerm, startsWithTerm);
+
+                deviceWhereClauses.push(`d.device_name LIKE ?`);
+                deviceParams.push(queryTerm);
+
             } else if (searchType === 'Manufacturer') {
                 deviceWhereClauses.push(`d.manufacturer LIKE ?`);
                 deviceParams.push(queryTerm);
@@ -261,8 +313,6 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description')
         ) AS combined_results
         ORDER BY sort_priority ASC, title ASC
     `;
-    console.log("Executing Search SQL:", finalSql); // For debugging
-    console.log("With Params:", finalParams); // For debugging
     const [rows] = await db.query(finalSql, finalParams);
     return rows;
 }

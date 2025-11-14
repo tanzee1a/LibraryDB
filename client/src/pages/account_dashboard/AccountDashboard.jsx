@@ -10,7 +10,8 @@ import BorrowHistory from './BorrowHistory';
 import Wishlist from './Wishlist';
 import Holds from './Holds';
 import Notifications from './Notifications';
-import { IoHomeOutline, IoBookOutline, IoWalletOutline, IoTimeOutline, IoHeartOutline, IoPersonCircleOutline, IoHourglassOutline, IoNotificationsOutline } from 'react-icons/io5';
+import Waitlist from './Waitlist';
+import { IoHomeOutline, IoBookOutline, IoWalletOutline, IoTimeOutline, IoHeartOutline, IoPersonCircleOutline, IoHourglassOutline, IoNotificationsOutline, IoListOutline } from 'react-icons/io5';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
 
@@ -21,6 +22,7 @@ const SECTIONS = [
   { key: 'fines', label: 'Fines', icon: <IoWalletOutline className="nav-icon" /> },
   { key: 'history', label: 'Loan History', icon: <IoTimeOutline className="nav-icon" /> },
   { key: 'holds', label: 'Holds', icon: <IoHourglassOutline className="nav-icon" /> },
+  { key: 'waitlist', label: 'Waitlist', icon: <IoListOutline className="nav-icon" /> },
   { key: 'wishlist', label: 'Saved for Later', icon: <IoHeartOutline className="nav-icon" /> },
   { key: 'profile', label: 'Profile', icon: <IoPersonCircleOutline className="nav-icon" /> },
 ];
@@ -131,6 +133,13 @@ export default function AccountDashboard({ isLoggedIn, setIsLoggedIn, isStaff, s
               <section className="card">
                 <div className="section-header"><IoHourglassOutline className="icon" /><h2 className="section-title">Holds</h2></div>
                 <Holds />
+              </section>
+            )}
+
+            {active === 'waitlist' && (
+              <section className="card">
+                <div className="section-header"><IoListOutline className="icon" /><h2 className="section-title">Waitlist</h2></div>
+                <Waitlist />
               </section>
             )}
 

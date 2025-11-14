@@ -15,8 +15,9 @@ const {
 
 const { 
     requestPickup, pickupHold, returnItem, markLost, markFound, placeWaitlistHold, 
-    getMyLoans, getMyHistory, getMyHolds, getMyWaitlist, getMyFines,
-    payFine, userPayFine, waiveFine, getAllBorrows, getAllHolds, cancelHold, staffCheckoutItem, getAllFines, staffCreateFine, getAllStatus, cancelMyHold
+    getMyLoans, getMyHistory, getMyHolds, getMyWaitlist, getMyFines, cancelMyWaitlistEntry,
+    payFine, userPayFine, waiveFine, getAllBorrows, getAllHolds, cancelHold, staffCheckoutItem, getAllFines, staffCreateFine, getAllStatus, cancelMyHold, getAllWaitlist,
+    staffCancelWaitlistEntry, staffPlaceWaitlistHold
 } = require('./controllers/loanController');
 
 const { 
@@ -136,6 +137,11 @@ const server = http.createServer((req, res) => {
             protect(req, res, () => placeWaitlistHold(req, res, itemId)); 
             return;
         }
+        else if (req.url.match(/^\/api\/my-waitlist\/([0-9]+)$/) && req.method === 'DELETE') {
+            const waitlistId = req.url.split('/')[3];
+            protect(req, res, () => cancelMyWaitlistEntry(req, res, waitlistId));
+            return;
+        }
         else if (req.url.match(/^\/api\/my-fines\/([a-zA-Z0-9]+)\/pay$/) && req.method === 'POST') {
             const fineId = req.url.split('/')[3]; 
             protect(req, res, () => userPayFine(req, res, fineId)); 
@@ -238,8 +244,8 @@ const server = http.createServer((req, res) => {
             staffProtect(req, res, () => staffCreateUser(req, res)); 
         }
         else if (req.url.match(/\/api\/users\/([a-zA-Z0-9]+)\/activate/) && req.method === 'PUT') {
-    const userId = req.url.split('/')[3];
-    staffProtect(req, res, () => staffActivateUser(req, res, userId));
+        const userId = req.url.split('/')[3];
+        staffProtect(req, res, () => staffActivateUser(req, res, userId));
         }
         else if (req.url.match(/\/api\/users\/([a-zA-Z0-9]+)$/) && req.method === 'PUT') {
             const userId = req.url.split('/')[3]; 
@@ -248,6 +254,17 @@ const server = http.createServer((req, res) => {
         else if (req.url.match(/\/api\/users\/([a-zA-Z0-9]+)$/) && req.method === 'DELETE') {
             const userId = req.url.split('/')[3];
             staffProtect(req, res, () => staffDeleteUser(req, res, userId));
+        }
+        // staff manage waitlist routes
+        else if (req.url.startsWith('/api/waitlist') && req.method === 'GET') {
+            staffProtect(req, res, () => getAllWaitlist(req, res));
+        }
+        else if (req.url.match(/^\/api\/waitlist\/([0-9]+)\/cancel$/) && req.method === 'POST') {
+            const waitlistId = req.url.split('/')[3];
+            staffProtect(req, res, () => staffCancelWaitlistEntry(req, res, waitlistId));
+        }
+        else if (req.url === '/api/staff/waitlist' && req.method === 'POST') {
+        staffProtect(req, res, () => staffPlaceWaitlistHold(req, res));
         }
 
         else if (req.url.startsWith('/api/holds') && req.method === 'GET') { 

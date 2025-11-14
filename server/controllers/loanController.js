@@ -77,6 +77,7 @@ async function pickupHold(req, res, holdId) {
 // @desc Staff returns an item (scans borrow ID?)
 // @route POST /api/return/:borrowId 
 async function returnItem(req, res, borrowId) {
+    console.log("returnItem controller: Received request for borrowId:", borrowId);
     try {
         const staff_user_id = req.userId; 
         const result = await Loan.returnItem(borrowId, staff_user_id);
@@ -362,7 +363,15 @@ async function staffCheckoutItem(req, res) {
             throw new Error('User Email and Item ID are required.');
         }
 
-        const result = await Loan.staffCheckoutItem(itemId, userEmail, staff_user_id);
+        // --- FIX: Find user by email *before* calling the model ---
+        const user = await Loan.findByEmail(userEmail);
+        if (!user) {
+            throw new Error('User not found with that email.');
+        }
+        // --- End Fix ---
+
+        // --- FIX: Pass the user.user_id, not the email ---
+        const result = await Loan.staffCheckoutItem(itemId, user.user_id, staff_user_id);
         
         res.writeHead(201, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         return res.end(JSON.stringify(result));
@@ -440,6 +449,123 @@ async function cancelMyHold(req, res, holdId) {
   }
 }
 
+// @desc Cancel a waitlist entry
+// @route DELETE /api/my-waitlist/:id
+async function cancelMyWaitlistEntry(req, res, waitlistId) {
+    try {
+        const userId = req.userId; // Assumes auth middleware sets this
+
+        if (!waitlistId) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({ message: 'Waitlist ID is required.' }));
+        }
+
+        const result = await Loan.cancelWaitlist(waitlistId, userId);
+
+        if (result.affectedRows === 0) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({ message: 'Waitlist entry not found or you do not have permission to cancel it.' }));
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ message: 'Canceled from waitlist successfully.' }));
+
+    } catch (error) {
+        console.error("Error in cancelMyWaitlistEntry:", error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ message: 'Could not cancel waitlist entry', error: error.message }));
+    }
+}
+
+// @desc    Get all waitlist entries (for staff)
+// @route   GET /api/waitlist
+async function getAllWaitlist(req, res) {
+    try {
+        const parsedUrl = url.parse(req.url, true);
+        const queryParams = parsedUrl.query; // e.g., { q: '...', sort: '...' }
+
+        const waitlist = await Loan.findAllWaitlist(queryParams);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(waitlist));
+    } catch (error) {
+        console.error("Error in getAllWaitlist:", error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ message: 'Could not fetch waitlist', error: error.message }));
+    }
+}
+
+// @desc    Staff cancels a waitlist entry
+// @route   POST /api/waitlist/:id/cancel
+async function staffCancelWaitlistEntry(req, res, waitlistId) {
+    try {
+        if (!waitlistId) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({ message: 'Waitlist ID is required.' }));
+        }
+        
+        const result = await Loan.staffCancelWaitlist(waitlistId);
+
+        if (result.affectedRows === 0) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({ message: 'Waitlist entry not found.' }));
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ message: 'Waitlist entry canceled successfully.' }));
+
+    } catch (error)
+    {
+        console.error("Error in staffCancelWaitlistEntry:", error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ message: 'Could not cancel waitlist entry', error: error.message }));
+    }
+}
+
+// @desc    Staff adds a user to a waitlist
+// @route   POST /api/staff/waitlist
+async function staffPlaceWaitlistHold(req, res) {
+    try {
+        const rawData = await getPostData(req);
+        const body = JSON.parse(rawData);
+        const { itemId, email } = body;
+
+        if (!itemId || !email) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({ message: 'Both itemId and email are required.' }));
+        }
+
+        // --- FIX: Use Loan.findByEmail instead of userModel.findByEmail ---
+        const user = await Loan.findByEmail(email); 
+        if (!user) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({ message: 'User not found with that email.' }));
+        }
+        const userId = user.user_id;
+        // --- End Fix ---
+
+        // This part is now correct because it has a valid userId
+        const result = await Loan.placeWaitlistHold(itemId, userId); 
+        
+        res.writeHead(201, { 'Content-Type': 'application/json' });
+        
+        return res.end(JSON.stringify(result));
+
+    } catch (error) {
+        console.error("Error in staffPlaceWaitlistHold:", error);
+        
+        // Handle known errors from placeWaitlistHold
+        if (error.message.includes('Item is currently available') || 
+            error.message.includes('already on the waitlist') ||
+            error.message.includes('Borrowing denied')) {
+            
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ message: error.message }));
+        } else {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ message: 'Could not place user on waitlist', error: error.message }));
+        }
+    }
+}
 
 module.exports = {
     requestPickup,
@@ -448,6 +574,7 @@ module.exports = {
     markLost,
     markFound,
     placeWaitlistHold,
+    cancelMyWaitlistEntry,
     getMyLoans,
     getMyHistory,
     getMyHolds,
@@ -463,5 +590,8 @@ module.exports = {
     getAllFines,
     staffCreateFine,
     getAllStatus,
-    cancelMyHold
+    cancelMyHold,
+    getAllWaitlist,
+    staffCancelWaitlistEntry,
+    staffPlaceWaitlistHold
 };

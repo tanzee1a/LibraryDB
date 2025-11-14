@@ -158,10 +158,10 @@ function ManageBorrows() {
         setSubmitError('');
 
         const token = localStorage.getItem('authToken');
-         if (!token) {
-        setSubmitError('Authentication token missing. Cannot add user.');
-        setIsSubmitting(false);
-        return;
+        if (!token) {
+            setSubmitError('Authentication failed. Please log in again.');
+            setIsSubmitting(false);
+            return;
         }
 
         try {
