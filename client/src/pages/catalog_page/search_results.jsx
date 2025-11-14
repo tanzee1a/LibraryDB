@@ -1,6 +1,8 @@
 import './search_results.css'
 import React, { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom';
+import { toast } from 'react-toastify'; 
+
 
 import { FaPlus } from "react-icons/fa"
 import { BiSort } from "react-icons/bi"
@@ -406,8 +408,11 @@ function SearchResults({ isStaff }) {
                 throw new Error(errorData.message || `HTTP error ${response.status}`);
             }
 
-            
-            console.log("Item Added:", await response.json());
+            const data = await response.json();
+            console.log("Item Added:", data);
+            toast.success(`Item ${newItem.title} added successfully!`, {
+                toastId: 'item-add-success' 
+            });
             setShowAddItemSheet(false);     
             setNewItem(initialNewItemState);
 

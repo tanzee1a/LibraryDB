@@ -187,7 +187,7 @@ function ManageBorrows() {
             const data = await response.json();
             console.log("Borrow Record Added:", data);
 
-            toast.success(`Borrow ${newBorrow.item_id} added successfully!`, {
+            toast.success(`Borrow for ${newBorrow.user_email} added successfully!`, {
                 toastId: 'borrow-add-success' 
             });
 
