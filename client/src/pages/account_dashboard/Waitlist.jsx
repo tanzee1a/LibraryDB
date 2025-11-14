@@ -1,18 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { IoListOutline } from 'react-icons/io5'; // Changed icon
 import { Link } from 'react-router-dom';
+import { FaPlus } from 'react-icons/fa';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 export default function Waitlist() {
-  const [waitlist, setWaitlist] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+    const [waitlist, setWaitlist] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
 
-  // State for the cancel operation
-  const [cancelingId, setCancelingId] = useState(null); // Tracks which waitlist item is being canceled
-  const [cancelError, setCancelError] = useState(''); // For cancel-specific errors
+    // State for the cancel operation
+    const [cancelingId, setCancelingId] = useState(null); // Tracks which waitlist item is being canceled
+    const [cancelError, setCancelError] = useState(''); // For cancel-specific errors
 
+  // --- NEW: State for the "Add" sheet (from manage_fines.jsx) ---
+    const [showAddWaitlistSheet, setShowAddWaitlistSheet] = useState(false);
+    const initialWaitlistState = {
+        email: '',
+        itemId: ''
+    };
+    const [newWaitlistEntry, setNewWaitlistEntry] = useState(initialWaitlistState);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState('');
+    // --- END NEW ---
+    
   // Helper function to get headers
   const getAuthHeaders = () => {
     // Using 'authToken' to match Holds.jsx

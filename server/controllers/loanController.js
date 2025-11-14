@@ -513,6 +513,54 @@ async function staffCancelWaitlistEntry(req, res, waitlistId) {
     }
 }
 
+// @desc    Staff adds a user to a waitlist
+// @route   POST /api/staff/waitlist
+async function staffPlaceWaitlistHold(req, res) {
+    try {
+        // --- THIS IS THE FIX ---
+        const rawData = await getPostData(req); // 1. Get the raw string body
+        const body = JSON.parse(rawData);       // 2. Parse the JSON string
+        const { itemId, email } = body;         // 3. Destructure from the parsed object
+        // --- END FIX ---
+
+        if (!itemId || !email) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({ message: 'Both itemId and email are required.' }));
+        }
+
+        // --- 1. Find the user by email ---
+        // (You need a findByEmail function in your userModel)
+        const user = await userModel.findByEmail(email); 
+        if (!user) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({ message: 'User not found with that email.' }));
+        }
+        const userId = user.user_id;
+
+        // --- 2. Call the existing waitlist logic ---
+        // (This re-uses all your checks for availability, duplicates, etc.)
+        const result = await Loan.placeWaitlistHold(itemId, userId); 
+        
+        res.writeHead(201, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify(result));
+
+    } catch (error) {
+        console.error("Error in staffPlaceWaitlistHold:", error);
+        
+        // Handle known errors from placeWaitlistHold
+        if (error.message.includes('Item is currently available') || 
+            error.message.includes('already on the waitlist') ||
+            error.message.includes('Borrowing denied')) {
+            
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ message: error.message }));
+        } else {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ message: 'Could not place user on waitlist', error: error.message }));
+        }
+    }
+}
+
 module.exports = {
     requestPickup,
     pickupHold,
@@ -538,5 +586,6 @@ module.exports = {
     getAllStatus,
     cancelMyHold,
     getAllWaitlist,
-    staffCancelWaitlistEntry
+    staffCancelWaitlistEntry,
+    staffPlaceWaitlistHold
 };

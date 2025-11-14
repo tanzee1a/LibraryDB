@@ -17,7 +17,7 @@ const {
     requestPickup, pickupHold, returnItem, markLost, markFound, placeWaitlistHold, 
     getMyLoans, getMyHistory, getMyHolds, getMyWaitlist, getMyFines, cancelMyWaitlistEntry,
     payFine, userPayFine, waiveFine, getAllBorrows, getAllHolds, cancelHold, staffCheckoutItem, getAllFines, staffCreateFine, getAllStatus, cancelMyHold, getAllWaitlist,
-    staffCancelWaitlistEntry
+    staffCancelWaitlistEntry, staffPlaceWaitlistHold
 } = require('./controllers/loanController');
 
 const { 
@@ -262,6 +262,9 @@ const server = http.createServer((req, res) => {
         else if (req.url.match(/^\/api\/waitlist\/([0-9]+)\/cancel$/) && req.method === 'POST') {
             const waitlistId = req.url.split('/')[3];
             staffProtect(req, res, () => staffCancelWaitlistEntry(req, res, waitlistId));
+        }
+        else if (req.url === '/api/staff/waitlist' && req.method === 'POST') {
+        staffProtect(req, res, () => staffPlaceWaitlistHold(req, res));
         }
 
         else if (req.url.startsWith('/api/holds') && req.method === 'GET') { 

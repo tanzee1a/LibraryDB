@@ -10,6 +10,16 @@ async function getStatusId(conn, statusName) {
   return rows[0].status_id;
 }
 
+async function findByEmail(email) {
+    const sql = `
+        SELECT * FROM USER 
+        WHERE email = ? 
+        LIMIT 1;
+    `;
+    const [users] = await db.query(sql, [email]);
+    return users[0]; // Returns the user object or undefined
+}
+
 async function getLoanPolicy(conn, userId, itemId) {
   const [rows] = await conn.query(`
     SELECT 
@@ -1019,6 +1029,7 @@ async function staffCancelWaitlist(waitlistId) {
 }
 
 
+
 module.exports = {
     requestPickup,
     pickupHold,
@@ -1045,4 +1056,5 @@ module.exports = {
     cancelMyHold,
     findAllWaitlist,
     staffCancelWaitlist,
+    findByEmail,
 };

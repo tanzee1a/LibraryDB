@@ -1,7 +1,8 @@
-import './manage_waitlist.css'; // You will need to create this CSS file
+import './manage_waitlist.css'; 
 import React, { useState, useEffect } from 'react'; 
 import { Link, useSearchParams } from 'react-router-dom';
-import { IoListOutline } from 'react-icons/io5'; // Use a different icon
+import { IoListOutline } from 'react-icons/io5';
+import { FaPlus } from 'react-icons/fa'; // --- 1. FaPlus icon is imported ---
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
@@ -12,7 +13,18 @@ function ManageWaitlist() {
     const [searchParams, setSearchParams] = useSearchParams(); 
     const query = searchParams.get('q') || '';
     const [localSearchTerm, setLocalSearchTerm] = useState(query);
-    const [sort, setSort] = useState(searchParams.get('sort') || 'requested_oldest'); // Default to oldest
+    const [sort, setSort] = useState(searchParams.get('sort') || 'requested_oldest');
+
+    // --- 2. State for the "Add" sheet ---
+    const [showAddWaitlistSheet, setShowAddWaitlistSheet] = useState(false);
+    const initialWaitlistState = {
+        email: '',
+        itemId: ''
+    };
+    const [newWaitlistEntry, setNewWaitlistEntry] = useState(initialWaitlistState);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState('');
+    // --- End new state ---
 
     const fetchWaitlist = () => {
         setLoading(true);
@@ -31,7 +43,6 @@ function ManageWaitlist() {
             'Authorization': `Bearer ${token}` 
         };
 
-        // Fetch from the new waitlist endpoint
         fetch(`${API_BASE_URL}/api/waitlist?${queryString}`, {
             method: 'GET',
             headers: authHeaders
@@ -41,7 +52,6 @@ function ManageWaitlist() {
             .catch(err => { console.error("Fetch Waitlist Error:", err); setError('Could not load waitlist.'); setLoading(false); });
     };
 
-    // Main fetch effect
     useEffect(() => {
         fetchWaitlist();
     }, [searchParams]); 
@@ -56,7 +66,6 @@ function ManageWaitlist() {
             return;
         }
         
-        // Use the new cancel endpoint
         fetch(`${API_BASE_URL}/api/waitlist/${waitlistId}/cancel`, { 
             method: 'POST', 
             headers: {
@@ -66,8 +75,8 @@ function ManageWaitlist() {
         })
             .then(r => { if (!r.ok) throw new Error('Cancel failed'); return r.json(); })
             .then((data) => {
-                console.log(data.message); // Log success
-                fetchWaitlist(); // Refresh list
+                console.log(data.message);
+                fetchWaitlist(); 
             })
             .catch(err => alert(`Error canceling waitlist entry: ${err.message}`));
     };
@@ -94,13 +103,79 @@ function ManageWaitlist() {
         }
     };
 
+    // --- 3. Input change handler ---
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setNewWaitlistEntry(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    // --- 4. Form submission handler ---
+    async function handleAddWaitlistSubmit(e) {
+        e.preventDefault();
+        setIsSubmitting(true);
+        setSubmitError('');
+
+        const token = localStorage.getItem('authToken'); 
+        if (!token) {
+            setSubmitError('Authentication required to add entries.');
+            setIsSubmitting(false);
+            return;
+        }
+
+        try {
+            if (!newWaitlistEntry.email || !newWaitlistEntry.itemId) {
+                throw new Error('User Email and Item ID are required.');
+            }
+
+            const response = await fetch(`${API_BASE_URL}/api/staff/waitlist`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}` 
+                },
+                body: JSON.stringify({
+                    email: newWaitlistEntry.email,
+                    itemId: newWaitlistEntry.itemId
+                }) 
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `HTTP error ${response.status}`);
+            }
+
+            console.log("New Waitlist Entry Added:", await response.json());
+            setShowAddWaitlistSheet(false);
+            setNewWaitlistEntry(initialWaitlistState); 
+            fetchWaitlist();
+
+        } catch (err) {
+            console.error("Add Waitlist Error:", err);
+            setSubmitError(`Failed to add entry: ${err.message}`);
+        } finally {
+            setIsSubmitting(false);
+        }
+    }
+
     return (
         <div>
         <div className="page-container">
             <div className='search-result-page-container'> 
                 <div className="search-result-header">
-                    <h1><IoListOutline /> Manage Waitlist</h1>
+                    <h1> Manage Waitlist</h1>
                     <div className="search-result-search-bar-container">
+                        
+                        {/* --- 5. "Add" Button --- */}
+                        <button
+                            className="action-circle-button primary-button"
+                            onClick={() => setShowAddWaitlistSheet(true)}
+                            >
+                            <FaPlus />
+                        </button>
+
                         <input 
                             type="text" 
                             placeholder="Search waitlist (by user, item...)" 
@@ -126,7 +201,6 @@ function ManageWaitlist() {
                                 <option value="title_desc">Title (Z–A)</option>
                             </select>
                         </div>
-                        {/* No filters needed for waitlist, as it has no status */}
                      </div>
 
                     <div className="search-results-list">
@@ -173,6 +247,31 @@ function ManageWaitlist() {
                 </div>
             </div>
         </div>
+        
+        {/* --- 6. "Add" Sheet JSX --- */}
+        {showAddWaitlistSheet && (
+            <div className="sheet-overlay" onClick={() => !isSubmitting && setShowAddWaitlistSheet(false)}>
+                <div className="sheet-container" onClick={(e) => e.stopPropagation()}>
+                <h2>Add User to Waitlist</h2>
+                {submitError && <p style={{color: 'red'}}>{submitError}</p>}
+                <form onSubmit={handleAddWaitlistSubmit}>
+                    <label> User Email: <input type="email" className="edit-input" name="email" value={newWaitlistEntry.email} onChange={handleInputChange} required placeholder="e.g., patron@example.com" /> </label>
+                    <label> Item ID: <input type="text" className="edit-input" name="itemId" value={newWaitlistEntry.itemId} onChange={handleInputChange} required placeholder="e.g., 9780316769488"/> </label>
+                    
+                    <div className="sheet-actions">
+                    <button type="submit" className="action-button primary-button" disabled={isSubmitting}>
+                         {isSubmitting ? 'Adding...' : 'Add to Waitlist'}
+                    </button>
+                    <button type="button" className="action-button secondary-button" onClick={() => setShowAddWaitlistSheet(false)} disabled={isSubmitting}>
+                        Cancel
+                    </button>
+                    </div>
+                </form>
+                </div>
+            </div>
+        )}
+        {/* --- End new JSX --- */}
+
         </div>
     )
 }
