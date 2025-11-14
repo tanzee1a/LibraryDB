@@ -94,7 +94,12 @@ const fetchStaffNotifications = async () => {
                   <div className="result-info">
                     <div className='result-text-info'>
                       {notification.link ? (
-                        <Link to={notification.link} className='result-link'>
+                        <Link 
+                          to={notification.link} 
+                          className='result-link'
+                          // Add this onClick handler
+                          onClick={() => handleMarkAsRead(notification.notification_id)}
+                        >
                           <h3 className='result-title result-title-blue'>{notification.title}</h3>
                         </Link>
                       ) : (
