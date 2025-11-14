@@ -46,6 +46,7 @@ function ItemDetails({ isStaff }) {
   const [editMessage, setEditMessage] = useState({ type: '', text: '' });
   const [isDeleteSubmitting, setIsDeleteSubmitting] = useState(false);
   const [isReactivateSubmitting, setIsReactivateSubmitting] = useState(false);
+  const [editSheetView, setEditSheetView] = useState('form'); // 'form', 'confirm_delete', 'confirm_reactivate'
 
 
   const staffRole = localStorage.getItem('staffRole');
@@ -215,7 +216,18 @@ function ItemDetails({ isStaff }) {
     });
     
     setEditMessage({ type: '', text: '' }); 
+    setEditSheetView('form');
     setShowEditSheet(true); 
+  };
+
+  const handleDeleteClick = () => {
+    setEditMessage({ type: '', text: '' });
+    setEditSheetView('confirm_delete');
+  };
+
+  const handleReactivateClick = () => {
+    setEditMessage({ type: '', text: '' });
+    setEditSheetView('confirm_reactivate');
   };
 
   const handleFormChange = (e) => {
@@ -573,9 +585,6 @@ function ItemDetails({ isStaff }) {
             <div className="availability-info">
               <p><strong>Available:</strong> <span>{item.available}</span></p>
               {item.available <= 0 && item.on_hold > 0 && <p><strong>On Hold:</strong> <span>{item.on_hold}</span></p>}
-               {item.available <= 0 && (
-                  <p><strong>Earliest Available:</strong> <span>{item.earliest_available_date ? new Date(item.earliest_available_date).toLocaleDateString() : 'N/A'}</span></p>
-              )}
             </div>
 
             {(userProfileLoading && !isStaff) && (
