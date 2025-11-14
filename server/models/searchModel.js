@@ -313,8 +313,6 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description')
         ) AS combined_results
         ORDER BY sort_priority ASC, title ASC
     `;
-    console.log("Executing Search SQL:", finalSql); // For debugging
-    console.log("With Params:", finalParams); // For debugging
     const [rows] = await db.query(finalSql, finalParams);
     return rows;
 }

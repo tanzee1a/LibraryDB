@@ -77,6 +77,7 @@ async function pickupHold(req, res, holdId) {
 // @desc Staff returns an item (scans borrow ID?)
 // @route POST /api/return/:borrowId 
 async function returnItem(req, res, borrowId) {
+    console.log("returnItem controller: Received request for borrowId:", borrowId);
     try {
         const staff_user_id = req.userId; 
         const result = await Loan.returnItem(borrowId, staff_user_id);

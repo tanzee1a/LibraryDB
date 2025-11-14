@@ -74,6 +74,7 @@
 }
 
 .status-badge.status-deactivated {
+    align-self: center;
     background-color: #777; 
     color: #fff;
 }
@@ -81,6 +82,7 @@
 .green-button {
     background-color: #28a745; 
     color: white;
+    align-self: center;
 }
 .green-button:hover {
     background-color: #218838; 

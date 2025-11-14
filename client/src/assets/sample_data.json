@@ -5,7 +5,7 @@
       "raw_category": "BOOK",
       "topics": [
         {
-          "name": "Genres",
+          "name": "Popular & Trending",
           "options": [
             "Fiction",
             "Non-Fiction",
@@ -21,21 +21,21 @@
           ]
         },
         {
-          "name": "Themes",
-          "options": [
-            "Dark",
-            "Dark Comedy",
-            "Mature",
-            "Kids"
-          ]
-        },
-        {
           "name": "Learning & Education",
           "options": [
             "History",
             "Science",
             "Physics",
             "Self-Help"
+          ]
+        },
+        {
+          "name": "Other Genres",
+          "options": [
+            "Romance",
+            "Mystery",
+            "Biography",
+            "Memoir"
           ]
         }
       ]
@@ -46,7 +46,7 @@
       "raw_category": "MOVIE",
       "topics": [
         {
-          "name": "Genres",
+          "name": "Popular & Trending",
           "options": [
             "Action",
             "Adventure",
@@ -68,6 +68,15 @@
           "options": [
             "Animation",
             "Anime"
+          ]
+        },
+        {
+          "name": "Other Genres",
+          "options": [
+            "Horror",
+            "Thriller",
+            "Suspense",
+            "Superhero"
           ]
         }
       ]

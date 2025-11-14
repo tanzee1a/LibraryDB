@@ -31,6 +31,8 @@ const reportTypeOptions = [
   { key: 'revenue', label: 'Revenue', endpoint: '/api/reports/revenue', description: 'Breakdown of revenue generated from fines and memberships.' },
 ];
 
+const backgroundColors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'];
+
 function Reports() {
     const [reportData, setReportData] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -76,6 +78,8 @@ function Reports() {
     }, [isAssistantLibrarian, selectedType]);
 
     useEffect(() => {
+        setParam1('');
+        setParam2('');
         fetchReportData();
     }, [selectedType]);
 
@@ -277,9 +281,9 @@ function Reports() {
         if (headerKey.toLowerCase().includes('date') && value) {
             return new Date(value).toLocaleDateString();
         }
-        if (headerKey.toLowerCase().includes('amount') || headerKey.toLowerCase().includes('fee')) {
-             if (typeof value === 'number') return `$${value.toFixed(2)}`;
-             if (typeof value === 'string') return `$${parseFloat(value).toFixed(2)}`; 
+        if (headerKey.toLowerCase().includes('amount')) {
+            const num = parseFloat(value);
+            return isNaN(num) ? '-' : `$${num.toFixed(2)}`;
         }
         return value;
     };
@@ -367,7 +371,7 @@ function Reports() {
                                 datasets: [
                                     {
                                         data: Object.values(revenueSummary.totals),
-                                        backgroundColor: ['#4CAF50', '#2196F3'], // green for fines, blue for membership
+                                        backgroundColor: backgroundColors,
                                         hoverOffset: 10,
                                     },
                                 ],
@@ -401,7 +405,7 @@ function Reports() {
                                 datasets: [
                                     {
                                         data: Object.values(userSummary.totals),
-                                        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'], // colors for roles
+                                        backgroundColor: backgroundColors,
                                         hoverOffset: 10,
                                     },
                                 ],
@@ -435,7 +439,7 @@ function Reports() {
                                 datasets: [
                                     {
                                         data: Object.values(membershipSummary.totals),
-                                        backgroundColor: ['#4CAF50', '#FF9800'], // green for active, orange for expired
+                                        backgroundColor: backgroundColors,
                                         hoverOffset: 10,
                                     },
                                 ],
@@ -461,8 +465,9 @@ function Reports() {
             case 'fines': {
                 if (!reportData.length) return null;
                 const fineTotals = reportData.reduce((acc, row) => {
-                    const email = row.email || 'Unknown';
-                    acc[email] = (acc[email] || 0) + Number(row.total_amount_due || 0);
+                    const type = row.fee_type || "Unknown";
+                    const amount = Number(row.amount_due || 0);
+                    acc[type] = (acc[type] || 0) + amount;
                     return acc;
                 }, {});
                 const totalFines = Object.values(fineTotals).reduce((a, b) => a + b, 0);
@@ -474,13 +479,13 @@ function Reports() {
                                 labels: Object.keys(fineTotals),
                                 datasets: [{
                                     data: Object.values(fineTotals),
-                                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'],
+                                    backgroundColor: backgroundColors,
                                     hoverOffset: 10,
                                 }],
                             }}
                             options={{
                                 plugins: {
-                                    legend: { display: false },
+                                    legend: { position: 'bottom' },
                                     tooltip: {
                                         callbacks: {
                                             label: (context) => {

@@ -134,9 +134,23 @@ const Navbar = ({
                 <ul className="nav-links">
                 <li><a href="/" className="logo"><img className="logo-image logo-image-small" src={Logo} alt="" />LBRY</a></li>
                 <li><a href="/search" className="logo">Browse</a></li>
-                <li><Link to="/search?category=BOOK">Books</Link></li>
-                <li><Link to="/search?category=MOVIE">Movies</Link></li>
-                <li><Link to="/search?category=DEVICE">Devices</Link></li>
+                {filters.map(filter => (
+                <li key={filter.category} className="dropdown">
+                    <a href={`/search?category=${encodeURIComponent(filter.raw_category)}`}>{filter.category}</a>
+                    <div className="dropdown-menu">
+                    <div className="dropdown-menu-contents">
+                        {filter.topics.map(topic => (
+                        <div key={topic.name} className="category-column">
+                            <p>{topic.name}</p>
+                            {topic.options.map(option => (
+                            <a key={option} href={`/search?tag=${encodeURIComponent(option)}`}>{option}</a>
+                            ))}
+                        </div>
+                        ))}
+                    </div>
+                    </div>
+                </li>
+                ))}
                 <li className="notification-icon">
                     <Link to="/account/?section=notifications">
                         <FaBell />
