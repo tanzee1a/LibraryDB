@@ -38,6 +38,7 @@ textarea:focus {
   padding-top: 50px;
   padding-left: 1rem;
   padding-right: 1rem;
+  min-height: 100vh;
 }
 
 .action-button {

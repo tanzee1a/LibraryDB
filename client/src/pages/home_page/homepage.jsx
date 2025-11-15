@@ -30,7 +30,7 @@ function Homepage() {
     setTimeout(() => {
       setShowPrimary(false);
       setShowSecondary(true);
-    }, 2000);
+    }, 500);
   };
 
   const handleBlur = () => {
