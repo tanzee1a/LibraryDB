@@ -8,9 +8,7 @@ export default function Loans() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // --- Fetch Loans ---
   const fetchLoans = () => {
-    // 1. Retrieve the token from storage
     const token = localStorage.getItem('authToken'); 
 
     if (!token) {
@@ -20,7 +18,6 @@ export default function Loans() {
         return; 
     }
 
-    // 2. Construct the headers object with the Authorization header
     const headers = {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
@@ -39,16 +36,24 @@ export default function Loans() {
   }, []); 
 
 
-  // --- Render Logic ---
   if (loading) return <div>Loading your borrowed items…</div>;
   if (error) return <div>{error}</div>;
   if (!items.length) return <div>No current loans.</div>;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
   return (
     <ul className="list">
       {items.map(item => {
         const due = item.due_date; 
+        
+        const dueDate = new Date(due);
+        
+        const isOverdue = dueDate < today;
+
         return (
+          // <li key={item.borrow_id} className={`list-item ${isOverdue ? 'overdue-item' : ''}`}>
           <li key={item.borrow_id} className="list-item">
             <img 
               src={item.thumbnail_url || '/placeholder-image.png'} 
@@ -58,7 +63,12 @@ export default function Loans() {
             />
             <div>
               <div className="item-title"><a className='result-link' href={`/item/${item.item_id}`}>{item.title}</a></div>
-              <div className="item-sub">Due by {new Date(due).toLocaleDateString()}</div>
+              <div className="item-sub">
+                Due by {new Date(due).toLocaleDateString()}
+                
+                {isOverdue && <span className="overdue-alert">OVERDUE</span>}
+              
+              </div>
             </div>
             <div>
             </div>
