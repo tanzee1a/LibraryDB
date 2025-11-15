@@ -80,7 +80,11 @@ function Notifications({ setUnreadCount = () => {} }) {
               <div className="thumb-icon" aria-hidden="true"><IoNotificationsOutline /></div>
               <div>
                 {notif.link ? (
-                  <Link to={notif.link} className="result-link">
+                  <Link 
+                    to={notif.link} 
+                    className="result-link"
+                    onClick={() => handleMarkAsRead(notif.notification_id)}
+                  >
                     <div className="item-title">{notif.title}</div>
                   </Link>
                 ) : (
