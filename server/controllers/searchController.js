@@ -10,6 +10,7 @@ async function searchItems(req, res) {
         const parsedUrl = url.parse(req.url, true);
         const searchTerm = parsedUrl.query.q || ''; 
         const searchType = parsedUrl.query.searchType || 'Description';
+
         const filters = parsedUrl.query; 
         const view = parsedUrl.query.view || 'user';
         delete filters.q; 
@@ -19,7 +20,7 @@ async function searchItems(req, res) {
 
         const results = await Search.searchItems(searchTerm, filters, searchType, view);
 
-        // 3. If no basic results, return empty
+        // 2. If no results, return empty
         if (!results || results.length === 0) {
             res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
             return res.end(JSON.stringify([]));

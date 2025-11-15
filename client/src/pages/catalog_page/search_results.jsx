@@ -27,20 +27,26 @@ function SearchResults({ isStaff }) {
     const [formatsLoading, setFormatsLoading] = useState(true);
     const [formatsError, setFormatsError] = useState('');
 
+     const [tagsLoading, setTagsLoading] = useState(true);
+
+
     const [userProfile, setUserProfile] = useState({ is_suspended: false, total_fines: 0.00 });
     const [userProfileLoading, setUserProfileLoading] = useState(true);
 
-    const [filterOptions, setFilterOptions] = useState([
-        // Initialize with the static 'Item Type' filter
+    const baseFilterOptions = [
         { 
             category: 'Item Type', 
             param: 'category',
             options: ['BOOK', 'MOVIE', 'DEVICE'] 
+        },
+        // Staff Only Filter
+        {
+            category: 'Item Status', 
+            param: 'status', 
+            options: ['ACTIVE', 'DELETED'] 
         }
-    ]);
-
-    const [tagsLoading, setTagsLoading] = useState(true);
-
+    ];
+    const [filterOptions, setFilterOptions] = useState(baseFilterOptions);
 
     // This tracks the ID of the *specific* item being submitted
     const [submittingItemId, setSubmittingItemId] = useState(null); 
@@ -60,14 +66,15 @@ function SearchResults({ isStaff }) {
         }
         return filters;
     };
+
     const [selectedFilters, setSelectedFilters] = useState(initialFilters);
 
     useEffect(() => {
         setLoading(true);
         setError('');
         setSelectedFilters(initialFilters());
+
     
-        // 1. Search Results Fetch (Existing Logic)
         const params = new URLSearchParams();
         if (query) {
             params.set('q', query);
@@ -94,7 +101,7 @@ function SearchResults({ isStaff }) {
             .then(data => { setResults(data || []); setLoading(false); })
             .catch(() => { setError(`Could not load results.`); setLoading(false); });
     
-        // 2. Fetch Languages (Existing Logic)
+        // 2. Fetch Languages 
         const fetchLanguages = async () => {
             // ... (fetch languages logic) ...
             setLanguagesLoading(true);
@@ -114,54 +121,56 @@ function SearchResults({ isStaff }) {
             }
         };
         fetchLanguages();
-    
-        // 3. Fetch Movie Formats (Existing Logic)
-        const fetchMovieFormats = async () => {
-            // ... (fetch movie formats logic) ...
-            setFormatsLoading(true);
-            setFormatsError('');
+
+        const fetchDynamicFilters = async () => {
+            setTagsLoading(true);
+            setFormatsLoading(true); // Use loading state for formats
             try {
-                const response = await fetch(`${API_BASE_URL}/api/movie-formats`); 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const data = await response.json();
-                setMovieFormats(data); 
+                // Fetch tags and formats in parallel
+                const [tagsResponse, formatsResponse] = await Promise.all([
+                    fetch(`${API_BASE_URL}/api/tags`),
+                    fetch(`${API_BASE_URL}/api/movie-formats`)
+                ]);
+        
+                if (!tagsResponse.ok) throw new Error('Failed to fetch tags');
+                if (!formatsResponse.ok) throw new Error('Failed to fetch movie formats');
+        
+                const tagsData = await tagsResponse.json();
+                const formatsData = await formatsResponse.json();
+                
+                // Set movieFormats for the "Add Item" form
+                setMovieFormats(formatsData); 
+
+                // Process data for filters
+                const tagNames = tagsData.map(tag => tag.tag_name).sort((a, b) => a.localeCompare(b));
+                const formatNames = formatsData.map(format => format.format_name).sort();
+                
+                // Set all filters at once, building from the base
+                setFilterOptions([
+                    ...baseFilterOptions, // Add the static 'Item Type' and 'Item Status'
+                    { // Add dynamic 'Tags'
+                        category: 'Tags',
+                        param: 'tag',
+                        options: tagNames 
+                    },
+                    { // Add dynamic 'Movie Formats'
+                        category: 'Movie Formats',
+                        param: 'format', // This param is used in your searchModel
+                        options: formatNames
+                    }
+                ]);
+
             } catch (e) {
-                console.error("Failed to fetch movie formats:", e);
-                setFormatsError("Failed to load formats.");
+                console.error("Failed to fetch dynamic filters:", e);
+                // You could set a general filterError state here
             } finally {
+                setTagsLoading(false);
                 setFormatsLoading(false);
             }
         };
-        fetchMovieFormats();
-    
-        // 4. Fetch Tags (Existing Logic)
-        const fetchTags = async () => {
-            // ... (fetch tags logic) ...
-            setTagsLoading(true);
-            try {
-                const response = await fetch(`${API_BASE_URL}/api/tags`);
-                if (!response.ok) throw new Error('Failed to fetch tags');
-                const data = await response.json();
-                
-                const tagNames = data.map(tag => tag.tag_name).sort((a, b) => a.localeCompare(b));
-                
-                setFilterOptions(prevOptions => [
-                    prevOptions[0], 
-                        { 
-                            category: 'Tags',
-                            param: 'tag',
-                            options: tagNames 
-                        }
-                ]);
-            } catch (e) {
-                console.error("Failed to fetch tags:", e);
-            } finally {
-                setTagsLoading(false);
-            }
-        };
-        fetchTags();
+
+        fetchDynamicFilters(); // Call the combined fetch function
+
     
         // --- 5. ADDED: Fetch User Profile for Suspension Status ---
         const token = localStorage.getItem('authToken');
@@ -589,28 +598,32 @@ function SearchResults({ isStaff }) {
                         </select>
                     </div>
                     {filterOptions.map((filterGroup) => (
-                        <div key={filterGroup.param} className="filter-category">
-                            <h3>{filterGroup.category}</h3>
-                            <hr className='thin-divider divider--tight' />
-                            {filterGroup.param === 'tag' && tagsLoading ? (
-                                <p>Loading tags...</p>
-                            ) : (
-                            <ul>
-                                {filterGroup.options.map((option) => (
-                                    <li key={option}>
-                                        <label>
-                                            <input 
-                                                type="checkbox" 
-                                                value={option}
-                                                checked={selectedFilters[filterGroup.param]?.includes(option) || false}
-                                                onChange={() => handleFilterChange(filterGroup.param, option)}
-                                            /> {option}
-                                        </label>
-                                    </li>
-                                ))}
-                            </ul>
-                            )}
-                        </div>
+                        // Only show the 'status' filter if isStaff is true
+                        (filterGroup.param !== 'status' || isStaff) && (
+                            <div key={filterGroup.param} className="filter-category">
+                                <h3>{filterGroup.category}</h3>
+                                <hr className='thin-divider divider--tight' />
+
+                                {filterGroup.param === 'tag' && tagsLoading ? (
+                                    <p>Loading tags...</p>
+                                ) : (
+                                <ul>
+                                    {filterGroup.options.map((option) => (
+                                        <li key={option}>
+                                            <label>
+                                                <input 
+                                                    type="checkbox" 
+                                                    value={option}
+                                                    checked={selectedFilters[filterGroup.param]?.includes(option) || false}
+                                                    onChange={() => handleFilterChange(filterGroup.param, option)}
+                                                /> {option}
+                                            </label>
+                                        </li>
+                                    ))}
+                                </ul>
+                                )}
+                            </div>
+                        ) 
                     ))}
                 </div>
                 <div className="search-results-list">

@@ -10,14 +10,13 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description',
     let finalParams = [];
 
     const categoryFilter = filters.category ? filters.category.split(',') : [];
-    const tagFilter = filters.tag ? filters.tag.split(',') : []; //
+    const tagFilter = filters.tag ? filters.tag.split(',') : [];
     const formatFilter = filters.format ? filters.format.split(',') : [];
+    const statusFilter = filters.status ? filters.status.split(',') : [];
     const fromItemJoin = `FROM ITEM i `;
 
+
     // --- 1. Build BOOK Query Part ---
-    // Only search books if:
-    // 1. We are NOT searching by 'Director' or 'Manufacturer'
-    // 2. The category filter allows it (or is empty)
     if (searchType !== 'Director' && searchType !== 'Manufacturer' && (categoryFilter.length === 0 || categoryFilter.includes('BOOK'))) {
         let bookParams = [];
         let bookWhereClauses = [];
@@ -26,12 +25,8 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description',
                 i.item_id, i.category, i.status, i.thumbnail_url, i.available, i.on_hold, i.loaned_out, i.earliest_available_date,
                 b.title AS title,
                 GROUP_CONCAT(DISTINCT a.first_name, ' ', a.last_name SEPARATOR ', ') AS creators,
-                
-                -- Book-specific fields
                 b.publisher,
                 l.name AS language_name,
-                
-                -- Placeholders for other types
                 NULL AS release_year,
                 NULL AS format_name,
                 NULL AS device_type_name
@@ -43,31 +38,31 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description',
             `LEFT JOIN LANGUAGE l ON b.language_id = l.language_id`
         ];
 
-        if (view !== 'staff') {
+        if (view === 'staff' && statusFilter.length > 0) {
+            bookWhereClauses.push(`i.status IN (?)`);
+            bookParams.push(statusFilter);
+        } else if (view !== 'staff') {
             bookWhereClauses.push(`i.status = 'ACTIVE'`);
         }
         
         if (searchTerm.trim()) {
             if (searchType === 'Title') {
-                // Add sorting rank column
                 bookSelect += `,
                     CASE
-                        WHEN b.title = ? THEN 1   -- 1st param
-                        WHEN b.title LIKE ? THEN 2 -- 2nd param
+                        WHEN b.title = ? THEN 1
+                        WHEN b.title LIKE ? THEN 2
                         ELSE 3                     
                     END AS sort_priority
                 `;
-                bookParams.push(exactTerm, startsWithTerm); // Push 1st and 2nd params
-                // The WHERE clause's param comes last
-                bookWhereClauses.push(`b.title LIKE ?`); // 3rd param
-                bookParams.push(queryTerm); // Push 3rd param
+                bookParams.push(exactTerm, startsWithTerm);
+                bookWhereClauses.push(`b.title LIKE ?`);
+                bookParams.push(queryTerm);
 
             } else if (searchType === 'Author') {
                 bookWhereClauses.push(`(a.first_name LIKE ? OR a.last_name LIKE ?)`);
                 bookParams.push(queryTerm, queryTerm);
-                bookSelect += `, 4 AS sort_priority`; // Default low priority
+                bookSelect += `, 4 AS sort_priority`;
             } else if (searchType === 'Tag') {
-                // tag logic is added within the tagFilter section
                 bookSelect += `, 4 AS sort_priority`;
             } else { // Default 'Description' search
                 bookWhereClauses.push(`(b.title LIKE ? OR i.description LIKE ? OR a.first_name LIKE ? OR a.last_name LIKE ?)`);
@@ -75,24 +70,22 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description',
                 bookSelect += `, 4 AS sort_priority`;
             }
         } else {
-            bookSelect += `, 4 AS sort_priority`; // Default low priority if no search term
+            bookSelect += `, 4 AS sort_priority`;
         }
-        // Category Filter logic
         if (categoryFilter.length > 0) {
             bookWhereClauses.push(`i.category IN (?)`);
             bookParams.push(categoryFilter);
         }
-        // Tag Filter logic
-        if (tagFilter.length > 0 || searchType === 'Tag') {
+        if (tagFilter.length > 0 || (searchType === 'Tag' && searchTerm.trim())) {
             bookJoins.push(
                 `JOIN ITEM_TAG it ON i.item_id = it.item_id`,
                 `JOIN TAG t ON it.tag_id = t.tag_id`
             );
-            if (tagFilter.length > 0) { // Filtering by tag list
+            if (tagFilter.length > 0) {
                 bookWhereClauses.push(`t.tag_name IN (?)`);
                 bookParams.push(tagFilter);
             }
-            if (searchType === 'Tag' && searchTerm.trim()) { // Searching by tag
+            if (searchType === 'Tag' && searchTerm.trim()) {
                 bookWhereClauses.push(`t.tag_name LIKE ?`);
                 bookParams.push(queryTerm);
             }
@@ -112,13 +105,9 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description',
     }
 
     // --- 2. Build MOVIE Query Part ---
-    // Only search movies if:
-    // 1. We are NOT searching by 'Author' or 'Manufacturer'
-    // 2. The category filter allows it (or is empty)
      if (searchType !== 'Author' && searchType !== 'Manufacturer' && (categoryFilter.length === 0 || categoryFilter.includes('MOVIE'))) {
         let movieParams = [];
         let movieWhereClauses = [];
-
         let movieJoins = [
             `JOIN MOVIE m ON i.item_id = m.item_id`,
             `LEFT JOIN MOVIE_DIRECTOR md ON m.item_id = md.item_id`,
@@ -126,26 +115,22 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description',
             `LEFT JOIN LANGUAGE l ON m.language_id = l.language_id`,
             `LEFT JOIN MOVIE_FORMAT mf ON m.format_id = mf.format_id`
         ];
-
         let movieSelect = `
             SELECT
                 i.item_id, i.category, i.status,i.thumbnail_url, i.available, i.on_hold, i.loaned_out, i.earliest_available_date,
                 m.title AS title,
                 GROUP_CONCAT(DISTINCT d.first_name, ' ', d.last_name SEPARATOR ', ') AS creators,
-                
-                -- Book-specific fields
                 NULL AS publisher,
                 l.name AS language_name,
-                
-                -- Movie-specific fields
                 m.release_year,
                 mf.format_name,
-
-                -- Device Specific field
                 NULL AS device_type_name
         `;
 
-        if (view !== 'staff') {
+        if (view === 'staff' && statusFilter.length > 0) {
+            movieWhereClauses.push(`i.status IN (?)`);
+            movieParams.push(statusFilter);
+        } else if (view !== 'staff') {
             movieWhereClauses.push(`i.status = 'ACTIVE'`);
         }
 
@@ -159,7 +144,6 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description',
                     END AS sort_priority
                 `;
                 movieParams.push(exactTerm, startsWithTerm);
-
                 movieWhereClauses.push(`m.title LIKE ?`);
                 movieParams.push(queryTerm);
 
@@ -177,19 +161,14 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description',
         } else {
             movieSelect += `, 4 AS sort_priority`;
         }
-        // Category filter logic
         if (categoryFilter.length > 0) {
             movieWhereClauses.push(`i.category IN (?)`);
             movieParams.push(categoryFilter);
         }
-
-        // Movie Format filter logic
-        if (formatFilter.length > 0) {
+        if (formatFilter.length > 0) { 
             movieWhereClauses.push(`mf.format_name IN (?)`);
             movieParams.push(formatFilter);
         }
-    
-        // Tag filter logic
         if (tagFilter.length > 0 || (searchType === 'Tag' && searchTerm.trim())) {
             movieJoins.push(
                 `JOIN ITEM_TAG it ON i.item_id = it.item_id`,
@@ -219,9 +198,6 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description',
      }
 
     // --- 3. Build DEVICE Query Part ---
-    // Only search devices if:
-    // 1. We are NOT searching by 'Author' or 'Director'
-    // 2. The category filter allows it (or is empty)
      if (searchType !== 'Author' && searchType !== 'Director' && (categoryFilter.length === 0 || categoryFilter.includes('DEVICE'))) {
         let deviceParams = [];
         let deviceWhereClauses = [];
@@ -229,26 +205,22 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description',
             `JOIN DEVICE d ON i.item_id = d.item_id`,
             `LEFT JOIN DEVICE_TYPE dt ON d.device_type = dt.type_id`
         ];
-
         let deviceSelect = `
             SELECT
                 i.item_id, i.category, i.status, i.thumbnail_url, i.available, i.on_hold, i.loaned_out, i.earliest_available_date,
                 d.device_name AS title,
                 d.manufacturer AS creators,
-                
-                -- Book Specific Fields
                 NULL AS publisher,
                 NULL AS language_name,
-
-                -- Movie Specific Fiels
                 NULL AS release_year,
                 NULL AS format_name,
-
-                -- Device-specific fields
                 dt.type_name AS device_type_name
         `;
 
-        if (view !== 'staff') {
+        if (view === 'staff' && statusFilter.length > 0) {
+            deviceWhereClauses.push(`i.status IN (?)`);
+            deviceParams.push(statusFilter);
+        } else if (view !== 'staff') {
             deviceWhereClauses.push(`i.status = 'ACTIVE'`);
         }
 
@@ -262,7 +234,6 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description',
                     END AS sort_priority
                 `;
                 deviceParams.push(exactTerm, startsWithTerm);
-
                 deviceWhereClauses.push(`d.device_name LIKE ?`);
                 deviceParams.push(queryTerm);
 
@@ -280,12 +251,10 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description',
         } else {
             deviceSelect += `, 4 AS sort_priority`;
         }
-        // Category filter logic
         if (categoryFilter.length > 0) {
             deviceWhereClauses.push(`i.category IN (?)`);
             deviceParams.push(categoryFilter);
         }        
-        // Tag filter logic
         if (tagFilter.length > 0 || (searchType === 'Tag' && searchTerm.trim())) {
             deviceJoins.push(
                 `JOIN ITEM_TAG it ON i.item_id = it.item_id`,
