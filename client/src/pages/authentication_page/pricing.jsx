@@ -25,7 +25,7 @@ function Pricing() {
             case 'Patron':
                 return (
                     <Link to="/register">
-                        <button className="tier-button primary-button">Get Started</button>
+                        <button className="tier-button primary-button">Register</button>
                     </Link>
                 );
             case 'Student':

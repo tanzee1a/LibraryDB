@@ -1,6 +1,6 @@
 .login-page-container {
   position: relative;
-  background-image: url('../../assets/login_background.jpg');
+  background-image: url('../../assets/login_background1.jpg');
   background-size: cover;
   background-repeat: no-repeat;
   background-position: left;
@@ -25,6 +25,7 @@
 
 .login-side-text {
   margin: auto;
+  color: white;
 }
 
 .login-side-text h1 {

@@ -10,6 +10,7 @@ function Homepage() {
   const [userProfile, setUserProfile] = useState({});
   const [showPrimary, setShowPrimary] = useState(true);   // fake-placeholder1
   const [showSecondary, setShowSecondary] = useState(false); // fake-placeholder2
+  const [isFocused, setIsFocused] = useState(false);
   const navigate = useNavigate();
 
   const handleSearch = (event) => {
@@ -24,18 +25,6 @@ function Homepage() {
                 navigate(`/search`);
             }
         }
-  };
-
-  const handleFocus = () => {
-    setTimeout(() => {
-      setShowPrimary(false);
-      setShowSecondary(true);
-    }, 500);
-  };
-
-  const handleBlur = () => {
-    setShowSecondary(false);
-    setShowPrimary(true);
   };
 
   useEffect(() => {
@@ -67,6 +56,17 @@ function Homepage() {
             fetchUserProfile();
         } 
   }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!isFocused && searchTerm === '') {
+        setShowPrimary(false);
+        setShowSecondary(true);
+      }
+    }, 10 * 1000);
+
+    return () => clearTimeout(timer);
+  }, [isFocused, searchTerm]);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -168,8 +168,6 @@ function Homepage() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyDown={handleSearch}
-                onFocus={handleFocus}
-                onBlur={handleBlur}
                 className="home-search-bar"
               />
 
@@ -178,7 +176,7 @@ function Homepage() {
               </span>
 
               <span className={`fake-placeholder2 ${(showSecondary && searchTerm === '') ? 'show' : ''}`}>
-                Don’t know where to start? Press Enter to browse everything.
+                Don’t know where to start? Click here & press Enter to browse everything.
               </span>
             </div>
           </div>
