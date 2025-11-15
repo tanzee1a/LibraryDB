@@ -67,9 +67,16 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: white;
+
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
   border-radius: 20px;
   padding: 2rem;
+
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
 }
 
 .form-group a {
@@ -86,4 +93,35 @@
   text-align: center;
   margin: 0;
   margin-bottom: 0.5rem;
+}
+
+.login-form-container input:not(#signUpLater),
+.login-form-container select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.4);
+
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  font-size: 1rem;
+  outline: none;
+  color: #333;
+}
+
+.login-form-container input:focus {
+  border-color: rgba(0,0,0,0.4);
+}
+
+.login-form-container input:disabled,
+.login-form-container select:disabled,
+.login-form-container textarea:disabled {
+  background: rgba(200, 200, 200, 0.35) !important;
+  color: #777 !important;
+  cursor: not-allowed;
+  border: 1px solid rgba(150,150,150,0.4) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
