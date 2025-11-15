@@ -41,9 +41,11 @@ function Reports() {
     const [dateFilterType, setDateFilterType] = useState('date');
     const [dateRange, setDateRange] = useState({ from: '', to: '' });
     const [monthRange, setMonthRange] = useState({ from: '1', to: '12' });
-    const [yearRange, setYearRange] = useState({ from: '2023', to: '2024' });
+    const currentYear = new Date().getFullYear();
+    const [yearRange, setYearRange] = useState({ from: currentYear, to: currentYear });
     const [param1, setParam1] = useState('');
     const [param2, setParam2] = useState('');
+    const [param3, setParam3] = useState('');
     const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
     const [searchQuery, setSearchQuery] = useState('');
     const [loggedInUserStaffRole, setLoggedInUserStaffRole] = useState(null); 
@@ -80,6 +82,7 @@ function Reports() {
     useEffect(() => {
         setParam1('');
         setParam2('');
+        setParam3('');
         fetchReportData();
     }, [selectedType]);
 
@@ -99,20 +102,39 @@ function Reports() {
             case 'month':
                 dateFilter = (
                     <div className="filter-group">
-                    <label>From:</label>
-                    <select value={monthRange.from} onChange={e => setMonthRange({ ...monthRange, from: e.target.value })}>
-                        {Array.from({ length: 12 }, (_, i) => (
-                        <option key={i+1} value={i+1}>{new Date(0, i).toLocaleString('default', { month: 'long' })}</option>
-                        ))}
-                    </select>
-                    <label>To:</label>
-                    <select value={monthRange.to} onChange={e => setMonthRange({ ...monthRange, to: e.target.value })}>
-                        {Array.from({ length: 12 }, (_, i) => (
-                        <option key={i+1} value={i+1}>{new Date(0, i).toLocaleString('default', { month: 'long' })}</option>
-                        ))}
-                    </select>
+                        <label>From:</label>
+                        <select value={monthRange.from} onChange={e => setMonthRange({ ...monthRange, from: e.target.value })}>
+                            {Array.from({ length: 12 }, (_, i) => (
+                                <option key={i+1} value={i+1}>
+                                    {new Date(0, i).toLocaleString('default', { month: 'long' })}
+                                </option>
+                            ))}
+                        </select>
+                        <input
+                            type="number"
+                            min="2000"
+                            max="2100"
+                            value={yearRange.from}
+                            onChange={e => setYearRange({ ...yearRange, from: e.target.value })}
+                        />
+
+                        <label>To:</label>
+                        <select value={monthRange.to} onChange={e => setMonthRange({ ...monthRange, to: e.target.value })}>
+                            {Array.from({ length: 12 }, (_, i) => (
+                                <option key={i+1} value={i+1}>
+                                    {new Date(0, i).toLocaleString('default', { month: 'long' })}
+                                </option>
+                            ))}
+                        </select>
+                        <input
+                            type="number"
+                            min="2000"
+                            max="2100"
+                            value={yearRange.to}
+                            onChange={e => setYearRange({ ...yearRange, to: e.target.value })}
+                        />
                     </div>
-                )
+                );
                 break;
             case 'year':
                 dateFilter = (
@@ -165,6 +187,17 @@ function Reports() {
                         />
                     </div>
                 );
+                specificFilters.push(
+                    <div className="filter-group" key="category-filter">
+                        <label>Min Borrow Count:</label>
+                        <input
+                            type="number"
+                            min="0"
+                            value={param3}
+                            onChange={e => setParam3(e.target.value)}
+                        />
+                    </div>
+                );
                 break;
             case 'memberships':
                 specificFilters.push(
@@ -205,8 +238,9 @@ function Reports() {
                         onClick={() => {
                         setDateRange({ from: '', to: '' });
                         setMonthRange({ from: '1', to: '12' });
-                        setYearRange({ from: '2023', to: '2024' });
+                        setYearRange({ from: currentYear, to: currentYear });
                         setParam1('');
+                        setParam2('');
                         }}
                     >
                         Clear Filters
@@ -232,8 +266,8 @@ function Reports() {
             if (dateRange.from) params.append('start', dateRange.from);
             if (dateRange.to) params.append('end', dateRange.to);
             } else if (dateFilterType === 'month') {
-            if (monthRange.from) params.append('start', monthRange.from);
-            if (monthRange.to) params.append('end', monthRange.to);
+                params.append("start", `${yearRange.from}-${monthRange.from.padStart(2,'0')}`);
+                params.append("end", `${yearRange.to}-${monthRange.to.padStart(2,'0')}`);
             } else if (dateFilterType === 'year') {
             if (yearRange.from) params.append('start', yearRange.from);
             if (yearRange.to) params.append('end', yearRange.to);
@@ -247,6 +281,7 @@ function Reports() {
                 case 'active_users':
                     if (param1) params.append('role', param1);
                     if (param2) params.append('minBorrow', param2);
+                    if (param3) params.append('maxBorrow', param3);
                     break;
                 case 'memberships':
                     if (param1) params.append('status', param1);
@@ -320,49 +355,6 @@ function Reports() {
 
         return sorted;
     }, [reportData, sortConfig, searchQuery]);
-
-    const revenueSummary = React.useMemo(() => {
-        if (selectedType !== 'revenue' || !sortedReportData.length) return null;
-
-        const totals = sortedReportData.reduce((acc, row) => {
-            acc[row.type] = (acc[row.type] || 0) + Number(row.amount || 0);
-            return acc;
-        }, {});
-
-        const totalRevenue = Object.values(totals).reduce((a, b) => a + b, 0);
-
-        return { totals, totalRevenue };
-    }, [sortedReportData, selectedType]);
-
-    // User summary for active_users report
-    const userSummary = React.useMemo(() => {
-        if (selectedType !== 'active_users' || !sortedReportData.length) return null;
-
-        const totals = sortedReportData.reduce((acc, row) => {
-            const label = row.role_name || 'Unknown';
-            acc[label] = (acc[label] || 0) + 1;
-            return acc;
-        }, {});
-
-        const totalUsers = Object.values(totals).reduce((a, b) => a + b, 0);
-
-        return { totals, totalUsers };
-    }, [sortedReportData, selectedType]);
-
-    // Membership summary for memberships report
-    const membershipSummary = React.useMemo(() => {
-        if (selectedType !== 'memberships' || !sortedReportData.length) return null;
-
-        const totals = sortedReportData.reduce((acc, row) => {
-            const label = row.membership_status || 'Unknown';
-            acc[label] = (acc[label] || 0) + 1;
-            return acc;
-        }, {});
-
-        const totalMemberships = Object.values(totals).reduce((a, b) => a + b, 0);
-
-        return { totals, totalMemberships };
-    }, [sortedReportData, selectedType]);
 
     const renderPieChart = () => {
         switch (selectedType) {

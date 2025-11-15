@@ -19,7 +19,6 @@ const Navbar = ({
     const [searchType, setSearchType] = useState('Title');
     const userFirstName = localStorage.getItem('userFirstName') || '';
     const filters = sampleData.item_filters;
-    // const [unreadCount, setUnreadCount] = useState(1);
 
     const handleSearch = (event) => {
         if (event.key === 'Enter') {
@@ -160,7 +159,10 @@ const Navbar = ({
                 </li>
                 {renderSearchDropdown()}
                 <li className="dropdown">
-                <button className="nav-icon profile-container">
+                <button 
+                    className="nav-icon profile-container"
+                    onClick={() => navigate('/account')}
+                >
                     <IoPersonCircleOutline />
                     {userFirstName && <span className="profile-name">{userFirstName}</span>}
                 </button>
@@ -243,7 +245,10 @@ const Navbar = ({
                     </Link>
                 </li>
                 <li className="dropdown">
-                <button className="nav-icon profile-container">
+                <button 
+                    className="nav-icon profile-container"
+                    onClick={() => navigate('/account')}
+                >
                     <IoPersonCircleOutline />
                     {userFirstName && <span className="profile-name">{userFirstName}</span>}
                 </button>

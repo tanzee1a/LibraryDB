@@ -14,10 +14,10 @@
           ]
         },
         {
-          "name": "Formats",
+          "name": "Intended Audience",
           "options": [
-            "Manga",
-            "Anime"
+            "Mature",
+            "Kids"
           ]
         },
         {

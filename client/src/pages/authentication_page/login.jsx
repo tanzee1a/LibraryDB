@@ -23,30 +23,28 @@ function Login({ setIsStaff, setIsLoggedIn }) {
       const data = await response.json();
   
       if (response.ok) {
-       // 1. Persist the data
-      localStorage.setItem('authToken', data.token);
-      localStorage.setItem('userRole', data.user.role);
-      localStorage.setItem('staffRole', data.user.staffRole); // Librarian / Assistant Librarian / null
-      localStorage.setItem('userFirstName', data.user.firstName);
-      localStorage.setItem('userId', data.user.user_id);
+        localStorage.setItem('authToken', data.token);
+        localStorage.setItem('userRole', data.user.role);
+        localStorage.setItem('staffRole', data.user.staffRole); // Librarian / Assistant Librarian / null
+        localStorage.setItem('userFirstName', data.user.firstName);
+        localStorage.setItem('userId', data.user.user_id);
+        
+        console.log('Login successful:', data.user);
 
-      // 2. Update React state immediately
-      const isStaffUser = data.user.role === 'Staff';
-      setIsStaff(isStaffUser);
-      setIsLoggedIn(true);
+        const isStaffUser = data.user.role === 'Staff';
+        setIsStaff(isStaffUser);
+        setIsLoggedIn(true);
 
-      const isLibrarian = data.user.staffRole === 'Librarian';
-      const isAssistantLibrarian = data.user.staffRole === 'Assistant Librarian';
-
-      // 3. Navigate the user
-      if (isStaffUser) {
-          navigate('/staff_page', { replace: true });
-      } else {
-          navigate('/account', { replace: true });
+        // 3. Navigate the user
+        if (isStaffUser) {
+            navigate('/staff_page', { replace: true });
+        } else {
+          navigate('/', { replace: true });
         }
-      }else {
-          alert(data.message || 'Login failed');
-        }
+      }
+      else {
+        alert(data.message || 'Login failed');
+      }
     } catch (err) {
       console.error(err);
       alert('Error connecting to server');

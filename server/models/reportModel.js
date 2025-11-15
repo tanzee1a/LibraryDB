@@ -20,9 +20,9 @@ async function popularGenresReport({ filterType = 'date', start = null, end = nu
         else if (end) sql += ' AND b.borrow_date <= ?';
     } 
     else if (filterType === 'month') {
-        if (start && end) sql += ' AND MONTH(b.borrow_date) BETWEEN ? AND ?';
-        else if (start) sql += ' AND MONTH(b.borrow_date) >= ?';
-        else if (end) sql += ' AND MONTH(b.borrow_date) <= ?';
+        if (start && end) sql += " AND DATE_FORMAT(b.borrow_date, '%Y-%m') BETWEEN ? AND ?";
+        else if (start) sql += " AND DATE_FORMAT(b.borrow_date, '%Y-%m') >= ?";
+        else if (end) sql += " AND DATE_FORMAT(b.borrow_date, '%Y-%m') <= ?";
     } 
     else if (filterType === 'year') {
         if (start && end) sql += ' AND YEAR(b.borrow_date) BETWEEN ? AND ?';
@@ -57,7 +57,7 @@ async function popularItemReport({ filterType = 'date', start = null, end = null
             COALESCE(bk.title, m.title, d.device_name) AS item_name,
             i.quantity,
             COUNT(DISTINCT b.borrow_id) AS borrow_count,
-            COUNT(DISTINCT w.user_id) AS total_wishlist
+            COUNT(DISTINCT w.user_id) AS total_saved
         FROM ITEM i
         LEFT JOIN BOOK bk ON i.item_id = bk.item_id AND i.category = 'BOOK'
         LEFT JOIN MOVIE m ON i.item_id = m.item_id AND i.category = 'MOVIE'
@@ -75,9 +75,9 @@ async function popularItemReport({ filterType = 'date', start = null, end = null
         else if (end) sql += ' AND b.borrow_date <= ?';
     } 
     else if (filterType === 'month') {
-        if (start && end) sql += ' AND MONTH(b.borrow_date) BETWEEN ? AND ?';
-        else if (start) sql += ' AND MONTH(b.borrow_date) >= ?';
-        else if (end) sql += ' AND MONTH(b.borrow_date) <= ?';
+        if (start && end) sql += " AND DATE_FORMAT(b.borrow_date, '%Y-%m') BETWEEN ? AND ?";
+        else if (start) sql += " AND DATE_FORMAT(b.borrow_date, '%Y-%m') >= ?";
+        else if (end) sql += " AND DATE_FORMAT(b.borrow_date, '%Y-%m') <= ?";
     } 
     else if (filterType === 'year') {
         if (start && end) sql += ' AND YEAR(b.borrow_date) BETWEEN ? AND ?';
@@ -138,9 +138,9 @@ async function overdueItemsReport({ filterType = 'date', start = null, end = nul
         else if (end) sql += ' AND b.borrow_date <= ?';
     } 
     else if (filterType === 'month') {
-        if (start && end) sql += ' AND MONTH(b.borrow_date) BETWEEN ? AND ?';
-        else if (start) sql += ' AND MONTH(b.borrow_date) >= ?';
-        else if (end) sql += ' AND MONTH(b.borrow_date) <= ?';
+        if (start && end) sql += " AND DATE_FORMAT(b.borrow_date, '%Y-%m') BETWEEN ? AND ?";
+        else if (start) sql += " AND DATE_FORMAT(b.borrow_date, '%Y-%m') >= ?";
+        else if (end) sql += " AND DATE_FORMAT(b.borrow_date, '%Y-%m') <= ?";
     } 
     else if (filterType === 'year') {
         if (start && end) sql += ' AND YEAR(b.borrow_date) BETWEEN ? AND ?';
@@ -191,9 +191,9 @@ async function outstandingFinesReport({ filterType = 'date', start = null, end =
         else if (end) sql += ' AND f.date_issued <= ?';
     } 
     else if (filterType === 'month') {
-        if (start && end) sql += ' AND MONTH(f.date_issued) BETWEEN ? AND ?';
-        else if (start) sql += ' AND MONTH(f.date_issued) >= ?';
-        else if (end) sql += ' AND MONTH(f.date_issued) <= ?';
+        if (start && end) sql += " AND DATE_FORMAT(f.date_issued, '%Y-%m') BETWEEN ? AND ?";
+        else if (start) sql += " AND DATE_FORMAT(f.date_issued, '%Y-%m') >= ?";
+        else if (end) sql += " AND DATE_FORMAT(f.date_issued, '%Y-%m') <= ?";
     } 
     else if (filterType === 'year') {
         if (start && end) sql += ' AND YEAR(f.date_issued) BETWEEN ? AND ?';
@@ -211,7 +211,7 @@ async function outstandingFinesReport({ filterType = 'date', start = null, end =
     return rows;
 }
 
-async function activeUsersReport({ filterType = 'date', start = null, end = null, role = null, minBorrow = null } = {}) {
+async function activeUsersReport({ filterType = 'date', start = null, end = null, role = null, minBorrow = null, maxBorrow = null } = {}) {
     let sql = `
         SELECT 
             u.email,
@@ -234,9 +234,9 @@ async function activeUsersReport({ filterType = 'date', start = null, end = null
         else if (end) sql += ' AND b.borrow_date <= ?';
     } 
     else if (filterType === 'month') {
-        if (start && end) sql += ' AND MONTH(b.borrow_date) BETWEEN ? AND ?';
-        else if (start) sql += ' AND MONTH(b.borrow_date) >= ?';
-        else if (end) sql += ' AND MONTH(b.borrow_date) <= ?';
+        if (start && end) sql += " AND DATE_FORMAT(b.borrow_date, '%Y-%m') BETWEEN ? AND ?";
+        else if (start) sql += " AND DATE_FORMAT(b.borrow_date, '%Y-%m') >= ?";
+        else if (end) sql += " AND DATE_FORMAT(b.borrow_date, '%Y-%m') <= ?";
     } 
     else if (filterType === 'year') {
         if (start && end) sql += ' AND YEAR(b.borrow_date) BETWEEN ? AND ?';
@@ -256,10 +256,20 @@ async function activeUsersReport({ filterType = 'date', start = null, end = null
     sql += `
         GROUP BY u.user_id, u.email, u.firstName, u.lastName, r.role_name
     `;
-    if (minBorrow) {
-        sql += ` HAVING COUNT(b.borrow_id) >= ?`;
-        params.push(minBorrow);
+
+    if (minBorrow || maxBorrow) {
+        sql += ` HAVING 1=1`;
+
+        if (minBorrow) {
+            sql += ` AND COUNT(b.borrow_id) >= ?`;
+            params.push(minBorrow);
+        }
+        if (maxBorrow) {
+            sql += ` AND COUNT(b.borrow_id) <= ?`;
+            params.push(maxBorrow);
+        }
     }
+
     sql += `
         ORDER BY total_borrows DESC;
     `;
@@ -298,9 +308,9 @@ async function membershipReport({ filterType = 'date', start = null, end = null,
         else if (end) sql += ' AND pm.signup_date <= ?';
     } 
     else if (filterType === 'month') {
-        if (start && end) sql += ' AND MONTH(pm.signup_date) BETWEEN ? AND ?';
-        else if (start) sql += ' AND MONTH(pm.signup_date) >= ?';
-        else if (end) sql += ' AND MONTH(pm.signup_date) <= ?';
+        if (start && end) sql += " AND DATE_FORMAT(pm.signup_date, '%Y-%m') BETWEEN ? AND ?";
+        else if (start) sql += " AND DATE_FORMAT(pm.signup_date, '%Y-%m') >= ?";
+        else if (end) sql += " AND DATE_FORMAT(pm.signup_date, '%Y-%m') <= ?";
     } 
     else if (filterType === 'year') {
         if (start && end) sql += ' AND YEAR(pm.signup_date) BETWEEN ? AND ?';
@@ -375,11 +385,11 @@ async function revenueReport({ filterType = 'date', start = null, end = null, ty
         }
     } else if (filterType === 'month') {
         if (start && end) {
-            sql += ' AND MONTH(f.date_paid) BETWEEN ? AND ?';
+            sql += " AND DATE_FORMAT(f.date_paid, '%Y-%m') BETWEEN ? AND ?";
         } else if (start) {
-            sql += ' AND MONTH(f.date_paid) >= ?';
+            sql += " AND DATE_FORMAT(f.date_paid, '%Y-%m') >= ?";
         } else if (end) {
-            sql += ' AND MONTH(f.date_paid) <= ?';
+            sql += " AND DATE_FORMAT(f.date_paid, '%Y-%m') <= ?";
         }
     } else if (filterType === 'year') {
         if (start && end) {
@@ -417,11 +427,11 @@ async function revenueReport({ filterType = 'date', start = null, end = null, ty
         }
     } else if (filterType === 'month') {
         if (start && end) {
-            sql += ' AND MONTH(m.payment_date) BETWEEN ? AND ?';
+            sql += " AND DATE_FORMAT(m.payment_date, '%Y-%m') BETWEEN ? AND ?";
         } else if (start) {
-            sql += ' AND MONTH(m.payment_date) >= ?';
+            sql += " AND DATE_FORMAT(m.payment_date, '%Y-%m') >= ?";
         } else if (end) {
-            sql += ' AND MONTH(m.payment_date) <= ?';
+            sql += " AND DATE_FORMAT(m.payment_date, '%Y-%m') <= ?";
         }
     } else if (filterType === 'year') {
         if (start && end) {

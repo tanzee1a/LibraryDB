@@ -108,9 +108,7 @@ function App() {
         <Route
           path="/login"
           element={
-            isLoggedIn
-              ? <Navigate to="/" replace /> // Redirect to home if already signed in
-              : <Login setIsStaff={setIsStaff} setIsLoggedIn={setIsLoggedIn} />
+            <Login setIsStaff={setIsStaff} setIsLoggedIn={setIsLoggedIn} />
           }
         />
         <Route
