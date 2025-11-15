@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { IoListOutline } from 'react-icons/io5';
 import { FaPlus } from 'react-icons/fa';
+import { toast } from 'react-toastify';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
@@ -15,7 +16,6 @@ function ManageWaitlist() {
     const [localSearchTerm, setLocalSearchTerm] = useState(query);
     const [sort, setSort] = useState(searchParams.get('sort') || 'requested_oldest');
 
-    // --- 2. State for the "Add" sheet ---
     const [showAddWaitlistSheet, setShowAddWaitlistSheet] = useState(false);
     const initialWaitlistState = {
         email: '',
@@ -24,8 +24,10 @@ function ManageWaitlist() {
     const [newWaitlistEntry, setNewWaitlistEntry] = useState(initialWaitlistState);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState('');
-    // --- End new state ---
-
+    const [showCancelSheet, setShowCancelSheet] = useState(false);
+    const [cancelTargetEntry, setCancelTargetEntry] = useState(null);
+    const [isCanceling, setIsCanceling] = useState(false);
+    
     const fetchWaitlist = () => {
         setLoading(true);
         setError('');
@@ -56,29 +58,50 @@ function ManageWaitlist() {
         fetchWaitlist();
     }, [searchParams]); 
 
-    const handleCancel = (waitlistId) => {
-        if (!window.confirm('Are you sure you want to remove this user from the waitlist?')) {
-             return;
-        }
+    const handleCancelClick = (entry) => {
+        setCancelTargetEntry(entry);
+        setShowCancelSheet(true);
+    };
+
+    const handleConfirmCancel = async () => {
+        if (!cancelTargetEntry) return;
+
+        setIsCanceling(true);
         const token = localStorage.getItem('authToken');
+
         if (!token) {
-            alert("Error: You must be logged in to perform this action.");
+            toast.error("Error: You must be logged in to perform this action.");
+            setIsCanceling(false);
             return;
         }
-        
-        fetch(`${API_BASE_URL}/api/waitlist/${waitlistId}/cancel`, { 
-            method: 'POST', 
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/waitlist/${cancelTargetEntry.waitlist_id}/cancel`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.message || 'Cancel failed');
             }
-        })
-            .then(r => { if (!r.ok) throw new Error('Cancel failed'); return r.json(); })
-            .then((data) => {
-                console.log(data.message);
-                fetchWaitlist(); 
-            })
-            .catch(err => alert(`Error canceling waitlist entry: ${err.message}`));
+
+            await response.json();
+            
+            // Success!
+            toast.success("User removed from waitlist!");
+            setShowCancelSheet(false);
+            setCancelTargetEntry(null);
+            fetchWaitlist(); // Refresh the list
+
+        } catch (err) {
+            toast.error(`Error canceling entry: ${err.message}`);
+        } finally {
+            setIsCanceling(false);
+        }
     };
 
     const handleSortChange = (event) => {
@@ -235,7 +258,7 @@ function ManageWaitlist() {
                                         </div>
                                     </div>
                                     <div className="result-actions">
-                                        <button onClick={() => handleCancel(entry.waitlist_id)} className="action-button secondary-button">Remove from Waitlist</button>
+                                        <button onClick={() => handleCancelClick(entry)} className="action-button secondary-button">Remove from Waitlist</button>
                                     </div>
                                 </div>
                                 <hr className="thin-divider" />
@@ -265,6 +288,38 @@ function ManageWaitlist() {
                     </button>
                     </div>
                 </form>
+                </div>
+            </div>
+        )}
+        {showCancelSheet && cancelTargetEntry && (
+            <div className="sheet-overlay" onClick={() => !isCanceling && setShowCancelSheet(false)}>
+                <div className="sheet-container" onClick={(e) => e.stopPropagation()}>
+                    <h2>Remove from Waitlist</h2>
+                    <p>Are you sure you want to remove this user from the waitlist?</p>
+                    
+                    <div style={{ padding: '10px 0', border: '1E2D3E', borderRadius: '5px' }}>
+                        <p><strong>Item:</strong> {cancelTargetEntry.item_title}</p>
+                        <p><strong>User:</strong> {cancelTargetEntry.firstName} {cancelTargetEntry.lastName} ({cancelTargetEntry.email})</p>
+                    </div>
+
+                    <div className="sheet-actions">
+                        <button 
+                            type="button" 
+                            className="action-button red-button" 
+                            onClick={handleConfirmCancel} 
+                            disabled={isCanceling}
+                        >
+                            {isCanceling ? 'Removing...' : 'Yes, Remove'}
+                        </button>
+                        <button 
+                            type="button" 
+                            className="action-button secondary-button" 
+                            onClick={() => setShowCancelSheet(false)} 
+                            disabled={isCanceling}
+                        >
+                            Nevermind
+                        </button>
+                    </div>
                 </div>
             </div>
         )}
