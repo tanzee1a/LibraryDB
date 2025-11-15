@@ -17,6 +17,7 @@ const Navbar = ({
     const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState('');
     const [searchType, setSearchType] = useState('Title');
+    const userFirstName = localStorage.getItem('userFirstName') || '';
     const filters = sampleData.item_filters;
     // const [unreadCount, setUnreadCount] = useState(1);
 
@@ -75,7 +76,7 @@ const Navbar = ({
         );
     }
 
-    // --- 1. GUEST NAVBAR (NOT LOGGED IN) ---
+    // GUEST NAVBAR (NOT LOGGED IN)
     const guestNavbar = () => {
         return (
             <nav className="nav">
@@ -118,7 +119,7 @@ const Navbar = ({
         );
     }
 
-
+    // USER NAVBAR (LOGGED IN AS REGULAR USER)
     const userNavbar = () => {
         const handleNavToSection = (sectionKey) => {
             if (window.location.pathname === '/account') {
@@ -159,8 +160,9 @@ const Navbar = ({
                 </li>
                 {renderSearchDropdown()}
                 <li className="dropdown">
-                <button className="nav-icon">
+                <button className="nav-icon profile-container">
                     <IoPersonCircleOutline />
+                    {userFirstName && <span className="profile-name">{userFirstName}</span>}
                 </button>
                 <div className="dropdown-menu">
                         <div className="dropdown-menu-contents">
@@ -241,8 +243,9 @@ const Navbar = ({
                     </Link>
                 </li>
                 <li className="dropdown">
-                <button className="nav-icon">
+                <button className="nav-icon profile-container">
                     <IoPersonCircleOutline />
+                    {userFirstName && <span className="profile-name">{userFirstName}</span>}
                 </button>
                 <div className="dropdown-menu">
                         <div className="dropdown-menu-contents">

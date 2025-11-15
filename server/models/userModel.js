@@ -37,12 +37,29 @@ async function findAllUsers(searchTerm, filters = {}, sort = '') {
             u.firstName, 
             u.lastName,
             sr.role_name AS staff_role,
-            u.account_status -- <<< --- ADDED
+            u.account_status,
+            r.requires_membership_fee,
+            COALESCE(f.total_fines, 0.00) AS total_fines,
+            (COALESCE(f.total_fines, 0.00) >= ?) AS is_suspended,
+            pm.auto_renew,
+            pm.expires_at
         FROM USER u
         JOIN USER_ROLE ur ON u.role_id = ur.role_id
-        LEFT JOIN STAFF s ON u.user_id = s.user_id AND ur.role_name = 'Staff'
+        LEFT JOIN (
+            SELECT user_id, SUM(amount) AS total_fines
+            FROM FINE
+            WHERE date_paid IS NULL AND waived_at IS NULL
+            GROUP BY user_id
+        ) AS f ON u.user_id = f.user_id
+        LEFT JOIN STAFF s 
+            ON u.user_id = s.user_id 
+            AND ur.role_name = 'Staff'
         LEFT JOIN STAFF_ROLES sr ON s.role_id = sr.role_id
-    `; 
+        LEFT JOIN PATRON_MEMBERSHIP pm
+            ON u.user_id = pm.user_id
+            AND ur.role_name = 'Patron'
+        JOIN USER_ROLE r ON u.role_id = r.role_id
+    `; // <- semicolon only here, after the backtick
     
     let params = [];
     let whereClauses = []; 
@@ -87,7 +104,32 @@ async function findAllUsers(searchTerm, filters = {}, sort = '') {
     
     sql += orderByClause;
     
-    const [rows] = await db.query(sql, params);
+    const [rows] = await db.query(sql, [SUSPENSION_THRESHOLD, ...params]);
+
+    // --- Compute Membership Status (like findUserProfileById) ---
+    for (const user of rows) {
+        if (user.role !== 'Patron') {
+            user.membership_status = null;
+            continue;
+        }
+
+        // If no membership record at all
+        if (!user.expires_at) {
+            user.membership_status = 'new';
+            continue;
+        }
+
+        const isExpired = new Date(user.expires_at) < new Date();
+
+        if (isExpired) {
+            user.membership_status = 'expired';
+        } else if (user.auto_renew === 0) {
+            user.membership_status = 'canceled';
+        } else {
+            user.membership_status = 'active';
+        }
+    }
+
     return rows;
 }
 

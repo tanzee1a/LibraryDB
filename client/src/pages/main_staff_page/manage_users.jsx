@@ -1,5 +1,5 @@
 import './manage_users.css';
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { FaPlus } from "react-icons/fa";
 import { Link, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify'; 
@@ -33,8 +33,6 @@ function ManageUsers() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState('');
 
-    const currencyFormatter = new Intl.NumberFormat('en-US', { /* ... */ });
-
     const userFilterOptions = [
         {
             category: 'Role',
@@ -43,8 +41,13 @@ function ManageUsers() {
         },
         {
             category: 'Account Status',
-            param: 'status', // This will be the URL param
+            param: 'status',
             options: ['Active', 'Deactivated']
+        },
+        {
+            category: 'Patron Memberships',
+            param: 'membership_status',
+            options: ['New', 'Active', 'Canceled', 'Expired']
         }
     ];
 
@@ -300,7 +303,19 @@ function ManageUsers() {
                         {error && <p style={{ color: 'red' }}>{error}</p>}
                         {!loading && !error && users.length === 0 && <p>No users found.</p>}
 
-                        {!loading && !error && users.map((user) => (
+                        {/* Membership Status Filter */}
+                        {(() => {
+                            const membershipFilter = (searchParams.get('membership_status') || '')
+                                .split(',')
+                                .filter(Boolean)
+                                .map(v => v.toLowerCase());
+
+                            const filteredUsers = users.filter(user => {
+                                if (!membershipFilter.length) return true;
+                                if (user.role !== 'Patron') return false;
+                                return membershipFilter.includes(user.membership_status?.toLowerCase());
+                            });
+                            return (!loading && !error && filteredUsers.map((user) => (
                             // Use user_id for the key
                             <div key={user.user_id} className="search-result-item"> 
                                 <div className="result-info">
@@ -309,23 +324,44 @@ function ManageUsers() {
                                             <Link to={`/user/${user.user_id}`} className="result-link">
                                                 {user.firstName} {user.lastName}
                                             </Link>
+                                            {user.account_status === 'DEACTIVATED' && (
+                                                <span style={{
+                                                    backgroundColor: '#777',
+                                                    color: 'white',
+                                                    padding: '2px 8px',
+                                                    fontSize: '0.8rem',
+                                                    fontWeight: '600',
+                                                    borderRadius: '10px',
+                                                    marginLeft: '10px'
+                                                }}>
+                                                    Deactivated
+                                                </span>
+                                            )}
+                                            {user.is_suspended === 1 && (
+                                                <span style={{
+                                                    backgroundColor: '#ff5c5cff',
+                                                    color: 'white',
+                                                    padding: '2px 8px',
+                                                    fontSize: '0.8rem',
+                                                    fontWeight: '600',
+                                                    borderRadius: '10px',
+                                                    marginLeft: '10px'
+                                                }}>
+                                                    Suspended
+                                                </span>
+                                            )}
                                         </h2>
                                         <div className="result-description">
                                             <div className="result-details">
                                                 <p><strong>Email:</strong> {user.email || 'N/A'}</p>
                                                 <p><strong>Role:</strong> {user.role} {user.staff_role ? `(${user.staff_role})` : ''}
-                                                {user.account_status === 'DEACTIVATED' && (
-                                                    <span style={{
-                                                        backgroundColor: '#777',
-                                                        color: 'white',
-                                                        padding: '2px 8px',
-                                                        fontSize: '0.8rem',
-                                                        fontWeight: '600',
-                                                        borderRadius: '10px',
-                                                        marginLeft: '10px'
-                                                    }}>
-                                                        Deactivated
-                                                    </span>
+                                                {user.role === 'Patron' && (
+                                                    <p>
+                                                        <strong>Membership Status:</strong>{' '}
+                                                        {user.membership_status 
+                                                            ? user.membership_status.charAt(0).toUpperCase() + user.membership_status.slice(1)
+                                                            : 'N/A'}
+                                                    </p>
                                                 )}
                                                 </p>
                                             </div>
@@ -344,7 +380,8 @@ function ManageUsers() {
                                 </div>
                                 <hr className="thin-divider" />
                             </div>
-                        ))}
+                            )));
+                        })()}
                     </div>
                 </div>
             </div>

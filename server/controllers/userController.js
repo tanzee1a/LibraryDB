@@ -36,7 +36,7 @@ async function getAllUsers(req, res) {
     try {
         const parsedUrl = url.parse(req.url, true);
         const searchTerm = parsedUrl.query.q || '';
-        const sort = parsedUrl.query.sort || ''; //
+        const sort = parsedUrl.query.sort || '';
         
         // Get ALL query params as filters
         const filters = parsedUrl.query;

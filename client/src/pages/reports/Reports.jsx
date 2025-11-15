@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import './Reports.css';
-
 import { IoInformationCircleOutline } from 'react-icons/io5';
 import { Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
@@ -17,18 +16,19 @@ const decodeToken = (token) => {
         }).join(''));
         return JSON.parse(jsonPayload);
     } catch (e) {
+        console.error("Failed to decode token:", e);
         return null;
     }
 };
 
 const reportTypeOptions = [
-  { key: 'genres', label: 'Popular Genres', endpoint: '/api/reports/popular-genres', description: 'Shows the most popular genres based on borrow counts. Note: An item can have multiple genres. Hence, borrow counts may overlap.' },
   { key: 'items', label: 'Popular Items', endpoint: '/api/reports/popular-items', description: 'List the most borrowed items.' },
-  { key: 'overdues', label: 'Overdue Items', endpoint: '/api/reports/overdue-items', description: 'List of items that are currently overdue along with borrower details.' },
   { key: 'fines', label: 'Outstanding Fines', endpoint: '/api/reports/outstanding-fines', description: 'Summarizes outstanding fines owed by users. Our goal is to minimize this list as much as we can by reaching out to them to encourage timely payment.' },
+  { key: 'revenue', label: 'Revenue', endpoint: '/api/reports/revenue', description: 'Breakdown of revenue generated from fines and memberships.' },
+  { key: 'genres', label: 'Popular Genres', endpoint: '/api/reports/popular-genres', description: 'Shows the most popular genres based on borrow counts. Note: An item can have multiple genres. Hence, borrow counts may overlap.' },
+  { key: 'overdues', label: 'Overdue Items', endpoint: '/api/reports/overdue-items', description: 'List of items that are currently overdue along with borrower details.' },
   { key: 'active_users', label: 'Users', endpoint: '/api/reports/active-users', description: 'We measure how active users are using how many times they borrow within a specified period.' },
   { key: 'memberships', label: 'Patrons', endpoint: '/api/reports/memberships', description: 'Provide an overview of patron memberships.' },
-  { key: 'revenue', label: 'Revenue', endpoint: '/api/reports/revenue', description: 'Breakdown of revenue generated from fines and memberships.' },
 ];
 
 const backgroundColors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'];
@@ -322,9 +322,9 @@ function Reports() {
     }, [reportData, sortConfig, searchQuery]);
 
     const revenueSummary = React.useMemo(() => {
-        if (selectedType !== 'revenue' || !reportData.length) return null;
+        if (selectedType !== 'revenue' || !sortedReportData.length) return null;
 
-        const totals = reportData.reduce((acc, row) => {
+        const totals = sortedReportData.reduce((acc, row) => {
             acc[row.type] = (acc[row.type] || 0) + Number(row.amount || 0);
             return acc;
         }, {});
@@ -332,45 +332,59 @@ function Reports() {
         const totalRevenue = Object.values(totals).reduce((a, b) => a + b, 0);
 
         return { totals, totalRevenue };
-    }, [reportData, selectedType]);
+    }, [sortedReportData, selectedType]);
 
     // User summary for active_users report
     const userSummary = React.useMemo(() => {
-        if (selectedType !== 'active_users' || !reportData.length) return null;
-        const totals = reportData.reduce((acc, row) => {
+        if (selectedType !== 'active_users' || !sortedReportData.length) return null;
+
+        const totals = sortedReportData.reduce((acc, row) => {
             const label = row.role_name || 'Unknown';
             acc[label] = (acc[label] || 0) + 1;
             return acc;
         }, {});
+
         const totalUsers = Object.values(totals).reduce((a, b) => a + b, 0);
+
         return { totals, totalUsers };
-    }, [reportData, selectedType]);
+    }, [sortedReportData, selectedType]);
 
     // Membership summary for memberships report
     const membershipSummary = React.useMemo(() => {
-        if (selectedType !== 'memberships' || !reportData.length) return null;
-        const totals = reportData.reduce((acc, row) => {
+        if (selectedType !== 'memberships' || !sortedReportData.length) return null;
+
+        const totals = sortedReportData.reduce((acc, row) => {
             const label = row.membership_status || 'Unknown';
             acc[label] = (acc[label] || 0) + 1;
             return acc;
         }, {});
+
         const totalMemberships = Object.values(totals).reduce((a, b) => a + b, 0);
+
         return { totals, totalMemberships };
-    }, [reportData, selectedType]);
+    }, [sortedReportData, selectedType]);
 
     const renderPieChart = () => {
         switch (selectedType) {
-            case 'revenue':
-                if (!revenueSummary) return null;
+            case 'revenue': {
+                if (!sortedReportData.length) return null;
+
+                const totals = sortedReportData.reduce((acc, row) => {
+                    acc[row.type] = (acc[row.type] || 0) + Number(row.amount || 0);
+                    return acc;
+                }, {});
+
+                const totalRevenue = Object.values(totals).reduce((a, b) => a + b, 0);
+
                 return (
                     <div className="revenue-summary">
-                        <h3>Total Revenue: ${revenueSummary.totalRevenue.toFixed(2)}</h3>
+                        <h3>Total Revenue: ${totalRevenue.toFixed(2)}</h3>
                         <Pie
                             data={{
-                                labels: Object.keys(revenueSummary.totals),
+                                labels: Object.keys(totals),
                                 datasets: [
                                     {
-                                        data: Object.values(revenueSummary.totals),
+                                        data: Object.values(totals),
                                         backgroundColor: backgroundColors,
                                         hoverOffset: 10,
                                     },
@@ -384,7 +398,7 @@ function Reports() {
                                             label: (context) => {
                                                 const type = context.label;
                                                 const val = context.raw;
-                                                const pct = ((val / revenueSummary.totalRevenue) * 100).toFixed(1);
+                                                const pct = ((val / totalRevenue) * 100).toFixed(1);
                                                 return `${type}: $${val.toFixed(2)} (${pct}%)`;
                                             },
                                         },
@@ -394,17 +408,73 @@ function Reports() {
                         />
                     </div>
                 );
-            case 'active_users':
-                if (!userSummary) return null;
+            }
+
+            case 'active_users': {
+                if (!sortedReportData.length) return null;
+
+                const totals = sortedReportData.reduce((acc, row) => {
+                    const role = row.role_name || "Unknown";
+                    acc[role] = (acc[role] || 0) + 1;
+                    return acc;
+                }, {});
+
+                const totalUsers = Object.values(totals).reduce((a, b) => a + b, 0);
+
                 return (
                     <div className="revenue-summary">
-                        <h3>Total Users: {userSummary.totalUsers}</h3>
+                        <h3>Total Users: {totalUsers}</h3>
                         <Pie
                             data={{
-                                labels: Object.keys(userSummary.totals),
+                                labels: Object.keys(totals),
                                 datasets: [
                                     {
-                                        data: Object.values(userSummary.totals),
+                                        data: Object.values(totals),
+                                        backgroundColor: backgroundColors,
+                                        hoverOffset: 10,
+                                    },
+                                ],
+                            }}
+                            options={{
+                                plugins: {
+                                    legend: { position: 'bottom' },
+                                    tooltip: {
+                                        callbacks: {
+                                            label: (context) => {
+                                                const role = context.label;
+                                                const val = context.raw;
+                                                const pct = ((val / totalUsers) * 100).toFixed(1);
+                                                return `${role}: ${val} (${pct}%)`;
+                                            },
+                                        },
+                                    },
+                                },
+                            }}
+                        />
+                    </div>
+                );
+            }
+
+            case 'memberships': {
+                if (!sortedReportData.length) return null;
+
+                const totals = sortedReportData.reduce((acc, row) => {
+                    const status = row.membership_status || "Unknown";
+                    acc[status] = (acc[status] || 0) + 1;
+                    return acc;
+                }, {});
+
+                const totalMemberships = Object.values(totals).reduce((a, b) => a + b, 0);
+
+                return (
+                    <div className="revenue-summary">
+                        <h3>Total Patrons: {totalMemberships}</h3>
+                        <Pie
+                            data={{
+                                labels: Object.keys(totals),
+                                datasets: [
+                                    {
+                                        data: Object.values(totals),
                                         backgroundColor: backgroundColors,
                                         hoverOffset: 10,
                                     },
@@ -418,7 +488,7 @@ function Reports() {
                                             label: (context) => {
                                                 const type = context.label;
                                                 const val = context.raw;
-                                                const pct = ((val / userSummary.totalUsers) * 100).toFixed(1);
+                                                const pct = ((val / totalMemberships) * 100).toFixed(1);
                                                 return `${type}: ${val} (${pct}%)`;
                                             },
                                         },
@@ -428,49 +498,20 @@ function Reports() {
                         />
                     </div>
                 );
-            case 'memberships':
-                if (!membershipSummary) return null;
-                return (
-                    <div className="revenue-summary">
-                        <h3>Total Patrons: {membershipSummary.totalMemberships}</h3>
-                        <Pie
-                            data={{
-                                labels: Object.keys(membershipSummary.totals),
-                                datasets: [
-                                    {
-                                        data: Object.values(membershipSummary.totals),
-                                        backgroundColor: backgroundColors,
-                                        hoverOffset: 10,
-                                    },
-                                ],
-                            }}
-                            options={{
-                                plugins: {
-                                    legend: { position: 'bottom' },
-                                    tooltip: {
-                                        callbacks: {
-                                            label: (context) => {
-                                                const type = context.label;
-                                                const val = context.raw;
-                                                const pct = ((val / membershipSummary.totalMemberships) * 100).toFixed(1);
-                                                return `${type}: ${val} (${pct}%)`;
-                                            },
-                                        },
-                                    },
-                                },
-                            }}
-                        />
-                    </div>
-                );
+            }
+
             case 'fines': {
-                if (!reportData.length) return null;
-                const fineTotals = reportData.reduce((acc, row) => {
+                if (!sortedReportData.length) return null;
+
+                const fineTotals = sortedReportData.reduce((acc, row) => {
                     const type = row.fee_type || "Unknown";
                     const amount = Number(row.amount_due || 0);
                     acc[type] = (acc[type] || 0) + amount;
                     return acc;
                 }, {});
+
                 const totalFines = Object.values(fineTotals).reduce((a, b) => a + b, 0);
+
                 return (
                     <div className="revenue-summary">
                         <h3>Total Outstanding Fines: ${totalFines.toFixed(2)}</h3>
@@ -505,7 +546,7 @@ function Reports() {
             default:
                 return null;
         }
-    }
+    };
 
     // Render table
     const renderReportTable = () => {

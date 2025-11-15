@@ -8,6 +8,8 @@ function Homepage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchType, setSearchType] = useState('Title');
   const [userProfile, setUserProfile] = useState({});
+  const [showPrimary, setShowPrimary] = useState(true);   // fake-placeholder1
+  const [showSecondary, setShowSecondary] = useState(false); // fake-placeholder2
   const navigate = useNavigate();
 
   const handleSearch = (event) => {
@@ -22,6 +24,18 @@ function Homepage() {
                 navigate(`/search`);
             }
         }
+  };
+
+  const handleFocus = () => {
+    setTimeout(() => {
+      setShowPrimary(false);
+      setShowSecondary(true);
+    }, 2000);
+  };
+
+  const handleBlur = () => {
+    setShowSecondary(false);
+    setShowPrimary(true);
   };
 
   useEffect(() => {
@@ -148,14 +162,25 @@ function Homepage() {
               <option value="Director">Director</option>
               <option value="Tag">Tag</option>
             </select>
-            <input
-              type="text"
-              placeholder="Curiosity starts here..."
-              className="home-search-bar" 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyDown={handleSearch}
-            />
+            <div className="search-wrapper">
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={handleSearch}
+                onFocus={handleFocus}
+                onBlur={handleBlur}
+                className="home-search-bar"
+              />
+
+              <span className={`fake-placeholder1 ${(showPrimary && searchTerm === '') ? 'show' : ''}`}>
+                Curiosity starts here...
+              </span>
+
+              <span className={`fake-placeholder2 ${(showSecondary && searchTerm === '') ? 'show' : ''}`}>
+                Don’t know where to start? Press Enter to browse everything.
+              </span>
+            </div>
           </div>
           <div>
           {renderActionButton()}

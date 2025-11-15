@@ -87,14 +87,14 @@ function Register({ setIsStaff, setIsLoggedIn }) {
     const { name, value } = e.target;
     let processedValue = value;
 
-    // 1. Card Number: Only allow digits, max 16
-    if (name === 'cardNumber') {
-      processedValue = value.replace(/\D/g, '').slice(0, 16);
+    if (name === "cardNumber") {
+      const digitsOnly = value.replace(/\D/g, "").slice(0, 16);
+      const formatted = digitsOnly.replace(/(.{4})/g, "$1-").replace(/-$/, "");
+      processedValue = formatted;
     }
 
-    // 2. CVV: Only allow digits, max 4 (for Amex)
     if (name === 'cvv') {
-      processedValue = value.replace(/\D/g, '').slice(0, 4);
+      processedValue = value.replace(/\D/g, '').slice(0, 3);
     }
 
     // 3. Expiry Date: Format as MM/YY

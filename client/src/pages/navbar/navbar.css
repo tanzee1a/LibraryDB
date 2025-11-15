@@ -92,7 +92,7 @@
 
 .dropdown:hover .dropdown-menu,
 .dropdown > a:hover + .dropdown-menu {
-  height: 250px;
+  height: 225px;
 }
 
 .category-column {
@@ -171,4 +171,18 @@
   padding: 2px 6px;
   font-size: 10px;
   font-weight: bold;
+}
+
+.profile-container {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0;
+}
+
+.profile-name {
+  font-size: 1rem;
+  font-weight: inherit;
+  color: inherit;
+  white-space: nowrap;
 }
