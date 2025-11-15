@@ -46,9 +46,9 @@ export default function Loans() {
   return (
     <ul className="list">
       {items.map(item => {
-        const due = item.due_date; 
-        
-        const dueDate = new Date(due);
+        const due = item.due_date; // This is now the STRING '2025-11-22'
+        const parts = due.split('-');
+        const dueDate = new Date(parts[0], parts[1] - 1, parts[2]);
         
         const isOverdue = dueDate < today;
 
@@ -64,8 +64,7 @@ export default function Loans() {
             <div>
               <div className="item-title"><a className='result-link' href={`/item/${item.item_id}`}>{item.title}</a></div>
               <div className="item-sub">
-                Due by {new Date(due).toLocaleDateString()}
-                
+                Due by {dueDate.toLocaleDateString()}
                 {isOverdue && <span className="overdue-alert">OVERDUE</span>}
               
               </div>

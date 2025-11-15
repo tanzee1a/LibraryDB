@@ -451,7 +451,7 @@ async function findLoansByUserId(userId) {
         SELECT 
             b.borrow_id, 
             b.item_id,
-            b.due_date, 
+            DATE_FORMAT(b.due_date, '%Y-%m-%d') AS due_date,
             COALESCE(bk.title, m.title, d.device_name) AS title,
             i.thumbnail_url
         FROM BORROW b
