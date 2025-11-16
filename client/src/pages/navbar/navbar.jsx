@@ -143,7 +143,7 @@ const Navbar = ({
                         <div key={topic.name} className="category-column">
                             <p>{topic.name}</p>
                             {topic.options.map(option => (
-                            <a key={option} href={`/search?tag=${encodeURIComponent(option)}`}>{option}</a>
+                            <a key={option} href={`/search?tag=${encodeURIComponent(option)}&category=${encodeURIComponent(filter.raw_category)}`}>{option}</a>
                             ))}
                         </div>
                         ))}
