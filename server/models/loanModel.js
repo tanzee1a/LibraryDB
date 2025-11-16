@@ -654,9 +654,24 @@ async function findAllBorrows(searchTerm, filters = {}, sort = 'borrow_newest') 
 
     // --- Filter Logic ---
     const statusFilter = filters.status ? filters.status.split(',') : [];
+    let statusWhereClauses = []; // To hold all status-related clauses
+
+    if (statusFilter.includes('Overdue')) {
+        statusWhereClauses.push(`(b.due_date < CURDATE() AND b.return_date IS NULL AND bs.status_name = 'Loaned Out')`);
+        // Remove 'Overdue' so it's not treated as a literal status_name
+        statusFilter.splice(statusFilter.indexOf('Overdue'), 1); 
+    }
+
     if (statusFilter.length > 0) {
-        whereClauses.push(`bs.status_name IN (?)`);
-        params.push(statusFilter);
+        statusWhereClauses.push(`bs.status_name IN (?)`);
+        params.push(statusFilter); // Add the array of status names to the main params
+    }
+
+    // Now, combine all status clauses with OR
+    if (statusWhereClauses.length > 0) {
+        // This wraps all status logic in parentheses, e.g.,
+        // WHERE ((overdue_logic) OR (bs.status_name IN ('Lost', 'Returned')))
+        whereClauses.push(`(${statusWhereClauses.join(' OR ')})`);
     }
 
     // --- Assemble Final SQL ---

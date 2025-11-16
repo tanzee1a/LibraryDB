@@ -32,7 +32,7 @@ function ManageBorrows() {
         return [{
             category: 'Status',
             param: 'status',
-            options: borrowStatus.map(status => status.status_name)
+            options: [...borrowStatus.map(status => status.status_name), "Overdue"]
         }]
     };
 
