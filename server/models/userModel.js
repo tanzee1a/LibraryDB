@@ -40,7 +40,7 @@ async function findAllUsers(searchTerm, filters = {}, sort = '') {
             u.account_status,
             r.requires_membership_fee,
             COALESCE(f.total_fines, 0.00) AS total_fines,
-            (COALESCE(f.total_fines, 0.00) >= ?) AS is_suspended,
+            (COALESCE(f.total_fines, 0.00) >= ${SUSPENSION_THRESHOLD}) AS is_suspended,
             pm.auto_renew,
             pm.expires_at
         FROM USER u
@@ -80,10 +80,26 @@ async function findAllUsers(searchTerm, filters = {}, sort = '') {
     
     // --- Status Filter Clause ---
     const statusFilter = filters.status ? filters.status.split(',') : [];
+    let statusWhereClauses = []; // To hold all status-related clauses
+
+    if (statusFilter.includes('Suspended')) {
+        statusWhereClauses.push(`(COALESCE(f.total_fines, 0.00) >= ?)`);
+        params.push(SUSPENSION_THRESHOLD);
+        // Remove 'Suspended' so it's not treated as a literal status_name
+        statusFilter.splice(statusFilter.indexOf('Suspended'), 1); 
+        
+    }
+
     if (statusFilter.length > 0) {
-        whereClauses.push(`u.account_status IN (?)`); 
+        statusWhereClauses.push(`u.account_status IN (?)`);
         params.push(statusFilter); 
     }
+
+    if (statusWhereClauses.length > 0) {
+
+        whereClauses.push(`(${statusWhereClauses.join(' OR ')})`);
+    }
+
 
     // Assemble the final SQL
     if (whereClauses.length > 0) {
@@ -104,7 +120,7 @@ async function findAllUsers(searchTerm, filters = {}, sort = '') {
     
     sql += orderByClause;
     
-    const [rows] = await db.query(sql, [SUSPENSION_THRESHOLD, ...params]);
+    const [rows] = await db.query(sql, params);
 
     // --- Compute Membership Status (like findUserProfileById) ---
     for (const user of rows) {

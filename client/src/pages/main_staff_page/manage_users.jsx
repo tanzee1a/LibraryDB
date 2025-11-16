@@ -42,7 +42,7 @@ function ManageUsers() {
         {
             category: 'Account Status',
             param: 'status',
-            options: ['Active', 'Deactivated']
+            options: ['Active', 'Deactivated', 'Suspended']
         },
         {
             category: 'Patron Memberships',
