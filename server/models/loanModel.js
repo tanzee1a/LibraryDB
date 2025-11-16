@@ -847,8 +847,12 @@ async function cancelHold(holdId, staffUserId) {
     }
 }
 
-async function findAllFines(filters = {}) {
-    const sql = `
+async function findAllFines(searchTerm, filters = {}, sort = 'newest') {
+
+    let params = [];
+    let whereClauses = [];
+
+    const baseSql = `
         SELECT 
             f.fine_id,
             f.borrow_id,
@@ -872,9 +876,67 @@ async function findAllFines(filters = {}) {
         LEFT JOIN BOOK bk ON i.item_id = bk.item_id AND i.category = 'BOOK'
         LEFT JOIN MOVIE m ON i.item_id = m.item_id AND i.category = 'MOVIE'
         LEFT JOIN DEVICE d ON i.item_id = d.item_id AND i.category = 'DEVICE'
-        ORDER BY f.date_issued DESC; 
     `;
-     const [rows] = await db.query(sql);
+
+    // --- Search Term Logic ---
+    if (searchTerm && searchTerm.trim()) {
+        const queryTerm = `%${searchTerm}%`;
+        whereClauses.push(`(
+            f.borrow_id LIKE ? OR
+            u.firstName LIKE ? OR
+            u.lastName LIKE ? OR
+            u.email LIKE ? OR
+            bk.title LIKE ? OR
+            m.title LIKE ? OR
+            d.device_name LIKE ?
+        )`);
+        params.push(queryTerm, queryTerm, queryTerm, queryTerm, queryTerm, queryTerm, queryTerm);
+    }
+
+    // --- Filter Logic (Status) ---
+    const statusFilter = filters.status ? filters.status.split(',') : [];
+    let statusWhereClauses = [];
+
+    if (statusFilter.includes('Paid')) {
+        statusWhereClauses.push(`f.date_paid IS NOT NULL`);
+    }
+    if (statusFilter.includes('Waived')) {
+        statusWhereClauses.push(`f.waived_at IS NOT NULL`);
+    }
+    if (statusFilter.includes('Unpaid')) {
+        // Only Unpaid if not paid AND not waived
+        statusWhereClauses.push(`(f.date_paid IS NULL AND f.waived_at IS NULL)`);
+    }
+
+    if (statusWhereClauses.length > 0) {
+        whereClauses.push(`(${statusWhereClauses.join(' OR ')})`);
+    }
+
+    // --- Assemble Final SQL ---
+    let finalSql = baseSql;
+    if (whereClauses.length > 0) {
+        finalSql += ` WHERE ${whereClauses.join(' AND ')}`;
+    }
+    
+    // --- Dynamic ORDER BY logic ---
+    let orderByClause = ' ORDER BY f.date_issued DESC'; // Default (newest)
+    switch (sort) {
+        case 'oldest':
+            orderByClause = ' ORDER BY f.date_issued ASC';
+            break;
+        case 'title_asc':
+            orderByClause = ' ORDER BY item_title ASC';
+            break;
+        case 'title_desc':
+            orderByClause = ' ORDER BY item_title DESC';
+            break;
+        case 'newest':
+        default:
+            orderByClause = ' ORDER BY f.date_issued DESC';
+    }
+    finalSql += orderByClause;
+
+    const [rows] = await db.query(finalSql, params);
     return rows;
 }
 

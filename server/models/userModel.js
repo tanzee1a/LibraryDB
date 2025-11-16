@@ -107,7 +107,7 @@ async function findAllUsers(searchTerm, filters = {}, sort = '') {
     }
 
     // --- Sorting (no changes) ---
-    let orderByClause = ' ORDER BY u.lastName ASC, u.firstName ASC'; // Default sort
+    let orderByClause = ' ORDER BY u.firstName ASC'; // Default sort
     if (sort === 'Fname_desc') {
         orderByClause = ' ORDER BY u.firstName DESC';
     } else if (sort === 'Fname_asc') {

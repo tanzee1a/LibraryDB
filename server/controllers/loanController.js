@@ -390,7 +390,16 @@ async function staffCheckoutItem(req, res) {
 // @route GET /api/fines
 async function getAllFines(req, res) {
     try {
-        const fines = await Loan.findAllFines(/* pass filters */);
+        const parsedUrl = url.parse(req.url, true);
+        const searchTerm = parsedUrl.query.q || '';
+        const sort = parsedUrl.query.sort || 'newest'; // Default sort
+        const filters = parsedUrl.query;
+        delete filters.q;
+        delete filters.sort;
+
+        console.log("getAllFines controller: Received request. Filters:", filters);
+
+        const fines = await Loan.findAllFines(searchTerm, filters, sort);
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         return res.end(JSON.stringify(fines));
     } catch (error) {

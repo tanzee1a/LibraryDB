@@ -1,7 +1,7 @@
 import './manage_fines.css';
 import React, { useState, useEffect } from 'react';
 import { FaPlus } from 'react-icons/fa';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify'; 
 
 
@@ -13,6 +13,11 @@ function ManageFines() {
     const [fineStatus, setFineStatus] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+
+    const [searchParams, setSearchParams] = useSearchParams(); 
+    const query = searchParams.get('q') || '';
+    const [localSearchTerm, setLocalSearchTerm] = useState(query);
+    const [sort, setSort] = useState(searchParams.get('sort') || 'newest');
 
     const [showAddFineSheet, setShowAddFineSheet] = useState(false);
     const initialFineState = {
@@ -67,7 +72,8 @@ function ManageFines() {
             return;
         }
 
-        fetch(`${API_BASE_URL}/api/fines`, { 
+        const queryString = searchParams.toString();
+        fetch(`${API_BASE_URL}/api/fines?${queryString}`, { 
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`, 
@@ -99,7 +105,7 @@ function ManageFines() {
     useEffect(() => {
         fetchFines(); 
         fetchFineStatus()
-    }, []);
+    }, [searchParams]);
 
     const handleMarkPaid = (fineId) => {
         const token = localStorage.getItem('authToken');
@@ -129,8 +135,16 @@ function ManageFines() {
         }));
     };
 
-    const handleSortChange = (sortType) => {
-        console.log("Sort by:", sortType);
+    const handleSortChange = (event) => {
+        const sortType = event.target.value;
+        setSort(sortType); // Update local state for the dropdown
+
+        const currentParams = Object.fromEntries(searchParams.entries());
+        const next = new URLSearchParams(currentParams);
+
+        next.set('sort', sortType);
+
+        setSearchParams(next);
     };
 
     async function handleAddFineSubmit(e) {
@@ -243,6 +257,42 @@ function ManageFines() {
         return { text: 'Unpaid', className: 'status-unpaid' };
     };
 
+    const handleSearch = (event) => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            const term = localSearchTerm.trim();
+            const currentParams = Object.fromEntries(searchParams.entries());
+
+            if (term) {
+                setSearchParams({ ...currentParams, q: term });
+            } else {
+                delete currentParams.q;
+                setSearchParams(currentParams);
+            }
+        }
+    };
+
+    const handleFilterChange = (param, option) => {
+        const currentValues = (searchParams.get(param) || '')
+            .split(',')
+            .filter(Boolean);
+
+        let newValues;
+        if (currentValues.includes(option)) {
+            newValues = currentValues.filter(v => v !== option);
+        } else {
+            newValues = [...currentValues, option];
+        }
+
+        const next = new URLSearchParams(searchParams);
+        if (newValues.length) {
+            next.set(param, newValues.join(','));
+        } else {
+            next.delete(param);
+        }
+        setSearchParams(next);
+    };
+
     return (
         <div>
         <div className="page-container">
@@ -256,7 +306,14 @@ function ManageFines() {
                             >
                             <FaPlus />
                         </button>
-                        <input type="text" placeholder="Search fines (by user, borrow ID)..." className="search-result-search-bar" />
+                        <input 
+                            type="text" 
+                            placeholder="Search fines (by user, borrow ID)..." 
+                            className="search-result-search-bar"
+                            value={localSearchTerm}
+                            onChange={(e) => setLocalSearchTerm(e.target.value)}
+                            onKeyDown={handleSearch}
+                        />
                     </div>
                 </div>
                 <div className="search-results-contents">
@@ -265,14 +322,13 @@ function ManageFines() {
                             Sort by:
                             <select
                                 className="sort-select"
-                                onChange={(e) => handleSortChange(e.target.value)}
-                                defaultValue=""
+                                value={sort}
+                                onChange={handleSortChange}
                             >
-                                <option value="" disabled></option>
-                                <option value="title_asc">Title (A–Z)</option>
-                                <option value="title_desc">Title (Z–A)</option>
                                 <option value="newest">Newest First</option>
                                 <option value="oldest">Oldest First</option>
+                                <option value="title_asc">Title (A–Z)</option>
+                                <option value="title_desc">Title (Z–A)</option>
                             </select>
                         </div>
                         {filterOptions().map((filterGroup) => (
@@ -281,12 +337,17 @@ function ManageFines() {
                                 <hr className='thin-divider divider--tight' />
                                 <ul>
                                     {filterGroup.options.map((option) => {
+                                        const isChecked = (searchParams.get(filterGroup.param) || '')
+                                                            .split(',')
+                                                            .includes(option);
                                         return (
                                             <li key={option}>
                                                 <label>
                                                     <input 
                                                         type="checkbox" 
                                                         value={option}
+                                                        checked={isChecked}
+                                                        onChange={() => handleFilterChange(filterGroup.param, option)}
                                                     /> {option}
                                                 </label>
                                             </li>

@@ -179,7 +179,7 @@ const server = http.createServer((req, res) => {
             protect(req, res, () => changeEmail(req, res)); 
             return;
         }
-        else if (req.url === '/api/fines' && req.method === 'GET') { 
+        else if (req.url.startsWith('/api/fines') && req.method === 'GET') { 
             staffProtect(req, res, () => getAllFines(req, res));
         }
         else if (req.url === '/api/fines' && req.method === 'POST') { 
