@@ -2,8 +2,6 @@ import './search_results.css'
 import React, { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify'; 
-
-
 import { FaPlus } from "react-icons/fa"
 import { BiSort } from "react-icons/bi"
 
@@ -27,7 +25,7 @@ function SearchResults({ isStaff }) {
     const [formatsLoading, setFormatsLoading] = useState(true);
     const [formatsError, setFormatsError] = useState('');
 
-     const [tagsLoading, setTagsLoading] = useState(true);
+    const [tagsLoading, setTagsLoading] = useState(true);
 
 
     const [userProfile, setUserProfile] = useState({ is_suspended: false, total_fines: 0.00 });
@@ -338,12 +336,24 @@ function SearchResults({ isStaff }) {
         quantity: '1'
     };
     const [newItem, setNewItem] = useState(initialNewItemState);
+    const [newItemFile, setNewItemFile] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false); // For loading state on submit
     const [submitError, setSubmitError] = useState('');
+
 
     function handleItemInputChange(e) {
         const { name, value } = e.target;
         setNewItem(prev => ({ ...prev, [name]: value }));
+    }
+
+    function handleItemFileChange(e) {
+        if (e.target.files.length > 0) {
+            setNewItemFile(e.target.files[0]);
+            // Optional: Clear any manually pasted URL
+            setNewItem(prev => ({ ...prev, thumbnail_url: '' }));
+        } else {
+            setNewItemFile(null);
+        }
     }
 
     async function handleAddItemSubmit(e) {
@@ -358,84 +368,89 @@ function SearchResults({ isStaff }) {
             return; 
         }
 
-        let endpoint = '';
-        const commonData = {
-            item_id: newItem.item_id,
-            title: newItem.title,
-            description: newItem.description,
-            thumbnail_url: newItem.thumbnail_url || null, // Allow empty URL
-            shelf_location: newItem.shelf_location || null,
-            quantity: parseInt(newItem.quantity, 10) || 0, // Ensure it's a number
-            tags: newItem.tags ? newItem.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [], // Split tags into array
-        };
+        const formData = new FormData();
 
-        let specificData = {};
+        formData.append('item_id', newItem.item_id);
+        formData.append('title', newItem.title);
+        formData.append('description', newItem.description);
+        formData.append('shelf_location', newItem.shelf_location);
+        formData.append('quantity', newItem.quantity);
+        formData.append('tags', newItem.tags); // Send as string, controller will split
+        formData.append('category', newItem.category);
 
-        if (newItem.category === 'BOOK') {
-            endpoint = '/api/items/book';
-            specificData = {
-                publisher: newItem.publisher,
-                published_date: newItem.published_date,
-                language_id: parseInt(newItem.language_id, 10) || 1, // Use selected/default ID
-                page_number: parseInt(newItem.page_number, 10) || 0,
-                authors: newItem.authors ? newItem.authors.split(',').map(a => a.trim()).filter(Boolean) : [], // Split authors
-            };
-        } else if (newItem.category === 'MOVIE') { // Changed from MEDIA
-            endpoint = '/api/items/movie';
-            specificData = {
-                // movie_id: `MOV-${uuidv4().substring(0, 8)}`, // Example if needed
-                language_id: parseInt(newItem.language_id, 10) || 1,
-                format_id: parseInt(newItem.format_id, 10) || 1, 
-                runtime: parseInt(newItem.runtime, 10) || 0,
-                rating_id: parseInt(newItem.rating_id, 10) || 1, 
-                release_year: parseInt(newItem.release_year, 10) || null,
-                directors: newItem.directors ? newItem.directors.split(',').map(d => d.trim()).filter(Boolean) : [], // Split directors
-            };
-        } else if (newItem.category === 'DEVICE') {
-            endpoint = '/api/items/device';
-            specificData = {
-                manufacturer: newItem.manufacturer,
-                device_name: newItem.title, // Use title as device_name based on schema
-                device_type: parseInt(newItem.device_type, 10) || 1, // Use selected/default ID
-            };
-             delete specificData.title; 
-             specificData.device_name = commonData.title;
+            // 3. Append the file (if it exists)
+        if (newItemFile) {
+            // 'thumbnailImage' MUST match the name your controller expects
+            formData.append('thumbnailImage', newItemFile, newItemFile.name);
         } else {
-             setSubmitError('Invalid item category selected.');
-             setIsSubmitting(false);
-             return;
+            // No file, just send the manually pasted URL (if any)
+            formData.append('thumbnail_url', newItem.thumbnail_url);
         }
 
-        const payload = { ...commonData, ...specificData };
+
+        let endpoint = '';
+        if (newItem.category === 'BOOK') {
+            endpoint = '/api/items/book';
+            formData.append('publisher', newItem.publisher);
+            formData.append('published_date', newItem.published_date);
+            formData.append('language_id', newItem.language_id);
+            formData.append('page_number', newItem.page_number);
+            formData.append('authors', newItem.authors); // Send as string
+        } else if (newItem.category === 'MOVIE') { 
+        endpoint = '/api/items/movie';
+        
+        // --- ADD THESE ---
+        formData.append('directors', newItem.directors);
+        formData.append('release_year', newItem.release_year);
+        formData.append('runtime', newItem.runtime);
+        formData.append('language_id', newItem.language_id);
+        formData.append('format_id', newItem.format_id);
+        formData.append('rating_id', newItem.rating_id);
+        // -----------------
+
+    } else if (newItem.category === 'DEVICE') {
+        endpoint = '/api/items/device';
+        
+        // --- ADD THESE ---
+        formData.append('manufacturer', newItem.manufacturer);
+        formData.append('device_type', newItem.device_type);
+        // -----------------
+    
+    } else {
+         setSubmitError('Invalid item category selected.');
+         setIsSubmitting(false);
+         return;
+    }
+
         try {
             const response = await fetch(`${API_BASE_URL}${endpoint}`, {
                 method: 'POST',
                 headers: { 
-                    'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}` 
                 },
-                body: JSON.stringify(payload)
+                body: formData
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || `HTTP error ${response.status}`);
-            }
-
-            const data = await response.json();
-            console.log("Item Added:", data);
-            toast.success(`Item ${newItem.title} added successfully!`, {
-                toastId: 'item-add-success' 
-            });
-            setShowAddItemSheet(false);     
-            setNewItem(initialNewItemState);
-
-        } catch (err) {
-            console.error("Add Item Error:", err);
-            setSubmitError(`Failed to add item: ${err.message}`);
-        } finally {
-            setIsSubmitting(false); 
+            const errorData = await response.json();
+            throw new Error(errorData.message || `HTTP error ${response.status}`);
         }
+
+        const data = await response.json();
+        console.log("Item Added:", data);
+        toast.success(`Item ${newItem.title} added successfully!`);
+        setShowAddItemSheet(false);     
+        setNewItem(initialNewItemState);
+        setNewItemFile(null); // <-- Reset the file state
+
+    } catch (err) {
+        console.error("Add Item Error:", err);
+        setSubmitError(`Failed to add item: ${err.message}`);
+    } finally {
+        setIsSubmitting(false); 
+    }
+
+
     }
 
     const renderItemDetails = (item) => {
@@ -712,7 +727,25 @@ function SearchResults({ isStaff }) {
                         </select>
                     </label>
                     <label> Description: <textarea name="description" value={newItem.description} onChange={handleItemInputChange} className="edit-input" /></label>
-                    <label> Thumbnail URL: <input type="url" name="thumbnail_url" value={newItem.thumbnail_url} onChange={handleItemInputChange} className="edit-input" /></label>
+                    <label> Thumbnail URL (Manual Paste): 
+                        <input 
+                            type="url" 
+                            name="thumbnail_url" 
+                            value={newItem.thumbnail_url} 
+                            onChange={handleItemInputChange} 
+                            className="edit-input" 
+                            disabled={!!newItemFile}
+                        />
+                    </label>
+                    <label> Or Upload Image:
+                        <input 
+                            type="file" 
+                            name="thumbnailImage"
+                            onChange={handleItemFileChange}
+                            accept="image/png, image/jpeg"
+                            className="edit-input" 
+                        />
+                    </label>
                     <label> Shelf Location: <input type="text" name="shelf_location" value={newItem.shelf_location} onChange={handleItemInputChange} className="edit-input" /></label>
                     <label> Quantity: <input type="number" name="quantity" min="0" value={newItem.quantity} onChange={handleItemInputChange} required className="edit-input" /></label>
                     <label> Tags (comma-separated): <input type="text" name="tags" value={newItem.tags} onChange={handleItemInputChange} className="edit-input" /></label>
