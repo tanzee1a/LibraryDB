@@ -17,7 +17,7 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description',
 
 
     // --- 1. Build BOOK Query Part ---
-    if (searchType !== 'Director' && searchType !== 'Manufacturer' && (categoryFilter.length === 0 || categoryFilter.includes('BOOK'))) {
+    if (formatFilter.length === 0 && searchType !== 'Director' && searchType !== 'Manufacturer' && (categoryFilter.length === 0 || categoryFilter.includes('BOOK'))) {
         let bookParams = [];
         let bookWhereClauses = [];
         let bookSelect = `
@@ -198,7 +198,7 @@ async function searchItems(searchTerm, filters = {}, searchType = 'Description',
      }
 
     // --- 3. Build DEVICE Query Part ---
-     if (searchType !== 'Author' && searchType !== 'Director' && (categoryFilter.length === 0 || categoryFilter.includes('DEVICE'))) {
+     if (formatFilter.length === 0 && searchType !== 'Author' && searchType !== 'Director' && (categoryFilter.length === 0 || categoryFilter.includes('DEVICE'))) {
         let deviceParams = [];
         let deviceWhereClauses = [];
         let deviceJoins = [
