@@ -396,65 +396,61 @@ function SearchResults({ isStaff }) {
             formData.append('language_id', newItem.language_id);
             formData.append('page_number', newItem.page_number);
             formData.append('authors', newItem.authors); // Send as string
-        } else if (newItem.category === 'MOVIE') { // Changed from MEDIA
-            endpoint = '/api/items/movie';
-            formData.append('directors', newItem.directors);
-            formData.append('release_year', newItem.release_year);
-            formData.append('language_id', newItem.language_id);
-            formData.append('rating_id', newItem.rating_id); // Send as string
-            formData.append('format_id', newItem.format_id);
-                language_id: parseInt(newItem.language_id, 10) || 1,
-                format_id: parseInt(newItem.format_id, 10) || 1, 
-                runtime: parseInt(newItem.runtime, 10) || 0,
-                rating_id: parseInt(newItem.rating_id, 10) || 1, 
-                release_year: parseInt(newItem.release_year, 10) || null,
-                directors: newItem.directors ? newItem.directors.split(',').map(d => d.trim()).filter(Boolean) : [], // Split directors
-            };
-        } else if (newItem.category === 'DEVICE') {
-            endpoint = '/api/items/device';
-            specificData = {
-                manufacturer: newItem.manufacturer,
-                device_name: newItem.title, // Use title as device_name based on schema
-                device_type: parseInt(newItem.device_type, 10) || 1, // Use selected/default ID
-            };
-             delete specificData.title; 
-             specificData.device_name = commonData.title;
-        } else {
-             setSubmitError('Invalid item category selected.');
-             setIsSubmitting(false);
-             return;
-        }
+        } else if (newItem.category === 'MOVIE') { 
+        endpoint = '/api/items/movie';
+        
+        // --- ADD THESE ---
+        formData.append('directors', newItem.directors);
+        formData.append('release_year', newItem.release_year);
+        formData.append('runtime', newItem.runtime);
+        formData.append('language_id', newItem.language_id);
+        formData.append('format_id', newItem.format_id);
+        formData.append('rating_id', newItem.rating_id);
+        // -----------------
 
-        const payload = { ...commonData, ...specificData };
+    } else if (newItem.category === 'DEVICE') {
+        endpoint = '/api/items/device';
+        
+        // --- ADD THESE ---
+        formData.append('manufacturer', newItem.manufacturer);
+        formData.append('device_type', newItem.device_type);
+        // -----------------
+    
+    } else {
+         setSubmitError('Invalid item category selected.');
+         setIsSubmitting(false);
+         return;
+    }
+
         try {
             const response = await fetch(`${API_BASE_URL}${endpoint}`, {
                 method: 'POST',
                 headers: { 
-                    'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}` 
                 },
-                body: JSON.stringify(payload)
+                body: formData
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || `HTTP error ${response.status}`);
-            }
-
-            const data = await response.json();
-            console.log("Item Added:", data);
-            toast.success(`Item ${newItem.title} added successfully!`, {
-                toastId: 'item-add-success' 
-            });
-            setShowAddItemSheet(false);     
-            setNewItem(initialNewItemState);
-
-        } catch (err) {
-            console.error("Add Item Error:", err);
-            setSubmitError(`Failed to add item: ${err.message}`);
-        } finally {
-            setIsSubmitting(false); 
+            const errorData = await response.json();
+            throw new Error(errorData.message || `HTTP error ${response.status}`);
         }
+
+        const data = await response.json();
+        console.log("Item Added:", data);
+        toast.success(`Item ${newItem.title} added successfully!`);
+        setShowAddItemSheet(false);     
+        setNewItem(initialNewItemState);
+        setNewItemFile(null); // <-- Reset the file state
+
+    } catch (err) {
+        console.error("Add Item Error:", err);
+        setSubmitError(`Failed to add item: ${err.message}`);
+    } finally {
+        setIsSubmitting(false); 
+    }
+
+
     }
 
     const renderItemDetails = (item) => {
@@ -731,7 +727,6 @@ function SearchResults({ isStaff }) {
                         </select>
                     </label>
                     <label> Description: <textarea name="description" value={newItem.description} onChange={handleItemInputChange} className="edit-input" /></label>
-                    <label> Thumbnail URL: <input type="url" name="thumbnail_url" value={newItem.thumbnail_url} onChange={handleItemInputChange} className="edit-input" /></label>
                     <label> Thumbnail URL (Manual Paste): 
                         <input 
                             type="url" 
@@ -739,15 +734,15 @@ function SearchResults({ isStaff }) {
                             value={newItem.thumbnail_url} 
                             onChange={handleItemInputChange} 
                             className="edit-input" 
-                            disabled={!!newItemFile} // Disable if a file is chosen
+                            disabled={!!newItemFile}
                         />
                     </label>
                     <label> Or Upload Image:
                         <input 
                             type="file" 
-                            name="thumbnailImage" // This name MATTERS
-                            onChange={handleItemFileChange} // Use the new handler
-                            accept="image/png, image/jpeg" // Restrict to images
+                            name="thumbnailImage"
+                            onChange={handleItemFileChange}
+                            accept="image/png, image/jpeg"
                             className="edit-input" 
                         />
                     </label>

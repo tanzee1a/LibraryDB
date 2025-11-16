@@ -150,81 +150,124 @@ async function createBook(req, res){
 // @route POST /api/items/movie
 async function createMovie(req, res){
     try {
-        const body = await getPostData(req);
-        const { 
-            item_id,
-            title, 
-            description,
-            language_id,
-            format_id,
-            runtime,
-            rating_id,
-            release_year,
-            quantity,
-            directors,
-            tags,
-            thumbnail_url,
-            shelf_location
-        } = JSON.parse(body);
+        // 1. Parse the multipart form
+        const form = formidable({});
+        const [fields, files] = await form.parse(req);
+
+        // 2. Extract data from fields
+        const movieData = {};
+        for (const key in fields) {
+            movieData[key] = fields[key][0];
+        }
+
+        // 3. Handle the thumbnail
+        let thumbnailUrl = movieData.thumbnail_url || null; // Default to pasted URL
+        const thumbnailFile = files.thumbnailImage ? files.thumbnailImage[0] : null;
+
+        if (thumbnailFile) {
+            console.log("Movie file detected. Uploading to S3...");
+            if (!movieData.item_id) {
+                throw new Error('item_id is required to name the thumbnail file.');
+            }
+            
+            // Use the 'movies/' prefix for the S3 key
+            const extension = path.extname(thumbnailFile.originalFilename);
+            const s3Key = `movies/${movieData.item_id}${extension}`;
+            
+            thumbnailUrl = await uploadToS3(thumbnailFile, s3Key);
+        }
+
+        // 4. Prepare data for your model function
+        const modelData = {
+            ...movieData,
+            thumbnail_url: thumbnailUrl, // The new S3 URL
+            quantity: parseInt(movieData.quantity, 10),
+            language_id: parseInt(movieData.language_id, 10),
+            format_id: parseInt(movieData.format_id, 10),
+            runtime: parseInt(movieData.runtime, 10),
+            rating_id: parseInt(movieData.rating_id, 10),
+            release_year: parseInt(movieData.release_year, 10),
+            // Convert directors string to array
+            directors: movieData.directors ? movieData.directors.split(',').map(d => d.trim()).filter(Boolean) : [],
+            tags: movieData.tags ? movieData.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
+        };
         
-        if (!item_id || !title || !runtime || !release_year || !quantity) {
+        // Basic validation
+        if (!modelData.item_id || !modelData.title || !modelData.release_year || !modelData.runtime) {
              throw new Error('Missing required movie fields');
         }
 
-        const movieData = {
-            item_id, title, description, language_id, format_id, runtime, 
-            rating_id, release_year, quantity, directors, tags, thumbnail_url, shelf_location
-        };
-
-        const newMovie = await Item.createMovie(movieData);
-        res.writeHead(201, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        // 5. Call your model
+        const newMovie = await Item.createMovie(modelData); 
+        
+        res.writeHead(201, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify(newMovie));
         
     } catch (error) {
         console.error("Error in createMovie controller:", error);
-        res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ message: 'Could not create movie', error: error.message }));
     }
 }
-
 
 // @desc Create a device
 // @route POST /api/items/device
 async function createDevice(req, res){
     try {
-        const body = await getPostData(req);
-        const { 
-            item_id, 
-            manufacturer,
-            device_name,
-            device_type,
-            description,
-            quantity,
-            tags,
-            thumbnail_url,
-            shelf_location
-        } = JSON.parse(body);
+        // 1. Parse the multipart form
+        const form = formidable({});
+        const [fields, files] = await form.parse(req);
+
+        // 2. Extract data from fields
+        const deviceData = {};
+        for (const key in fields) {
+            deviceData[key] = fields[key][0];
+        }
+
+        // 3. Handle the thumbnail
+        let thumbnailUrl = deviceData.thumbnail_url || null; // Default to pasted URL
+        const thumbnailFile = files.thumbnailImage ? files.thumbnailImage[0] : null;
+
+        if (thumbnailFile) {
+            console.log("Device file detected. Uploading to S3...");
+            if (!deviceData.item_id) {
+                throw new Error('item_id is required to name the thumbnail file.');
+            }
+            
+            // Use the 'devices/' prefix for the S3 key
+            const extension = path.extname(thumbnailFile.originalFilename);
+            const s3Key = `devices/${deviceData.item_id}${extension}`;
+            
+            thumbnailUrl = await uploadToS3(thumbnailFile, s3Key);
+        }
+
+        // 4. Prepare data for your model function
+        const modelData = {
+            ...deviceData,
+            device_name: deviceData.title, // Your schema uses device_name
+            thumbnail_url: thumbnailUrl, // The new S3 URL
+            quantity: parseInt(deviceData.quantity, 10),
+            device_type: parseInt(deviceData.device_type, 10),
+            tags: deviceData.tags ? deviceData.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
+        };
         
-         if (!item_id || !device_name || !device_type || !quantity) {
+        // Basic validation
+        if (!modelData.item_id || !modelData.title || !modelData.device_type) {
              throw new Error('Missing required device fields');
         }
 
-        const deviceData = {
-            item_id, manufacturer, device_name, device_type, description, 
-            quantity, tags, thumbnail_url, shelf_location
-        };
-
-        const newDevice = await Item.createDevice(deviceData);
-        res.writeHead(201, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        // 5. Call your model
+        const newDevice = await Item.createDevice(modelData); 
+        
+        res.writeHead(201, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify(newDevice));
         
     } catch (error) {
         console.error("Error in createDevice controller:", error);
-        res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ message: 'Could not create device', error: error.message }));
     }
 }
-
 
 // --- UPDATE Functions ---
 
