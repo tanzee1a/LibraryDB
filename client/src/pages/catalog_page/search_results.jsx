@@ -26,6 +26,7 @@ function SearchResults({ isStaff }) {
     const [formatsError, setFormatsError] = useState('');
 
     const [tagsLoading, setTagsLoading] = useState(true);
+    const [showAllTags, setShowAllTags] = useState(false);
 
 
     const [userProfile, setUserProfile] = useState({ is_suspended: false, total_fines: 0.00 });
@@ -45,6 +46,7 @@ function SearchResults({ isStaff }) {
         }
     ];
     const [filterOptions, setFilterOptions] = useState(baseFilterOptions);
+    
 
     // This tracks the ID of the *specific* item being submitted
     const [submittingItemId, setSubmittingItemId] = useState(null); 
@@ -140,7 +142,7 @@ function SearchResults({ isStaff }) {
                 setMovieFormats(formatsData); 
 
                 // Process data for filters
-                const tagNames = tagsData.map(tag => tag.tag_name).sort((a, b) => a.localeCompare(b));
+                const tagNames = tagsData.map(tag => tag.tag_name);
                 const formatNames = formatsData.map(format => format.format_name).sort();
                 
                 // Set all filters at once, building from the base
@@ -618,24 +620,58 @@ function SearchResults({ isStaff }) {
                             <div key={filterGroup.param} className="filter-category">
                                 <h3>{filterGroup.category}</h3>
                                 <hr className='thin-divider divider--tight' />
-
-                                {filterGroup.param === 'tag' && tagsLoading ? (
+                                {/* 1. Show loading message ONLY for the specific loading filter */}
+                                {filterGroup.param === 'tag' && tagsLoading && (
                                     <p>Loading tags...</p>
-                                ) : (
-                                <ul>
-                                    {filterGroup.options.map((option) => (
-                                        <li key={option}>
-                                            <label>
-                                                <input 
-                                                    type="checkbox" 
-                                                    value={option}
-                                                    checked={selectedFilters[filterGroup.param]?.includes(option) || false}
-                                                    onChange={() => handleFilterChange(filterGroup.param, option)}
-                                                /> {option}
-                                            </label>
-                                        </li>
-                                    ))}
-                                </ul>
+                                )}
+                                {filterGroup.param === 'format' && formatsLoading && (
+                                    <p>Loading formats...</p>
+                                )}
+                                {/* 2. Render the list (if not loading) */}
+                                {!(filterGroup.param === 'tag' && tagsLoading) && !(filterGroup.param === 'format' && formatsLoading) && (
+                                    <ul>
+                                        {/* 3. Slice the list ONLY if it's the tag filter and showAllTags is false */}
+                                        {
+                                          (filterGroup.param === 'tag' && !showAllTags 
+                                            ? filterGroup.options.slice(0, 10) 
+                                            : filterGroup.options
+                                          ).map((option) => (
+                                            <li key={option}>
+                                                <label>
+                                                    <input 
+                                                        type="checkbox" 
+                                                        value={option}
+                                                        checked={selectedFilters[filterGroup.param]?.includes(option) || false}
+                                                        onChange={() => handleFilterChange(filterGroup.param, option)}
+                                                    /> {option}
+                                                </label>
+                                            </li>
+                                          ))
+                                        }
+                                    </ul>
+                                )}
+                                {/* 4. Render "See More"/"See Less" buttons ONLY for the tag filter */}
+                                {filterGroup.param === 'tag' && !tagsLoading && (
+                                    <>
+                                        {!showAllTags && filterGroup.options.length > 10 && (
+                                            <button 
+                                                className="see-more-button"
+                                                onClick={() => setShowAllTags(true)}
+                                                style={{ background: 'none', border: 'none', color: 'var(--primary-color)', cursor: 'pointer', padding: '5px 0', fontSize: '0.9em', width: '100%', textAlign: 'left' }}
+                                            >
+                                                See More ({filterGroup.options.length - 10} more)
+                                            </button>
+                                        )}
+                                        {showAllTags && (
+                                            <button 
+                                                className="see-more-button"
+                                                onClick={() => setShowAllTags(false)}
+                                                style={{ background: 'none', border: 'none', color: 'var(--primary-color)', cursor: 'pointer', padding: '5px 0', fontSize: '0.9em', width: '100%', textAlign: 'left' }}
+                                            >
+                                                See Less
+                                            </button>
+                                        )}
+                                    </>
                                 )}
                             </div>
                         ) 

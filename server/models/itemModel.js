@@ -186,7 +186,16 @@ async function findAllLanguages() {
 
 async function findAllTags() {
     // Select only the needed columns from the LANGUAGE table
-    const sql = 'SELECT * FROM TAG ORDER BY tag_id';
+    const sql = `
+        SELECT 
+            t.tag_id, 
+            t.tag_name, 
+            COUNT(it.item_id) AS item_count
+        FROM TAG t
+        LEFT JOIN ITEM_TAG it ON t.tag_id = it.tag_id
+        GROUP BY t.tag_id, t.tag_name
+        ORDER BY item_count DESC, t.tag_name ASC
+    `;
     const [rows] = await db.query(sql);
     return rows;
 }
