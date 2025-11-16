@@ -47,8 +47,13 @@ function ManageFines() {
             category: 'Status',
             param: 'status',
             options: fineStatus.map(status => status.status_name)
-        }]
-    };
+        },
+        {
+            category: 'Fee Type',
+            param: 'fee_type',
+            options: ['LATE', 'DAMAGED', 'LOST']
+        }
+    ]};
 
     const fetchFineStatus = async () => {
         try {

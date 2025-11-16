@@ -912,6 +912,24 @@ async function findAllFines(searchTerm, filters = {}, sort = 'newest') {
         whereClauses.push(`(${statusWhereClauses.join(' OR ')})`);
     }
 
+    // --- Filter Logic (fee_type) ---
+    const feeTypeFilter = filters.fee_type ? filters.fee_type.split(',') : [];
+    let feeTypeWhereClauses = [];
+
+    if (feeTypeFilter.includes('LATE')) {
+        feeTypeWhereClauses.push(`f.fee_type = 'LATE'`);
+    }
+    if (feeTypeFilter.includes('DAMAGED')) {
+        feeTypeWhereClauses.push(`f.fee_type = 'DAMAGED'`);
+    }
+    if (feeTypeFilter.includes('LOST')) {
+        feeTypeWhereClauses.push(`f.fee_type = 'LOST'`);
+    }
+
+    if (feeTypeWhereClauses.length > 0) {
+        whereClauses.push(`(${feeTypeWhereClauses.join(' OR ')})`);
+    }
+
     // --- Assemble Final SQL ---
     let finalSql = baseSql;
     if (whereClauses.length > 0) {
