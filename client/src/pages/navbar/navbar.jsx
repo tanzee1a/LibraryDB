@@ -247,7 +247,7 @@ const Navbar = ({
                 <li className="dropdown">
                 <button 
                     className="nav-icon profile-container"
-                    onClick={() => navigate('/account')}
+                    onClick={() => navigate('/staff_page')}
                 >
                     <IoPersonCircleOutline />
                     {userFirstName && <span className="profile-name">{userFirstName}</span>}
