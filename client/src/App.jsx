@@ -22,6 +22,7 @@ import StaffRoute from './pages/staffAuthRoutes/StaffRoute.jsx';
 import AssistLibRoute from "./pages/staffAuthRoutes/AssistLibRoute.jsx";
 import ClerkRoute from "./pages/staffAuthRoutes/ClerkRoute.jsx";
 import StaffProfile from './pages/staff_dashboard/StaffProfile.jsx'; 
+import ScrollToTop from "../src/utils/ScrollToTop.jsx";
 import { ToastContainer, toast, Bounce } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useState, useEffect } from 'react';
@@ -94,6 +95,7 @@ function App() {
   }
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Navbar
         isStaff={isStaff}
         setIsStaff={setIsStaff}
