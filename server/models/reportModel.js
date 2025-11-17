@@ -32,7 +32,8 @@ async function mostPopularItems() {
         LEFT JOIN BORROW b ON i.item_id = b.item_id
 
         GROUP BY i.item_id, i.thumbnail_url, item_name, i.category, d.manufacturer
-        ORDER BY borrow_count DESC;
+        ORDER BY borrow_count DESC
+        LIMIT 5
     `;
 
     const [rows] = await db.query(sql);

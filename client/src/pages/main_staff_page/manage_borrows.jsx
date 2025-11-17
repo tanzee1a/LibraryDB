@@ -367,6 +367,20 @@ function ManageBorrows() {
                                         <div className='result-title-header'>
                                             <h3 className="result-title">Borrow #{borrow.borrow_id}</h3>
                                             <p className={`result-status status-${borrow.status_name?.replace(/\s+/g, '-').toLowerCase()}`}>{borrow.status_name || 'Unknown'}</p> 
+                                            {borrow.status_name === 'Loaned Out' && borrow.due_date &&
+                                                new Date(borrow.due_date) < new Date() && (
+                                                    <span style={{
+                                                        backgroundColor: '#ff615cff',
+                                                        color: 'white',
+                                                        padding: '2px 8px',
+                                                        fontSize: '0.8rem',
+                                                        fontWeight: '600',
+                                                        borderRadius: '10px',
+                                                        marginLeft: '10px'
+                                                    }}>
+                                                        Overdue
+                                                    </span>
+                                            )}
                                         </div>
                                         <div className="result-description">
                                             <div className="result-details">
