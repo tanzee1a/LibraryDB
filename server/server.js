@@ -28,7 +28,7 @@ const { saveItem, unsaveItem, getMyWishlist } = require('./controllers/wishlistC
 const { getMyProfile, getAllUsers, staffCreateUser, getUserProfile, getUserBorrowHistory, getUserHoldHistory, getUserFineHistory, staffUpdateUser, staffDeleteUser, changePassword, changeEmail, staffActivateUser} = require('./controllers/userController');
 const { signup, cancel, renew } = require('./controllers/membershipController');
 const { searchItems } = require('./controllers/searchController');
-const { getPopularGenresReport, getPopularItemsReport, getOverdueItemsReport, getOutstandingFines, getActiveUsersReport, getMembershipReport, getRevenueReport } = require('./controllers/reportController');
+const { getSimilarItems, getMostPopularItems, getPopularGenresReport, getPopularItemsReport, getOverdueItemsReport, getOutstandingFines, getActiveUsersReport, getMembershipReport, getRevenueReport } = require('./controllers/reportController');
 const { protect } = require('./middleware/authMiddleware');
 const { getDashboardStats, getMyStaffProfile } = require('./controllers/staffController');
 const { staffProtect} = require('./middleware/authMiddleware');
@@ -276,6 +276,15 @@ const server = http.createServer((req, res) => {
         else if (req.url.match(/^\/api\/holds\/([0-9]+)\/cancel$/) && req.method === 'POST') { 
             const holdId = req.url.split('/')[3];
             staffProtect(req, res, () => cancelHold(req, res, holdId));
+        }
+
+        else if (req.url === '/api/recommendations/popular-items' && req.method === 'GET') {
+            getMostPopularItems(req, res);
+            return;
+        }
+        else if (req.url.startsWith('/api/recommendations/similar-items') && req.method === 'GET') {
+            getSimilarItems(req, res);
+            return;
         }
 
         // reports routes

@@ -2,6 +2,36 @@
 const Report = require('../models/reportModel');
 const url = require('url');
 
+// @desc Get Most Popular Items
+// @route GET /api/recommendations/popular-items
+async function getMostPopularItems(req, res) {
+    try {
+        const data = await Report.mostPopularItems();
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        return res.end(JSON.stringify(data));
+    } catch (error) {
+        console.error("Error getting Popular Items Report:", error);
+        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ message: 'Could not fetch report', error: error.message }));
+    }
+}
+
+// @desc Get Similar Items
+// @route GET /api/recommendations/similar-items
+async function getSimilarItems(req, res) {
+    try {
+        const parsedUrl = url.parse(req.url, true);
+        const query = parsedUrl.query;
+        const data = await Report.similarItems(query);
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        return res.end(JSON.stringify(data));
+    } catch (error) {
+        console.error("Error getting Similar Items Report:", error);
+        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ message: 'Could not fetch report', error: error.message }));
+    }
+}
+
 // @desc Get Borrows Report
 // @route GET /api/reports/borrows
 async function getPopularGenresReport(req, res) {
@@ -123,6 +153,8 @@ async function getRevenueReport(req, res) {
 }
 
 module.exports = {
+    getMostPopularItems,
+    getSimilarItems,
     getPopularGenresReport,
     getPopularItemsReport,
     getOverdueItemsReport,

@@ -1,6 +1,138 @@
 // models/reportModel.js
 const db = require('../config/db');
 
+async function mostPopularItems() {
+    let sql = `
+        SELECT 
+            i.item_id,
+            i.thumbnail_url,
+            COALESCE(bk.title, m.title, d.device_name) AS item_name,
+
+            CASE 
+                WHEN i.category = 'BOOK' THEN 
+                    GROUP_CONCAT(DISTINCT CONCAT(a.first_name, ' ', a.last_name) SEPARATOR ', ')
+                WHEN i.category = 'MOVIE' THEN 
+                    GROUP_CONCAT(DISTINCT CONCAT(dr.first_name, ' ', dr.last_name) SEPARATOR ', ')
+                WHEN i.category = 'DEVICE' THEN 
+                    d.manufacturer
+            END AS item_creator,
+
+            COUNT(b.borrow_id) AS borrow_count
+        FROM ITEM i
+        LEFT JOIN BOOK bk ON i.item_id = bk.item_id
+        LEFT JOIN BOOK_AUTHOR ba ON bk.item_id = ba.item_id
+        LEFT JOIN AUTHOR a ON ba.author_id = a.author_id
+
+        LEFT JOIN MOVIE m ON i.item_id = m.item_id
+        LEFT JOIN MOVIE_DIRECTOR md ON m.item_id = md.item_id
+        LEFT JOIN DIRECTOR dr ON md.director_id = dr.director_id
+
+        LEFT JOIN DEVICE d ON i.item_id = d.item_id
+
+        LEFT JOIN BORROW b ON i.item_id = b.item_id
+
+        GROUP BY i.item_id, i.thumbnail_url, item_name, i.category, d.manufacturer
+        ORDER BY borrow_count DESC;
+    `;
+
+    const [rows] = await db.query(sql);
+    return rows;
+}
+
+async function similarItems({ item_id = null }) {
+  if (!item_id) return [];
+
+  const sqlInfo = `
+    SELECT 
+      i.category,
+      GROUP_CONCAT(it.tag_id) AS tag_list
+    FROM ITEM i
+    LEFT JOIN ITEM_TAG it ON it.item_id = i.item_id
+    WHERE i.item_id = ?
+    GROUP BY i.item_id, i.category;
+  `;
+
+  const [infoRows] = await db.query(sqlInfo, [item_id]);
+  if (infoRows.length === 0) return [];
+
+  const category = infoRows[0].category;
+  const tagListRaw = infoRows[0].tag_list;
+  const tagIds = tagListRaw ? tagListRaw.split(',') : [];
+
+  // If no tags, then fallback to most popular items in same category
+  if (!tagIds.length) {
+    const sqlFallback = `
+      SELECT 
+          i.item_id,
+          i.thumbnail_url,
+          COALESCE(bk.title, m.title, d.device_name) AS item_name,
+          CASE 
+              WHEN i.category = 'BOOK' THEN 
+                  GROUP_CONCAT(DISTINCT CONCAT(a.first_name, ' ', a.last_name) SEPARATOR ', ')
+              WHEN i.category = 'MOVIE' THEN 
+                  GROUP_CONCAT(DISTINCT CONCAT(dr.first_name, ' ', dr.last_name) SEPARATOR ', ')
+              WHEN i.category = 'DEVICE' THEN 
+                  d.manufacturer
+          END AS item_creator,
+          COUNT(b.borrow_id) AS borrow_count
+      FROM ITEM i
+      LEFT JOIN BOOK bk ON i.item_id = bk.item_id
+      LEFT JOIN BOOK_AUTHOR ba ON bk.item_id = ba.item_id
+      LEFT JOIN AUTHOR a ON ba.author_id = a.author_id
+      LEFT JOIN MOVIE m ON i.item_id = m.item_id
+      LEFT JOIN MOVIE_DIRECTOR md ON m.item_id = md.item_id
+      LEFT JOIN DIRECTOR dr ON md.director_id = dr.director_id
+      LEFT JOIN DEVICE d ON i.item_id = d.item_id
+      LEFT JOIN BORROW b ON i.item_id = b.item_id
+      WHERE i.category = ?
+        AND i.item_id <> ?
+      GROUP BY i.item_id, i.thumbnail_url, item_name, i.category, d.manufacturer
+      ORDER BY borrow_count DESC
+      LIMIT 10;
+    `;
+
+    const [fallback] = await db.query(sqlFallback, [category, item_id]);
+    return fallback;
+  }
+
+  // Step 2: Items that match ANY tag of the input item
+  const placeholders = tagIds.map(() => '?').join(',');
+  const sqlByTags = `
+    SELECT 
+        i.item_id,
+        i.thumbnail_url,
+        COALESCE(bk.title, m.title, d.device_name) AS item_name,
+        CASE 
+            WHEN i.category = 'BOOK' THEN 
+                GROUP_CONCAT(DISTINCT CONCAT(a.first_name, ' ', a.last_name) SEPARATOR ', ')
+            WHEN i.category = 'MOVIE' THEN 
+                GROUP_CONCAT(DISTINCT CONCAT(dr.first_name, ' ', dr.last_name) SEPARATOR ', ')
+            WHEN i.category = 'DEVICE' THEN 
+                d.manufacturer
+        END AS item_creator,
+        COUNT(DISTINCT it.tag_id) AS shared_tags
+    FROM ITEM_TAG it
+    JOIN ITEM i ON i.item_id = it.item_id
+    LEFT JOIN BOOK bk ON i.item_id = bk.item_id
+    LEFT JOIN BOOK_AUTHOR ba ON bk.item_id = ba.item_id
+    LEFT JOIN AUTHOR a ON ba.author_id = a.author_id
+    LEFT JOIN MOVIE m ON i.item_id = m.item_id
+    LEFT JOIN MOVIE_DIRECTOR md ON m.item_id = md.item_id
+    LEFT JOIN DIRECTOR dr ON md.director_id = dr.director_id
+    LEFT JOIN DEVICE d ON i.item_id = d.item_id
+    WHERE it.tag_id IN (${placeholders})
+      AND i.item_id <> ?
+    GROUP BY i.item_id, i.thumbnail_url, item_name, i.category, d.manufacturer
+    ORDER BY shared_tags DESC
+    LIMIT 10;
+  `;
+
+  const params = [...tagIds, item_id];
+  const [rows] = await db.query(sqlByTags, params);
+
+  return rows;
+}
+
 async function popularGenresReport({ filterType = 'date', start = null, end = null, category = null } = {}) {
     let sql = `
         SELECT 
@@ -456,6 +588,8 @@ async function revenueReport({ filterType = 'date', start = null, end = null, ty
 }
 
 module.exports = {
+    mostPopularItems,
+    similarItems,
     popularGenresReport,
     popularItemReport,
     overdueItemsReport,

@@ -1,10 +1,10 @@
 import './item_details.css';
 import '../catalog_page/search_results.css';
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { FaRegFileAlt } from "react-icons/fa";
 import { IoMdGlobe } from "react-icons/io";
-import { IoBookOutline, IoCalendarClearOutline, IoBarcodeOutline, IoInformationCircleOutline, IoTimerOutline, IoHeartOutline } from "react-icons/io5";
+import { IoBookOutline, IoCalendarClearOutline, IoInformationCircleOutline, IoTimerOutline, IoHeartOutline } from "react-icons/io5";
 import { MdDevicesOther } from "react-icons/md";
 import { TbBuildingFactory2 } from "react-icons/tb";
 import { BsTicketPerforated } from "react-icons/bs";
@@ -13,8 +13,8 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000
 
 function ItemDetails({ isStaff }) {
   const { itemId } = useParams();
-  const navigate = useNavigate();
   const [item, setItem] = useState(null);
+  const [similarItems, setSimilarItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -74,13 +74,36 @@ function ItemDetails({ isStaff }) {
         })
         .then(data => {
           setItem(data);
-          console.log('Fetched item data:', data);
           setLoading(false);
         })
         .catch((err) => {
           setError(err.message || 'Could not load item details.');
           setLoading(false);
         });
+
+      // Fetch similar items
+      const fetchSimilarItems = async () => {
+        try {
+          const res = await fetch(
+            `${API_BASE_URL}/api/recommendations/similar-items?item_id=${itemId}`,
+            {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+
+          if (res.ok) {
+            const data = await res.json();
+            console.log("Fetched similar items:", data);
+            setSimilarItems(data);
+          }
+        } catch (err) {
+          console.error("Error fetching similar items:", err);
+        }
+      };
+      fetchSimilarItems();
     }
   }, [itemId]);
 
@@ -674,6 +697,33 @@ function ItemDetails({ isStaff }) {
             </div>
           </div>
         </div>
+        <div className="similar-section fade-in">
+        <h2 className="similar-title">Similar items you may like</h2>
+
+        <div className="similar-grid">
+          {similarItems.slice(0, 9).map(sim => (
+            <a
+              key={sim.item_id}
+              className="similar-card"
+              href={`/item/${sim.item_id}`}
+            >
+              <img
+                src={sim.thumbnail_url}
+                alt={sim.item_name}
+                className="similar-thumb"
+              />
+
+              <div className="similar-item-title">
+                {sim.item_name}
+              </div>
+
+              <p className="similar-item-creator">
+                {sim.item_creator}
+              </p>
+            </a>
+          ))}
+        </div>
+      </div>
       </div>
       {showEditSheet && formData && (
         <div className="sheet-overlay" onClick={() => !(isEditSubmitting || isDeleteSubmitting || isReactivateSubmitting) && setShowEditSheet(false)}>

@@ -102,7 +102,7 @@ const Navbar = ({
                     ))}
                     {renderSearchDropdown()}
                     <li className="dropdown">
-                        <button className="nav-icon"><IoPersonCircleOutline /></button>
+                        <button className="nav-icon" onClick={() => navigate('/login')}><IoPersonCircleOutline /></button>
                         <div className="dropdown-menu">
                             <div className="dropdown-menu-contents">
                                 <div className="category-column">

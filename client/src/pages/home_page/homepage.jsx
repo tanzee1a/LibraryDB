@@ -11,6 +11,29 @@ function Homepage() {
   const [showPrimary, setShowPrimary] = useState(true);   // fake-placeholder1
   const [showSecondary, setShowSecondary] = useState(false); // fake-placeholder2
   const [isFocused, setIsFocused] = useState(false);
+  const [popularItems, setPopularItems] = useState([]);
+  useEffect(() => {
+    const fetchPopular = async () => {
+      try {
+        const token = localStorage.getItem('authToken');
+        const res = await fetch(`${API_BASE_URL}/api/recommendations/popular-items`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': token ? `Bearer ${token}` : ''
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          console.log("Fetched popular items:", data);
+          setPopularItems(data);
+        }
+      } catch (err) {
+        console.error("Error fetching popular items:", err);
+      }
+    };
+    fetchPopular();
+  }, []);
   const navigate = useNavigate();
 
   const handleSearch = (event) => {
@@ -78,7 +101,7 @@ function Homepage() {
   const renderWelcomeMessage = () => {
     if (userProfile.firstName) {
       return (
-        <div className="home-title fade-in-text-from-bottom">
+        <div className="home-title fade-in">
           <h1>{getGreeting()}, {userProfile.firstName}!</h1>
           <p>Let’s uncover stories and knowledge worth exploring.</p>
         </div>
@@ -86,7 +109,7 @@ function Homepage() {
     }
 
     return (
-        <div className="home-title fade-in-text-from-bottom">
+        <div className="home-title fade-in">
           <h1>Search the world's knowledge</h1>
           <p>Access a world of stories, ideas, and innovation — all in one place.</p>
         </div>
@@ -94,16 +117,6 @@ function Homepage() {
   }
 
   const renderActionButton = () => {
-    console.log("User Profile:", userProfile);
-    if (userProfile.is_suspended) {
-      return (
-        <div className="home-action-section fade-in">
-          <button className="red-button" onClick={() => navigate('/account?section=fines')}>Go to Fines</button>
-          <p>Your account is suspended due to too many outstanding fines. Please pay off your fines to regain access.</p>
-        </div>
-      );
-    }
-
     if (!userProfile.firstName) {
       return (
         <div className="home-action-section fade-in">
@@ -112,7 +125,14 @@ function Homepage() {
         </div>
       );
     }
-
+    if (userProfile.is_suspended) {
+      return (
+        <div className="home-action-section fade-in">
+          <button className="red-button" onClick={() => navigate('/account?section=fines')}>Go to Fines</button>
+          <p>Your account is suspended due to too many outstanding fines. Please pay off your fines to regain access.</p>
+        </div>
+      );
+    }
 
     switch(userProfile.membership_status) {
       case 'new':
@@ -183,6 +203,26 @@ function Homepage() {
           <div>
           {renderActionButton()}
           </div>
+            <div className="popular-section fade-in-text-from-bottom-far">
+              <h2 className="popular-title">Popular & Trending</h2>
+              <div className="popular-grid">
+                {popularItems.slice(0, 5).map((item) => (
+                  <a 
+                    key={item.item_id}
+                    className="popular-card"
+                    href={`/item/${item.item_id}`}
+                  >
+                    <img src={item.thumbnail_url} alt={item.item_name} className="popular-thumb" />
+                    <div className="popular-item-title">
+                      {item.item_name}
+                    </div>
+                    <p className="popular-item-creator">
+                      {item.item_creator}
+                    </p>
+                  </a>
+                ))}
+              </div>
+            </div>
         </div>
       </div>
     </div>

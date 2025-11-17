@@ -95,9 +95,25 @@ textarea:focus {
   }
 }
 
+@keyframes fadeInFromBottomFar {
+  0% {
+    opacity: 0;
+    transform: translateY(100px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .fade-in-text-from-bottom {
   opacity: 0;
   animation: fadeInFromBottom 1.5s ease-out forwards;
+}
+
+.fade-in-text-from-bottom-far {
+  opacity: 0;
+  animation: fadeInFromBottomFar 1.5s ease-out forwards;
 }
 
 @keyframes fadeInFromTop {
