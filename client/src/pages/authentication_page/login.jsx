@@ -1,6 +1,7 @@
 import './login.css'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'react-toastify'; 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 import Logo from "../../assets/logo-dark.webp"
 
@@ -43,11 +44,12 @@ function Login({ setIsStaff, setIsLoggedIn }) {
         }
       }
       else {
-        alert(data.message || 'Login failed');
+        const errorMessage = data.message || 'Login failed. Please check your credentials.';
+        toast.error(errorMessage);
       }
     } catch (err) {
       console.error(err);
-      alert('Error connecting to server');
+      toast.error('Error connecting to the server. Please try again later.');
     }
   };
 

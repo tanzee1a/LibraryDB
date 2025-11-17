@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IoPersonCircleOutline } from 'react-icons/io5';
+import { toast } from 'react-toastify'; 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
 
 export default function UserProfile() {
@@ -329,6 +330,9 @@ function renderEmailChangeSection() {
         expireDate: data.expires_at || newExpiryDateISO 
       });
 
+      toast.success("Membership signed up successfully! You can now borrow items.");
+
+
       // Clear the form fields for security/UX
       setMembershipForm({
         name: '',
@@ -340,7 +344,7 @@ function renderEmailChangeSection() {
     })
     .catch(err => {
       console.error(err);
-      alert('Failed to sign up membership. Please try again.');
+      toast.error(`Failed to sign up membership: ${err.message || 'Please check your card details and try again.'}`);
     });
   }
 
@@ -432,10 +436,11 @@ const handleMembershipFormChange = (e) => {
     })
     .then(data => {
       setMembershipStatus('canceled');
+      toast.info('Membership successfully canceled. Access remains until the next billing date.');
     })
     .catch(err => {
       console.error(err);
-      alert('Failed to cancel membership. Please try again.');
+      toast.error(`Failed to cancel membership: ${err.message || 'Please try again.'}`);
     });
   }
 
@@ -450,16 +455,18 @@ const handleMembershipFormChange = (e) => {
       method: 'POST',
       headers,
     })
-    .then(res => {
-      if (!res.ok) throw new Error('Failed to renew membership');
-      return res.json();
+    .then(async res => {
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to renew membership');
+      return data;
     })
     .then(data => {
       setMembershipStatus('active');
+      toast.success('Membership successfully renewed!');
     })
     .catch(err => {
       console.error(err);
-      alert('Failed to renew membership. Please try again.');
+      toast.error(`Failed to renew membership: ${err.message || 'Please try again.'}`);
     });
   }
 

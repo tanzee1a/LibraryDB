@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify'; 
 
 import "./register.css";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
@@ -145,14 +146,16 @@ const handleSubmit = async (e) => {
       const registerData = await response.json();
 
       if (!response.ok) {
-        alert(registerData.message || 'Registration failed');
-        return;
+        toast.error(registerData.message || 'Registration failed due to an unknown error.');
+        return;    
       }
       
       // --- STEP 2: Store login data (token, role, etc.) ---
       localStorage.setItem('authToken', registerData.token);
       localStorage.setItem('userRole', registerData.user.role);
       localStorage.setItem('userFirstName', registerData.user.firstName);
+
+      let finalMessage = 'Registration successful! Welcome to our library.';
 
       // --- STEP 3: If they didn't skip, sign them up for membership ---
       if (!signUpLater) {
@@ -171,9 +174,11 @@ const handleSubmit = async (e) => {
 
           if (!membershipResponse.ok) {
             const memError = await membershipResponse.json();
-            alert(`Registration was successful, but membership signup failed: ${memError.message}. Please sign up from your profile.`);
+            finalMessage += ` Membership signup failed: ${memError.message}. Please sign up from your profile later.`;
+            toast.warn(finalMessage);
           } else {
-            console.log("Membership signup successful!");
+            finalMessage += ' Membership activated successfully!';
+            toast.success(finalMessage);
           }
         } catch (memErr) {
           console.error("Membership signup fetch error:", memErr);
