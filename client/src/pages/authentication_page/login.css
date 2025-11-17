@@ -4,7 +4,7 @@
   background-size: cover;
   background-repeat: no-repeat;
   background-position: left;
-  height: 100vh;
+  min-height: 100vh;
   overflow: hidden;
 }
 
@@ -42,6 +42,7 @@
   display: flex;
   align-items: center;
   height: 90vh;
+  padding: 3rem 0 6rem 0;
 }
 
 .login-form-title {
@@ -73,7 +74,7 @@
   -webkit-backdrop-filter: blur(12px);
 
   border-radius: 20px;
-  padding: 2rem;
+  padding: 1.5rem 2rem;
 
   border: 1px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
