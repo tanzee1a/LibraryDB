@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { IoWalletOutline } from 'react-icons/io5';
+import { toast } from 'react-toastify';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
 const Fines = () => {
   const [fines, setFines] = useState([]);
@@ -140,6 +141,7 @@ const Fines = () => {
       .then(() => {
         setShowPayFineSheet(false);
         setIsPaying(false);
+        toast.success('Payment was successful');
       })
       .catch(err => {
         setPaymentError(err.message || 'Payment failed.');
