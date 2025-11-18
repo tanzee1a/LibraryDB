@@ -565,7 +565,7 @@ function SearchResults({ isStaff }) {
         <div className='search-result-page-container'>
             <div className="search-result-header">
                 <h1>{ isStaff ? 'Manage Items' : 'Find your perfect discovery.'}</h1>
-                <p>{query ? `Search Results for "${query}". Found ${results.length} item(s).` : ''}</p>
+                <p>{query ? `Search Results for "${query}". Found ${results.length} item(s).` : 'All roads lead to here.'}</p>
                 <div className="search-result-search-bar-container">
                     { isStaff && (
                         <button

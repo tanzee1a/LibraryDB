@@ -201,11 +201,13 @@ function Homepage() {
             </div>
           </div>
           <div>
-          {renderActionButton()}
+          <div className="home-action-wrapper">
+            {renderActionButton()}
           </div>
-            <div className="popular-section fade-in-text-from-bottom-far">
-              <h2 className="popular-title">Popular & Trending</h2>
-              <div className="popular-grid">
+          </div>
+            <div className="popular-section">
+              <h2 className="popular-title fade-in-delay">Popular & Trending</h2>
+              <div className="popular-grid fade-in-text-from-bottom-far">
                 {popularItems.slice(0, 5).map((item) => (
                   <a 
                     key={item.item_id}

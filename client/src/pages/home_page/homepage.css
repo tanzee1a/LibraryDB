@@ -2,10 +2,12 @@
   position: relative;
   background-image: url('../../assets/library_background.jpg');
   background-size: cover;
-  background-repeat: no-repeat; 
-  background-position: left;
+  background-repeat: no-repeat;
   min-height: 100vh;
   overflow: hidden;
+  background-size: cover;
+  background-position: center top;
+  background-attachment: fixed;
 }
 
 .homepage-container::after {
@@ -96,6 +98,13 @@
   outline: none;
 }
 
+.home-action-wrapper {
+  min-height: 120px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .home-action-section {
   margin-top: 2rem;
   display: flex;
@@ -181,6 +190,7 @@
   background: white;
   border-radius: 20px;
   margin: 0 5rem;
+  min-height: 310px;
   box-sizing: border-box;
 }
 

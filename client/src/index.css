@@ -145,6 +145,12 @@ textarea:focus {
   animation: fadeIn 1.5s ease-out forwards;
 }
 
+.fade-in-delay {
+  opacity: 0;
+  animation: fadeIn 1.5s ease-out forwards;
+  animation-delay: 1.5s;
+}
+
 .action-message {
   margin: 10px 0;
   padding: 10px;

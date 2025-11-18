@@ -618,7 +618,7 @@ function ItemDetails({ isStaff }) {
                         let denialMessage = isSuspended ? 'Account Suspended (Fines)' : 'Membership Required';
                         let subMessage = isSuspended 
                             ? `⚠️ Borrowing suspended due to outstanding fines ($${Number(userProfile.total_fines || 0).toFixed(2)}).`
-                            : `⚠️ Borrowing denied. Your membership is currently not active.`;
+                            : `⚠️ Unable to borrow due to inactive membership.`;
 
                         return (
                             <div className="search-item-actions" style={{ marginTop: '10px' }}>
