@@ -103,12 +103,12 @@ async function getOverdueItemsReport(req, res) {
 }
 
 // @desc Get Fines Report
-// @route GET /api/reports/fines-summary
-async function getOutstandingFines(req, res) {
+// @route GET /api/reports/fines
+async function getFinesReport(req, res) {
     try {
         const parsedUrl = url.parse(req.url, true);
         const query = parsedUrl.query;
-        const data = await Report.outstandingFinesReport(query);
+        const data = await Report.finesReport(query);
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         return res.end(JSON.stringify(data));
     } catch (error) {
@@ -173,7 +173,7 @@ module.exports = {
     getPopularGenresReport,
     getPopularItemsReport,
     getOverdueItemsReport,
-    getOutstandingFines,
+    getFinesReport,
     getActiveUsersReport,
     getMembershipReport,
     getRevenueReport

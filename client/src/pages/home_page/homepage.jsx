@@ -139,7 +139,7 @@ function Homepage() {
     return (
         <div className="home-title fade-in">
           <h1>Search the world's knowledge</h1>
-          <p>Access a world of stories, ideas, and innovation — all in one place.</p>
+          <p>Access a world of stories, ideas, and innovation - all in one place.</p>
         </div>
     );
   }

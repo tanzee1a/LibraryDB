@@ -59,23 +59,18 @@ function Register({ setIsStaff, setIsLoggedIn }) {
     if (!firstName.trim()) e.firstName = "First name is required.";
     if (!lastName.trim()) e.lastName = "Last name is required.";
 
-
-    // --- Membership field validation (if not signing up later) ---
     if (!signUpLater) {
       if (!name.trim()) e.name = "Name on card is required.";
       if (!billingAddress.trim()) e.billingAddress = "Billing address is required.";
 
-      // Card Number: 13-16 digits
-      if (cardNumber.length < 13 || cardNumber.length > 16) {
-        e.cardNumber = 'Card number must be 13-16 digits.';
+      if (cardNumber.length < 15 || cardNumber.length > 16) {
+        e.cardNumber = 'Card number must be 15-16 digits.';
       }
 
-      // CVV: 3-4 digits
       if (cvv.length < 3 || cvv.length > 4) {
         e.cvv = 'CVV must be 3 or 4 digits.';
       }
 
-      // Expiry Date: Check format and ensure it's not in the past
       if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(expDate)) {
         e.expDate = 'Must be in MM/YY format (e.g., 05/26).';
       } else {
@@ -108,12 +103,11 @@ function Register({ setIsStaff, setIsLoggedIn }) {
       processedValue = value.replace(/\D/g, '').slice(0, 3);
     }
 
-    // 3. Expiry Date: Format as MM/YY
     if (name === 'expDate') {
       processedValue = value
-        .replace(/\D/g, '') // Remove non-digits
-        .replace(/(\d{2})(\d)/, '$1/$2') // Add slash after first 2 digits
-        .slice(0, 5); // Max 5 chars (MM/YY)
+        .replace(/\D/g, '')
+        .replace(/(\d{2})(\d)/, '$1/$2')
+        .slice(0, 5);
     }
 
     // Update the form state
@@ -122,7 +116,6 @@ function Register({ setIsStaff, setIsLoggedIn }) {
       [name]: processedValue
     }));
 
-    // Clear the error for this field as the user types
     if (errors[name]) {
       setErrors(prevErrors => ({
         ...prevErrors,

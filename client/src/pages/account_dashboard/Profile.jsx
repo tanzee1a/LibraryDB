@@ -352,38 +352,35 @@ const handleMembershipFormChange = (e) => {
     const { name, value } = e.target;
     let processedValue = value;
 
-    // 1. Card Number: Only allow digits, max 16
     if (name === 'cardNumber') {
-      processedValue = value.replace(/\D/g, '').slice(0, 16);
+      const digitsOnly = value.replace(/\D/g, '').slice(0, 16);
+      const formatted = digitsOnly.replace(/(.{4})/g, '$1-').replace(/-$/, '');
+      processedValue = formatted;
     }
 
-    // 2. CVV: Only allow digits, max 4 (for Amex)
     if (name === 'cvv') {
       processedValue = value.replace(/\D/g, '').slice(0, 4);
     }
 
-    // 3. Expiry Date: Format as MM/YY
     if (name === 'expDate') {
       processedValue = value
-        .replace(/\D/g, '') 
-        .replace(/(\d{2})(\d)/, '$1/$2') 
-        .slice(0, 5); // Max 5 chars (MM/YY)
+        .replace(/\D/g, '')
+        .replace(/(\d{2})(\d)/, '$1/$2')
+        .slice(0, 5);
     }
 
-    // Update the form state
     setMembershipForm(prevForm => ({
       ...prevForm,
       [name]: processedValue
     }));
 
-    // Clear the error for this field as the user types
     if (membershipErrors[name]) {
       setMembershipErrors(prevErrors => ({
         ...prevErrors,
         [name]: null
       }));
     }
-  };
+};
 
   const validateMembershipForm = () => {
     const errors = {};
@@ -392,22 +389,18 @@ const handleMembershipFormChange = (e) => {
     if (!name) errors.name = 'Name on card is required.';
     if (!billingAddress) errors.billingAddress = 'Billing address is required.';
 
-    // Card Number: 13-16 digits
-    if (cardNumber.length < 13 || cardNumber.length > 16) {
-      errors.cardNumber = 'Card number must be 13-16 digits.';
+    if (cardNumber.length < 15 || cardNumber.length > 16) {
+      errors.cardNumber = 'Card number must be 15-16 digits.';
     }
 
-    // CVV: 3-4 digits
     if (cvv.length < 3 || cvv.length > 4) {
       errors.cvv = 'CVV must be 3 or 4 digits.';
     }
 
-    // Expiry Date: Check format and ensure it's not in the past
     if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(expDate)) {
       errors.expDate = 'Must be in MM/YY format (e.g., 05/26).';
     } else {
       const [month, year] = expDate.split('/');
-      // Get the last day of the expiry month
       const lastDayOfExpiryMonth = new Date(Number(`20${year}`), Number(month), 0);
       const today = new Date();
 

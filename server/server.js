@@ -28,7 +28,7 @@ const { saveItem, unsaveItem, getMyWishlist } = require('./controllers/wishlistC
 const { getMyProfile, getAllUsers, staffCreateUser, getUserProfile, getUserBorrowHistory, getUserHoldHistory, getUserFineHistory, staffUpdateUser, staffDeleteUser, changePassword, changeEmail, staffActivateUser} = require('./controllers/userController');
 const { signup, cancel, renew } = require('./controllers/membershipController');
 const { searchItems } = require('./controllers/searchController');
-const { getSimilarItems, getMostPopularGenres, getMostPopularItems, getPopularGenresReport, getPopularItemsReport, getOverdueItemsReport, getOutstandingFines, getActiveUsersReport, getMembershipReport, getRevenueReport } = require('./controllers/reportController');
+const { getSimilarItems, getMostPopularGenres, getMostPopularItems, getPopularGenresReport, getPopularItemsReport, getOverdueItemsReport, getFinesReport, getActiveUsersReport, getMembershipReport, getRevenueReport } = require('./controllers/reportController');
 const { protect } = require('./middleware/authMiddleware');
 const { getDashboardStats, getMyStaffProfile } = require('./controllers/staffController');
 const { staffProtect} = require('./middleware/authMiddleware');
@@ -305,8 +305,8 @@ const server = http.createServer((req, res) => {
             staffProtect(req, res, () => getOverdueItemsReport(req, res));
             return;
         }
-        else if (req.url.startsWith('/api/reports/outstanding-fines') && req.method === 'GET') {
-            staffProtect(req, res, () => getOutstandingFines(req, res));
+        else if (req.url.startsWith('/api/reports/fines') && req.method === 'GET') {
+            staffProtect(req, res, () => getFinesReport(req, res));
             return;
         }
         else if (req.url.startsWith('/api/reports/active-users') && req.method === 'GET') {

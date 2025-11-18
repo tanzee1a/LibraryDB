@@ -208,7 +208,7 @@ async function popularItemReport({ filterType = 'date', start = null, end = null
             COALESCE(bk.title, m.title, d.device_name) AS item_name,
             i.quantity,
             COUNT(DISTINCT b.borrow_id) AS borrow_count,
-            COUNT(DISTINCT w.user_id) AS total_saved
+            COUNT(DISTINCT w.user_id) AS wishlist_count
         FROM ITEM i
         LEFT JOIN BOOK bk ON i.item_id = bk.item_id AND i.category = 'BOOK'
         LEFT JOIN MOVIE m ON i.item_id = m.item_id AND i.category = 'MOVIE'
@@ -316,7 +316,7 @@ async function overdueItemsReport({ filterType = 'date', start = null, end = nul
     return rows;
 }
 
-async function outstandingFinesReport({ filterType = 'date', start = null, end = null } = {}) {
+async function finesReport({ filterType = 'date', start = null, end = null, paid_status = null, fee_type = null } = {}) {
     let sql = `
         SELECT 
             f.fee_type,
@@ -326,15 +326,27 @@ async function outstandingFinesReport({ filterType = 'date', start = null, end =
             u.lastName,
             f.amount AS amount_due,
             f.date_issued,
+            f.date_paid,
             f.notes
         FROM FINE f
         JOIN USER u ON f.user_id = u.user_id
         WHERE 
-            f.date_paid IS NULL
-            AND f.waived_at IS NULL
+            1=1
     `;
 
     const params = [];
+
+    if (paid_status === '0') {
+        sql += ' AND f.date_paid IS NULL AND f.waived_at IS NULL';
+    }
+    if (paid_status === '1') {
+        sql += ' AND f.date_paid IS NOT NULL';
+    }
+
+    if (fee_type !== null && fee_type !== '') {
+        sql += ' AND f.fee_type = ?';
+        params.push(fee_type);
+    }
 
     if (filterType === 'date') {
         if (start && end) sql += ' AND f.date_issued BETWEEN ? AND ?';
@@ -517,90 +529,59 @@ async function membershipReport({ filterType = 'date', start = null, end = null,
 }
 
 async function revenueReport({ filterType = 'date', start = null, end = null, type = null } = {}) {
-    let sql = `
-        SELECT 'Fine' AS type, u.email AS user_email, f.amount, f.date_paid
-        FROM FINE f
-        JOIN USER u ON f.user_id = u.user_id
-        WHERE f.date_paid IS NOT NULL
-    `;
-
+    const selects = [];
     const params = [];
 
-    if (filterType === 'date') {
-        if (start && end) {
-            sql += ' AND f.date_paid BETWEEN ? AND ?';
-        } else if (start) {
-            sql += ' AND f.date_paid >= ?';
-        } else if (end) {
-            sql += ' AND f.date_paid <= ?';
+    const addDateFilters = (prefix) => {
+        let clause = '';
+
+        if (filterType === 'date') {
+            if (start && end) clause += ` AND ${prefix} BETWEEN ? AND ?`;
+            else if (start) clause += ` AND ${prefix} >= ?`;
+            else if (end) clause += ` AND ${prefix} <= ?`;
+        } else if (filterType === 'month') {
+            if (start && end) clause += ` AND DATE_FORMAT(${prefix}, '%Y-%m') BETWEEN ? AND ?`;
+            else if (start) clause += ` AND DATE_FORMAT(${prefix}, '%Y-%m') >= ?`;
+            else if (end) clause += ` AND DATE_FORMAT(${prefix}, '%Y-%m') <= ?`;
+        } else if (filterType === 'year') {
+            if (start && end) clause += ` AND YEAR(${prefix}) BETWEEN ? AND ?`;
+            else if (start) clause += ` AND YEAR(${prefix}) >= ?`;
+            else if (end) clause += ` AND YEAR(${prefix}) <= ?`;
         }
-    } else if (filterType === 'month') {
+
         if (start && end) {
-            sql += " AND DATE_FORMAT(f.date_paid, '%Y-%m') BETWEEN ? AND ?";
+            params.push(start, end);
         } else if (start) {
-            sql += " AND DATE_FORMAT(f.date_paid, '%Y-%m') >= ?";
+            params.push(start);
         } else if (end) {
-            sql += " AND DATE_FORMAT(f.date_paid, '%Y-%m') <= ?";
+            params.push(end);
         }
-    } else if (filterType === 'year') {
-        if (start && end) {
-            sql += ' AND YEAR(f.date_paid) BETWEEN ? AND ?';
-        } else if (start) {
-            sql += ' AND YEAR(f.date_paid) >= ?';
-        } else if (end) {
-            sql += ' AND YEAR(f.date_paid) <= ?';
-        }
+
+        return clause;
+    };
+
+    if (!type || type === 'Fine') {
+        let fineSql = `
+            SELECT 'Fine' AS type, u.email AS user_email, f.amount, f.date_paid
+            FROM FINE f
+            JOIN USER u ON f.user_id = u.user_id
+            WHERE f.date_paid IS NOT NULL
+        `;
+        fineSql += addDateFilters('f.date_paid');
+        selects.push(fineSql);
+    }
+    if (!type || type === 'Membership') {
+        let membershipSql = `
+            SELECT 'Membership' AS type, u.email AS user_email, m.amount, m.payment_date AS date_paid
+            FROM MEMBERSHIP_PAYMENT m
+            JOIN USER u ON m.user_id = u.user_id
+            WHERE m.payment_date IS NOT NULL
+        `;
+        membershipSql += addDateFilters('m.payment_date');
+        selects.push(membershipSql);
     }
 
-    if (start && end) {
-        params.push(start, end);
-    } else if (start) {
-        params.push(start);
-    } else if (end) {
-        params.push(end);
-    }
-
-    sql += `
-        UNION ALL
-        SELECT 'Membership' AS type, u.email AS user_email, m.amount, m.payment_date AS date_paid
-        FROM MEMBERSHIP_PAYMENT m
-        JOIN USER u ON m.user_id = u.user_id
-        WHERE m.payment_date IS NOT NULL
-    `;
-
-    if (filterType === 'date') {
-        if (start && end) {
-            sql += ' AND m.payment_date BETWEEN ? AND ?';
-        } else if (start) {
-            sql += ' AND m.payment_date >= ?';
-        } else if (end) {
-            sql += ' AND m.payment_date <= ?';
-        }
-    } else if (filterType === 'month') {
-        if (start && end) {
-            sql += " AND DATE_FORMAT(m.payment_date, '%Y-%m') BETWEEN ? AND ?";
-        } else if (start) {
-            sql += " AND DATE_FORMAT(m.payment_date, '%Y-%m') >= ?";
-        } else if (end) {
-            sql += " AND DATE_FORMAT(m.payment_date, '%Y-%m') <= ?";
-        }
-    } else if (filterType === 'year') {
-        if (start && end) {
-            sql += ' AND YEAR(m.payment_date) BETWEEN ? AND ?';
-        } else if (start) {
-            sql += ' AND YEAR(m.payment_date) >= ?';
-        } else if (end) {
-            sql += ' AND YEAR(m.payment_date) <= ?';
-        }
-    }
-
-    if (start && end) {
-        params.push(start, end);
-    } else if (start) {
-        params.push(start);
-    } else if (end) {
-        params.push(end);
-    }
+    const sql = selects.join(' UNION ALL ');
 
     const [rows] = await db.query(sql, params);
     return rows;
@@ -613,7 +594,7 @@ module.exports = {
     popularGenresReport,
     popularItemReport,
     overdueItemsReport,
-    outstandingFinesReport,
+    finesReport,
     activeUsersReport,
     membershipReport,
     revenueReport

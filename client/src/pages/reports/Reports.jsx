@@ -22,13 +22,13 @@ const decodeToken = (token) => {
 };
 
 const reportTypeOptions = [
-  { key: 'items', label: 'Popular Items', endpoint: '/api/reports/popular-items', description: 'List the most borrowed items.' },
-  { key: 'fines', label: 'Outstanding Fines', endpoint: '/api/reports/outstanding-fines', description: 'Summarizes outstanding fines owed by users. Our goal is to minimize this list as much as we can by reaching out to them to encourage timely payment.' },
-  { key: 'revenue', label: 'Revenue', endpoint: '/api/reports/revenue', description: 'Breakdown of revenue generated from fines and memberships.' },
-  { key: 'genres', label: 'Popular Genres', endpoint: '/api/reports/popular-genres', description: 'Shows the most popular genres based on borrow counts. Note: An item can have multiple genres. Hence, borrow counts may overlap.' },
-  { key: 'overdues', label: 'Overdue Items', endpoint: '/api/reports/overdue-items', description: 'List of items that are currently overdue along with borrower details.' },
-  { key: 'active_users', label: 'Users', endpoint: '/api/reports/active-users', description: 'We measure how active users are using how many times they borrow within a specified period.' },
-  { key: 'memberships', label: 'Patrons', endpoint: '/api/reports/memberships', description: 'Provide an overview of patron memberships.' },
+  { key: 'items', label: 'Popular Items', endpoint: '/api/reports/popular-items', description: 'Shows which items get borrowed the most. Used to identify what our users want. Note: \'Borrow Count\' is the total number of times an item has been borrowed. \'Wishlist Count\' indicates how many users have added the item to their wishlist.' },
+  { key: 'active_users', label: 'Users', endpoint: '/api/reports/active-users', description: 'Shows how active users are based on how often they borrow.' },
+  { key: 'revenue', label: 'Revenue', endpoint: '/api/reports/revenue', description: 'Breakdown of revenue collected from fines and memberships.' },
+  { key: 'genres', label: 'Popular Genres', endpoint: '/api/reports/popular-genres', description: 'Shows which genres get borrowed the most. Note: One or more items can share the same genres. Hence, borrow counts may overlap.' },
+  { key: 'overdues', label: 'Overdue Items', endpoint: '/api/reports/overdue-items', description: 'Lists items that are late and who has them.' },
+  { key: 'fines', label: 'Fines', endpoint: '/api/reports/fines', description: 'Shows unpaid fines by user. Our goal is to minimize this list as much as we can by reaching out to them to encourage timely payment.' },
+  { key: 'memberships', label: 'Patrons', endpoint: '/api/reports/memberships', description: 'Provide an overview of patron memberships. Note: \'Canceled\' status indicates the user has unenrolled their membership from auto renew but still has their membership active until the end of the current period.' },
 ];
 
 const backgroundColors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'];
@@ -156,7 +156,7 @@ function Reports() {
                     <div className="filter-group" key="category-filter">
                         <label>Category:</label>
                         <select value={param1} onChange={e => setParam1(e.target.value)}>
-                            <option value="">ALL</option>
+                            <option value="">All</option>
                             <option value="BOOK">Book</option>
                             <option value="MOVIE">Movie</option>
                             <option value="DEVICE">Device</option>
@@ -189,7 +189,7 @@ function Reports() {
                 );
                 specificFilters.push(
                     <div className="filter-group" key="category-filter">
-                        <label>Min Borrow Count:</label>
+                        <label>Max Borrow Count:</label>
                         <input
                             type="number"
                             min="0"
@@ -209,6 +209,42 @@ function Reports() {
                             <option value="Active">Active</option>
                             <option value="Canceled">Canceled</option>
                             <option value="Expired">Expired</option>
+                        </select>
+                    </div>
+                );
+                break;
+            case 'revenue':
+                specificFilters.push(
+                    <div className="filter-group" key="category-filter">
+                        <label>Revenue Type:</label>
+                        <select value={param1} onChange={e => setParam1(e.target.value)}>
+                            <option value="">All</option>
+                            <option value="Fine">Fine</option>
+                            <option value="Membership">Membership</option>
+                        </select>
+                    </div>
+                );
+                break;
+
+            case 'fines':
+                specificFilters.push(
+                    <div className="filter-group" key="category-filter">
+                        <label>Paid Status:</label>
+                        <select value={param1} onChange={e => setParam1(e.target.value)}>
+                            <option value="">All</option>
+                            <option value="0">Unpaid</option>
+                            <option value="1">Paid</option>
+                        </select>
+                    </div>
+                );
+                specificFilters.push(
+                    <div className="filter-group" key="category-filter">
+                        <label>Fee Type:</label>
+                        <select value={param2} onChange={e => setParam2(e.target.value)}>
+                            <option value="">All</option>
+                            <option value="LATE">Late</option>
+                            <option value="DAMAGED">Damaged</option>
+                            <option value="LOST">Lost</option>
                         </select>
                     </div>
                 );
@@ -285,6 +321,13 @@ function Reports() {
                     break;
                 case 'memberships':
                     if (param1) params.append('status', param1);
+                    break;
+                case 'revenue':
+                    if (param1) params.append('type', param1);
+                    break;
+                case 'fines':
+                    if (param1) params.append('paid_status', param1);
+                    if (param2) params.append('fee_type', param2);
                     break;
                 default:
                     break;
@@ -506,7 +549,7 @@ function Reports() {
 
                 return (
                     <div className="revenue-summary">
-                        <h3>Total Outstanding Fines: ${totalFines.toFixed(2)}</h3>
+                        <h3>Total Fines: ${totalFines.toFixed(2)}</h3>
                         <Pie
                             data={{
                                 labels: Object.keys(fineTotals),
