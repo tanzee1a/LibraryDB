@@ -3,7 +3,36 @@ const { getPostData } = require('../utils');
 const url = require('url');
 const userModel = require('../models/userModel');
 
+async function checkBorrowingEligibility(userId) {
+    const userProfile = await userModel.findUserProfileById(userId);
 
+    if (!userProfile) {
+        throw new Error('User profile not found.');
+    }
+
+        if (userProfile.is_suspended) {
+            throw new Error(`Borrowing suspended due to $${userProfile.total_fines.toFixed(2)} in outstanding fines.`);
+        }
+
+        if (userProfile.requires_membership_fee) {
+
+        const isExpired = new Date(userProfile.expires_at) < new Date();
+
+        if (isExpired) { 
+            let reason;
+            if (userProfile.membership_status === 'expired') {
+                reason = 'Your membership has expired.';
+            } else {
+                reason = 'Membership is required for this user role.'; 
+            }
+
+             throw new Error(`Borrowing denied. ${reason} Please activate or renew your membership.`);
+        }
+    }
+
+}
+
+/*
 async function checkBorrowingEligibility(userId) {
     const userProfile = await userModel.findUserProfileById(userId);
 
@@ -31,6 +60,7 @@ async function checkBorrowingEligibility(userId) {
         }
     }
 }
+*/
 
 // @desc User requests pickup for an available item
 // @route POST /api/request/:itemId

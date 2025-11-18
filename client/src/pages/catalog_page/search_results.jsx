@@ -28,7 +28,13 @@ function SearchResults({ isStaff }) {
     const [showAllTags, setShowAllTags] = useState(false);
 
 
-    const [userProfile, setUserProfile] = useState({ is_suspended: false, total_fines: 0.00 });
+    const [userProfile, setUserProfile] = useState({ 
+        is_suspended: false, 
+        total_fines: 0.00,
+        requires_membership: false,
+        membership_status: null,
+        expires_at: null
+    });
     const [userProfileLoading, setUserProfileLoading] = useState(true);
 
     const baseFilterOptions = [
@@ -187,11 +193,18 @@ function SearchResults({ isStaff }) {
                             is_suspended: data.is_suspended,
                             total_fines: parseFloat(data.outstanding_fines) || 0.00,
                             requires_membership: data.requires_membership_fee,
-                            membership_status: data.membership_status // 'active', 'expired', 'canceled', etc.
+                            membership_status: data.membership_status,
+                            expires_at: data.expires_at
                         });
                     } else {
                         // Token is likely expired or invalid, reset profile status
-                        setUserProfile({ is_suspended: false, total_fines: 0.00 });
+                        setUserProfile({ 
+                            is_suspended: false, 
+                            total_fines: 0.00,
+                            requires_membership: false,
+                            membership_status: null,
+                            expires_at: null
+                        });
                     }
                 } catch (error) {
                     console.error("Error fetching user profile:", error);
@@ -495,7 +508,7 @@ function SearchResults({ isStaff }) {
         }
 
         const isSuspended = userProfile.is_suspended;
-        const membershipExpired = userProfile.requires_membership && userProfile.membership_status !== 'active';
+        const membershipExpired = userProfile.requires_membership && (new Date(userProfile.expires_at) < new Date());
         const isDenied = isSuspended || membershipExpired;
         
         if (isDenied) {

@@ -23,7 +23,8 @@ function ItemDetails({ isStaff }) {
     is_suspended: false, 
     total_fines: 0.00, 
     requires_membership: false, 
-    membership_status: null 
+    membership_status: null,
+    expires_at: null 
   });
   const [userProfileLoading, setUserProfileLoading] = useState(true);
 
@@ -127,14 +128,16 @@ function ItemDetails({ isStaff }) {
               is_suspended: data.is_suspended,
               total_fines: Number(data.outstanding_fines) || 0.00,
               requires_membership: data.requires_membership_fee,
-              membership_status: data.membership_status
+              membership_status: data.membership_status,
+              expires_at: data.expires_at
           });
       } else {
           setUserProfile({ 
               is_suspended: false, 
               total_fines: 0.00,
               requires_membership: false,
-              membership_status: null 
+              membership_status: null,
+              expires_at: null 
           }); 
         }
       } catch (error) {
@@ -612,7 +615,7 @@ function ItemDetails({ isStaff }) {
             {
                 !userProfileLoading && !isStaff && (() => {
                     const isSuspended = userProfile.is_suspended;
-                    const membershipExpired = userProfile.requires_membership && userProfile.membership_status !== 'active';
+                    const membershipExpired = userProfile.requires_membership && (new Date(userProfile.expires_at) < new Date());
                     
                     if (isSuspended || membershipExpired) {
                         let denialMessage = isSuspended ? 'Account Suspended (Fines)' : 'Membership Required';
@@ -646,7 +649,7 @@ function ItemDetails({ isStaff }) {
                 </p>
             )}
 
-            {(!isWishlisted && !isStaff && !(userProfile.is_suspended || (userProfile.requires_membership && userProfile.membership_status !== 'active'))) && (
+            {(!isWishlisted && !isStaff && !userProfile.is_suspended) && (
                 <button
                     className="action-button secondary-button"
                     style={{ marginTop: '10px' }}
@@ -658,7 +661,7 @@ function ItemDetails({ isStaff }) {
                 </button>
             )}
 
-            {(!requestMade && !isStaff && !(userProfile.is_suspended || (userProfile.requires_membership && userProfile.membership_status !== 'active'))) && (
+            {(!requestMade && !isStaff && !(userProfile.is_suspended || (userProfile.requires_membership && (new Date(userProfile.expires_at) < new Date())))) && (
                 item.available > 0 ? (
                     <button
                         className="action-button primary-button"

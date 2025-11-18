@@ -298,6 +298,7 @@ async function findUserProfileById(userId) {
             if (membershipRows.length === 0) {
                 userProfile.membership_status = 'new';
                 userProfile.membership_details = null;
+                userProfile.expires_at = null;
             } else {
                 const membership = membershipRows[0];
                 const isExpired = new Date(membership.expires_at) < new Date();
@@ -319,6 +320,7 @@ async function findUserProfileById(userId) {
         } else {
             userProfile.membership_status = null;
             userProfile.membership_details = null;
+            userProfile.expires_at = null;
         }
 
         return userProfile;
