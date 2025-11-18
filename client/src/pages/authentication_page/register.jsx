@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify'; 
 
@@ -24,6 +24,16 @@ function Register({ setIsStaff, setIsLoggedIn }) {
   const [signUpLater, setSignUpLater] = useState(false);
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const offset = -window.scrollY * 0.3;
+      document.documentElement.style.setProperty('--parallax-offset', `${offset}px`);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   // Input validation
   const validate = () => {

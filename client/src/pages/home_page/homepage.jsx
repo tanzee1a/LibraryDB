@@ -81,6 +81,13 @@ function Homepage() {
   }, []);
 
   useEffect(() => {
+    const handleScroll = () => {
+      const offset = -window.scrollY * 0.3;
+      document.documentElement.style.setProperty('--parallax-offset', `${offset}px`);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+
     const timer = setTimeout(() => {
       if (!isFocused && searchTerm === '') {
         setShowPrimary(false);
@@ -88,7 +95,10 @@ function Homepage() {
       }
     }, 10 * 1000);
 
-    return () => clearTimeout(timer);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      clearTimeout(timer);
+    };
   }, [isFocused, searchTerm]);
 
   const getGreeting = () => {

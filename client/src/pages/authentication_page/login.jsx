@@ -1,5 +1,5 @@
 import './login.css'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'; 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
@@ -11,6 +11,15 @@ function Login({ setIsStaff, setIsLoggedIn }) {
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const handleScroll = () => {
+      const offset = -window.scrollY * 0.3;
+      document.documentElement.style.setProperty('--parallax-offset', `${offset}px`);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

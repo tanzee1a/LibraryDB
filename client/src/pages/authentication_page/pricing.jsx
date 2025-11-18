@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import './pricing.css'
 
 import Logo from "../../assets/logo-dark.webp"
+import { useEffect } from 'react'
 import { BsPeopleFill } from "react-icons/bs";
 import { FaGraduationCap, FaSchool } from "react-icons/fa";
 import { FaStar } from "react-icons/fa6";
@@ -13,6 +14,16 @@ function Pricing() {
         { icon: <FaGraduationCap />, name: 'Student', price: 'Free*', borrowLimits: 10, },
         { icon: <FaSchool />, name: 'Faculty', price: 'Free*', borrowLimits: 25, },
     ]
+
+    useEffect(() => {
+    const handleScroll = () => {
+        const offset = -window.scrollY * 0.3;
+        document.documentElement.style.setProperty('--parallax-offset', `${offset}px`);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
 
     const renderTierFooter = (tier) => {
         switch (tier.name) {
