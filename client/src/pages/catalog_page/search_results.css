@@ -175,9 +175,6 @@
     transition: border-color 0.2s ease;
 }
 
-/* ... (your existing styles) ... */
-
-/* Style for the 'DELETED' tag itself */
 .status-tag {
     display: inline-block;
     padding: 2px 8px;
@@ -189,12 +186,11 @@
 }
 
 .deleted-tag {
-    background-color: #f8d7da; /* Light red */
-    color: #721c24; /* Dark red */
+    background-color: #f8d7da; 
+    color: #721c24; 
     border: 1px solid #f5c6cb;
 }
 
-/* Style for the entire item row when deleted */
 .search-result-item.deleted-item {
     opacity: 0.6;
     background-color: #f9f9f9;
