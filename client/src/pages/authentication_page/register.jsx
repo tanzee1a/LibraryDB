@@ -63,7 +63,7 @@ function Register({ setIsStaff, setIsLoggedIn }) {
       if (!name.trim()) e.name = "Name on card is required.";
       if (!billingAddress.trim()) e.billingAddress = "Billing address is required.";
 
-      if (cardNumber.length < 15 || cardNumber.length > 16) {
+      if (cardNumber.length < 18 || cardNumber.length > 19) {
         e.cardNumber = 'Card number must be 15-16 digits.';
       }
 
@@ -100,7 +100,7 @@ function Register({ setIsStaff, setIsLoggedIn }) {
     }
 
     if (name === 'cvv') {
-      processedValue = value.replace(/\D/g, '').slice(0, 3);
+      processedValue = value.replace(/\D/g, '').slice(0, 4);
     }
 
     if (name === 'expDate') {

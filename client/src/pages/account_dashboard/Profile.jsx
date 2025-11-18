@@ -389,7 +389,7 @@ const handleMembershipFormChange = (e) => {
     if (!name) errors.name = 'Name on card is required.';
     if (!billingAddress) errors.billingAddress = 'Billing address is required.';
 
-    if (cardNumber.length < 15 || cardNumber.length > 16) {
+    if (cardNumber.length < 18 || cardNumber.length > 19) {
       errors.cardNumber = 'Card number must be 15-16 digits.';
     }
 
