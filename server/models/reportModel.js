@@ -40,6 +40,24 @@ async function mostPopularItems() {
     return rows;
 }
 
+async function mostPopularGenres() {
+    let sql = `
+        SELECT 
+            t.tag_name AS genre_name,
+            COUNT(b.borrow_id) AS total_borrows
+        FROM TAG t
+        JOIN ITEM_TAG it ON t.tag_id = it.tag_id
+        JOIN ITEM i ON it.item_id = i.item_id
+        LEFT JOIN BORROW b ON i.item_id = b.item_id
+        GROUP BY t.tag_name
+        ORDER BY total_borrows DESC
+        LIMIT 20;
+    `;
+
+    const [rows] = await db.query(sql);
+    return rows;
+}
+
 async function similarItems({ item_id = null }) {
   if (!item_id) return [];
 
@@ -590,6 +608,7 @@ async function revenueReport({ filterType = 'date', start = null, end = null, ty
 
 module.exports = {
     mostPopularItems,
+    mostPopularGenres,
     similarItems,
     popularGenresReport,
     popularItemReport,

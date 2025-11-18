@@ -1,30 +1,18 @@
 .homepage-container {
-  position: relative;
-  background-image: url('../../assets/library_background.jpg');
+  background-image:
+    linear-gradient(
+      to bottom,
+      rgba(0,0,0,0) 0%,
+      rgba(255,255,255,0) 70%,
+      white 100%
+    ),
+    url('../../assets/library_background.jpg');
   background-size: cover;
   background-repeat: no-repeat;
-  min-height: 100vh;
-  overflow: hidden;
-  background-size: cover;
   background-attachment: fixed;
   background-position: center calc(50% + var(--parallax-offset, 0px));
-  will-change: background-position;
-}
-
-.homepage-container::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  z-index: 0;
-  width: 100%;
-  height: 180px;
-  background: linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0) 0%,
-    white 100%
-  );
-  pointer-events: none;
+  min-height: 100vh;
+  overflow: hidden;
 }
 
 .homepage-content {
@@ -50,19 +38,18 @@
 }
 
 .home-search-container {
-  display: flex; /* Aligns items horizontally */
+  display: flex;
   width: 50rem; 
   max-width: 90%;
-  margin: 0 auto; /* Centers the container */
+  margin: 0 auto;
   border: 1px solid var(--darker-tertiary-color);
-  border-radius: 50px; /* Applies to the whole container */
+  border-radius: 50px;
   background: white;
-  /* Apply hover/focus shadow to the whole container */
   transition: border-color 0.2s ease-out, box-shadow 0.2s ease-out;
 }
 
 .home-search-container:hover,
-.home-search-container:focus-within { /* focus-within highlights when a child is focused */
+.home-search-container:focus-within {
     border-color: var(--secondary-color);
     box-shadow: 0 0 8px var(--secondary-color);
 }
@@ -72,16 +59,16 @@
   padding: 0 1rem;
   font-size: 1rem;
   border: none;
-  border-radius: 50px 0 0 50px; /* Round left corners */
-  background: #f8f8f8; /* Slight background to differentiate */
+  border-radius: 50px 0 0 50px;
+  background: #f8f8f8;
   color: black;
   cursor: pointer;
-  flex-shrink: 0; /* Prevents dropdown from shrinking */
+  flex-shrink: 0;
   outline: none;
-  -webkit-appearance: none; /* Removes default OS styling */
+  -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
-  padding-right: 2.5em; /* Make space for custom arrow */
+  padding-right: 2.5em;
   background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23666%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.6-3.6%205.4-7.9%205.4-12.9%200-5-1.8-9.2-5.4-12.7z%22%2F%3E%3C%2Fsvg%3E');
   background-repeat: no-repeat;
   background-position: right 1rem center;
@@ -173,6 +160,14 @@
   z-index: 2;
 }
 
+.popular-wrapper {
+  background: white;
+  border-radius: 20px;
+  padding: 3rem 3rem 2rem 3rem;
+  margin: 0 5rem;
+  box-sizing: border-box;
+}
+
 .popular-title {
   font-size: 2rem;
   margin-bottom: 1.5rem;
@@ -184,16 +179,11 @@
   justify-content: center;
   gap: 7vw;
   flex-wrap: nowrap;
-  padding: 3rem 3rem 0 3rem;
-  background: white;
-  border-radius: 20px;
-  margin: 0 5rem;
   min-height: 310px;
-  box-sizing: border-box;
 }
 
 .popular-card {
-  width: 180px;                /* fixed width to ensure 5 fit neatly */
+  width: 180px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -234,4 +224,59 @@
   font-size: 0.85rem;
   color: var(--muted);
   margin: 0.25rem 0 0;
+}
+
+.popular-genre-section {
+  margin-top: 2rem;
+  text-align: center;
+  position: relative;
+  z-index: 2;
+}
+
+.popular-genre-section .popular-title {
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  color: black;
+}
+
+.genre-scroller {
+  width: 100%;
+  overflow: hidden;
+  padding: 1rem 0;
+  position: relative;
+}
+
+.genre-track {
+  display: flex;
+  white-space: nowrap;
+  animation: genreScroll 35s linear infinite;
+}
+
+.genre-pill {
+  margin-right: 1.25rem;
+  padding: 0.6rem 1.4rem;
+  background: #fff;
+  border-radius: 30px;
+  border: 1px solid var(--tertiary-color);
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+  text-decoration: none;
+}
+
+.genre-pill:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+}
+
+@keyframes genreScroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
 }

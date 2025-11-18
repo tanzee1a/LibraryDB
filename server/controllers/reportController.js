@@ -10,7 +10,21 @@ async function getMostPopularItems(req, res) {
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         return res.end(JSON.stringify(data));
     } catch (error) {
-        console.error("Error getting Popular Items Report:", error);
+        console.error("Error getting Popular Items:", error);
+        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ message: 'Could not fetch report', error: error.message }));
+    }
+}
+
+// @desc Get Most Popular Genres
+// @route GET /api/recommendations/popular-genres
+async function getMostPopularGenres(req, res) {
+    try {
+        const data = await Report.mostPopularGenres();
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        return res.end(JSON.stringify(data));
+    } catch (error) {
+        console.error("Error getting Popular Genres:", error);
         res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         res.end(JSON.stringify({ message: 'Could not fetch report', error: error.message }));
     }
@@ -26,7 +40,7 @@ async function getSimilarItems(req, res) {
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         return res.end(JSON.stringify(data));
     } catch (error) {
-        console.error("Error getting Similar Items Report:", error);
+        console.error("Error getting Similar Items:", error);
         res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         res.end(JSON.stringify({ message: 'Could not fetch report', error: error.message }));
     }
@@ -154,6 +168,7 @@ async function getRevenueReport(req, res) {
 
 module.exports = {
     getMostPopularItems,
+    getMostPopularGenres,
     getSimilarItems,
     getPopularGenresReport,
     getPopularItemsReport,

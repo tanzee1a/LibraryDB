@@ -28,7 +28,7 @@ const { saveItem, unsaveItem, getMyWishlist } = require('./controllers/wishlistC
 const { getMyProfile, getAllUsers, staffCreateUser, getUserProfile, getUserBorrowHistory, getUserHoldHistory, getUserFineHistory, staffUpdateUser, staffDeleteUser, changePassword, changeEmail, staffActivateUser} = require('./controllers/userController');
 const { signup, cancel, renew } = require('./controllers/membershipController');
 const { searchItems } = require('./controllers/searchController');
-const { getSimilarItems, getMostPopularItems, getPopularGenresReport, getPopularItemsReport, getOverdueItemsReport, getOutstandingFines, getActiveUsersReport, getMembershipReport, getRevenueReport } = require('./controllers/reportController');
+const { getSimilarItems, getMostPopularGenres, getMostPopularItems, getPopularGenresReport, getPopularItemsReport, getOverdueItemsReport, getOutstandingFines, getActiveUsersReport, getMembershipReport, getRevenueReport } = require('./controllers/reportController');
 const { protect } = require('./middleware/authMiddleware');
 const { getDashboardStats, getMyStaffProfile } = require('./controllers/staffController');
 const { staffProtect} = require('./middleware/authMiddleware');
@@ -278,8 +278,13 @@ const server = http.createServer((req, res) => {
             staffProtect(req, res, () => cancelHold(req, res, holdId));
         }
 
+        // recommendations routes
         else if (req.url === '/api/recommendations/popular-items' && req.method === 'GET') {
             getMostPopularItems(req, res);
+            return;
+        }
+        else if (req.url.startsWith('/api/recommendations/popular-genres') && req.method === 'GET') {
+            getMostPopularGenres(req, res);
             return;
         }
         else if (req.url.startsWith('/api/recommendations/similar-items') && req.method === 'GET') {

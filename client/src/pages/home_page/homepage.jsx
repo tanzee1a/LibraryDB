@@ -12,6 +12,7 @@ function Homepage() {
   const [showSecondary, setShowSecondary] = useState(false); // fake-placeholder2
   const [isFocused, setIsFocused] = useState(false);
   const [popularItems, setPopularItems] = useState([]);
+  const [popularGenres, setPopularGenres] = useState([]);
   useEffect(() => {
     const fetchPopular = async () => {
       try {
@@ -33,12 +34,29 @@ function Homepage() {
       }
     };
     fetchPopular();
+
+    const fetchPopularGenres = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/recommendations/popular-genres`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          console.log("Fetched popular genres:", data);
+          setPopularGenres(data);
+        }
+      } catch (err) {
+        console.error("Error fetching popular genres:", err);
+      }
+    };
+    fetchPopularGenres();
   }, []);
   const navigate = useNavigate();
 
   const handleSearch = (event) => {
      if (event.key === 'Enter') {
-            event.preventDefault(); // Prevent default form submission
+            event.preventDefault();
             const term = searchTerm.trim();
             if (term) {
                 // If there is a term, search with it and the type
@@ -215,26 +233,49 @@ function Homepage() {
             {renderActionButton()}
           </div>
           </div>
-            <div className="popular-section">
-              <h2 className="popular-title fade-in-delay">Popular & Trending</h2>
-              <div className="popular-grid fade-in-text-from-bottom-far">
-                {popularItems.slice(0, 5).map((item) => (
-                  <a 
-                    key={item.item_id}
-                    className="popular-card"
-                    href={`/item/${item.item_id}`}
-                  >
-                    <img src={item.thumbnail_url} alt={item.item_name} className="popular-thumb" />
-                    <div className="popular-item-title">
-                      {item.item_name}
-                    </div>
-                    <p className="popular-item-creator">
-                      {item.item_creator}
-                    </p>
-                  </a>
-                ))}
+          <div className="popular-section">
+          <h2 className="popular-title fade-in-delay">Popular & Trending</h2>
+          <div className="popular-wrapper fade-in-text-from-bottom-far">
+            <div className="popular-grid">
+              {popularItems.slice(0, 5).map((item) => (
+                <a
+                  key={item.item_id}
+                  className="popular-card"
+                  href={`/item/${item.item_id}`}
+                >
+                  <img src={item.thumbnail_url} alt={item.item_name} className="popular-thumb" />
+                  <div className="popular-item-title">{item.item_name}</div>
+                  <p className="popular-item-creator">{item.item_creator}</p>
+                </a>
+              ))}
+            </div>
+
+            <div className="popular-genre-section">
+              <div className="genre-scroller">
+                <div className="genre-track">
+                  {popularGenres.map((g, idx) => (
+                    <a
+                      key={idx}
+                      className="genre-pill"
+                      href={`/search?tag=${encodeURIComponent(g.genre_name)}`}
+                    >
+                      {g.genre_name}
+                    </a>
+                  ))}
+                  {popularGenres.map((g, idx) => (
+                    <a
+                      key={`dup-${idx}`}
+                      className="genre-pill"
+                      href={`/search?tag=${encodeURIComponent(g.genre_name)}`}
+                    >
+                      {g.genre_name}
+                    </a>
+                  ))}
+                </div>
               </div>
             </div>
+          </div>
+        </div>
         </div>
       </div>
     </div>
