@@ -30,7 +30,7 @@ async function findById(userId) {
 // --- Find ALL Users (Patrons and Staff) ---
 async function findAllUsers(searchTerm, filters = {}, sort = '') {
     let sql = `
-        SELECT 
+        SELECT
             u.user_id, 
             u.email, 
             ur.role_name AS role,

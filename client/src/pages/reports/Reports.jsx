@@ -23,12 +23,12 @@ const decodeToken = (token) => {
 
 const reportTypeOptions = [
   { key: 'items', label: 'Popular Items', endpoint: '/api/reports/popular-items', description: 'Shows which items get borrowed the most. Used to identify what our users want. Note: \'Borrow Count\' is the total number of times an item has been borrowed. \'Wishlist Count\' indicates how many users have added the item to their wishlist.' },
-  { key: 'active_users', label: 'Users', endpoint: '/api/reports/active-users', description: 'Shows how active users are based on how often they borrow.' },
-  { key: 'revenue', label: 'Revenue', endpoint: '/api/reports/revenue', description: 'Breakdown of revenue collected from fines and memberships.' },
   { key: 'genres', label: 'Popular Genres', endpoint: '/api/reports/popular-genres', description: 'Shows which genres get borrowed the most. Note: One or more items can share the same genres. Hence, borrow counts may overlap.' },
+  { key: 'active_users', label: 'Users', endpoint: '/api/reports/active-users', description: 'Shows how active users are based on how often they borrow.' },
+  { key: 'memberships', label: 'Patrons', endpoint: '/api/reports/memberships', description: 'Provide an overview of patron memberships. Note: \'Auto Renew off\' status indicates the user has unsubscribed their membership from auto renew but still has their membership active until the end of the current period.' },
   { key: 'overdues', label: 'Overdue Items', endpoint: '/api/reports/overdue-items', description: 'Lists items that are late and who has them.' },
-  { key: 'fines', label: 'Fines', endpoint: '/api/reports/fines', description: 'Shows unpaid fines by user. Our goal is to minimize this list as much as we can by reaching out to them to encourage timely payment.' },
-  { key: 'memberships', label: 'Patrons', endpoint: '/api/reports/memberships', description: 'Provide an overview of patron memberships. Note: \'Canceled\' status indicates the user has unenrolled their membership from auto renew but still has their membership active until the end of the current period.' },
+  { key: 'fines', label: 'Fines', endpoint: '/api/reports/fines', description: 'Overall breakdown of fines.' },
+  { key: 'revenue', label: 'Revenue', endpoint: '/api/reports/revenue', description: 'Breakdown of revenue collected from fines and memberships.' },
 ];
 
 const backgroundColors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'];
@@ -61,21 +61,17 @@ function Reports() {
         }
     }, []);
 
+    // Only the head librarian can access revenue report. Since only the librarians have access to this page, hence we filter out the revenue report for assistant librarians here.
     const availableReportOptions = React.useMemo(() => {
         if (isAssistantLibrarian) {
-            // Filter out the 'revenue' report
             const filteredOptions = reportTypeOptions.filter(
                 (option) => option.key !== 'revenue'
             );
-            
-            // If the currently selected report is 'revenue', default to the first available one
             if (selectedType === 'revenue') {
                 setSelectedType(filteredOptions[0].key);
             }
-            
             return filteredOptions;
         }
-        // For Admin/Librarian/Clerk, return all options
         return reportTypeOptions;
     }, [isAssistantLibrarian, selectedType]);
 
@@ -234,6 +230,7 @@ function Reports() {
                             <option value="">All</option>
                             <option value="0">Unpaid</option>
                             <option value="1">Paid</option>
+                            <option value="2">Waived</option>
                         </select>
                     </div>
                 );
@@ -399,7 +396,40 @@ function Reports() {
         return sorted;
     }, [reportData, sortConfig, searchQuery]);
 
-    const renderPieChart = () => {
+    const renderPieChart =  (title, total, data, isCurrency) => {
+        return (
+            <div>
+                <h4>{title}: {isCurrency ? `$${total.toFixed(2)}` : `${total}`}</h4>
+                <Pie
+                    data={{
+                        labels: Object.keys(data),
+                        datasets: [{
+                            data: Object.values(data),
+                            backgroundColor: backgroundColors,
+                            hoverOffset: 10,
+                        }],
+                    }}
+                    options={{
+                        plugins: {
+                            legend: { position: 'bottom' },
+                            tooltip: {
+                                callbacks: {
+                                    label: (context) => {
+                                        const label = context.label;
+                                        const val = context.raw;
+                                        const pct = ((val / total) * 100).toFixed(1);
+                                        return `${label}: `+`${isCurrency ? `$${val.toFixed(2)}` : val} (${pct}%)`;
+                                    },
+                                },
+                            },
+                        },
+                    }}
+                />
+            </div>
+        );
+    };
+
+    const renderCharts = () => {
         switch (selectedType) {
             case 'revenue': {
                 if (!sortedReportData.length) return null;
@@ -410,37 +440,9 @@ function Reports() {
                 }, {});
 
                 const totalRevenue = Object.values(totals).reduce((a, b) => a + b, 0);
-
                 return (
                     <div className="revenue-summary">
-                        <h3>Total Revenue: ${totalRevenue.toFixed(2)}</h3>
-                        <Pie
-                            data={{
-                                labels: Object.keys(totals),
-                                datasets: [
-                                    {
-                                        data: Object.values(totals),
-                                        backgroundColor: backgroundColors,
-                                        hoverOffset: 10,
-                                    },
-                                ],
-                            }}
-                            options={{
-                                plugins: {
-                                    legend: { position: 'bottom' },
-                                    tooltip: {
-                                        callbacks: {
-                                            label: (context) => {
-                                                const type = context.label;
-                                                const val = context.raw;
-                                                const pct = ((val / totalRevenue) * 100).toFixed(1);
-                                                return `${type}: $${val.toFixed(2)} (${pct}%)`;
-                                            },
-                                        },
-                                    },
-                                },
-                            }}
-                        />
+                        {renderPieChart("Revenue", totalRevenue, totals, true)}
                     </div>
                 );
             }
@@ -458,34 +460,7 @@ function Reports() {
 
                 return (
                     <div className="revenue-summary">
-                        <h3>Total Users: {totalUsers}</h3>
-                        <Pie
-                            data={{
-                                labels: Object.keys(totals),
-                                datasets: [
-                                    {
-                                        data: Object.values(totals),
-                                        backgroundColor: backgroundColors,
-                                        hoverOffset: 10,
-                                    },
-                                ],
-                            }}
-                            options={{
-                                plugins: {
-                                    legend: { position: 'bottom' },
-                                    tooltip: {
-                                        callbacks: {
-                                            label: (context) => {
-                                                const role = context.label;
-                                                const val = context.raw;
-                                                const pct = ((val / totalUsers) * 100).toFixed(1);
-                                                return `${role}: ${val} (${pct}%)`;
-                                            },
-                                        },
-                                    },
-                                },
-                            }}
-                        />
+                        {renderPieChart("Users", totalUsers, totals)}
                     </div>
                 );
             }
@@ -503,34 +478,7 @@ function Reports() {
 
                 return (
                     <div className="revenue-summary">
-                        <h3>Total Patrons: {totalMemberships}</h3>
-                        <Pie
-                            data={{
-                                labels: Object.keys(totals),
-                                datasets: [
-                                    {
-                                        data: Object.values(totals),
-                                        backgroundColor: backgroundColors,
-                                        hoverOffset: 10,
-                                    },
-                                ],
-                            }}
-                            options={{
-                                plugins: {
-                                    legend: { position: 'bottom' },
-                                    tooltip: {
-                                        callbacks: {
-                                            label: (context) => {
-                                                const type = context.label;
-                                                const val = context.raw;
-                                                const pct = ((val / totalMemberships) * 100).toFixed(1);
-                                                return `${type}: ${val} (${pct}%)`;
-                                            },
-                                        },
-                                    },
-                                },
-                            }}
-                        />
+                        {renderPieChart("Memberships", totalMemberships, totals)}
                     </div>
                 );
             }
@@ -538,43 +486,43 @@ function Reports() {
             case 'fines': {
                 if (!sortedReportData.length) return null;
 
-                const fineTotals = sortedReportData.reduce((acc, row) => {
+                const totalsAll = sortedReportData.reduce((acc, row) => {
                     const type = row.fee_type || "Unknown";
                     const amount = Number(row.amount_due || 0);
                     acc[type] = (acc[type] || 0) + amount;
                     return acc;
                 }, {});
 
-                const totalFines = Object.values(fineTotals).reduce((a, b) => a + b, 0);
+                const totalFinesAll = Object.values(totalsAll).reduce((a, b) => a + b, 0);
+                const totalsPaid = {};
+                const totalsUnpaid = {};
+                const totalsWaived = {};
+
+                sortedReportData.forEach(row => {
+                    const type = row.fee_type || "Unknown";
+                    const amount = Number(row.amount_due || 0);
+                    if (row.date_waived) {
+                        totalsWaived[type] = (totalsWaived[type] || 0) + amount;
+                    } else if (!row.date_paid) {
+                        totalsUnpaid[type] = (totalsUnpaid[type] || 0) + amount;
+                    } else {
+                        totalsPaid[type] = (totalsPaid[type] || 0) + amount;
+                    }
+                });
+
+                const totalPaid = Object.values(totalsPaid).reduce((a, b) => a + b, 0);
+                const totalUnpaid = Object.values(totalsUnpaid).reduce((a, b) => a + b, 0);
+                const totalWaived = Object.values(totalsWaived).reduce((a, b) => a + b, 0);
+                console.log({totalFinesAll, totalPaid, totalUnpaid, totalWaived});
 
                 return (
                     <div className="revenue-summary">
-                        <h3>Total Fines: ${totalFines.toFixed(2)}</h3>
-                        <Pie
-                            data={{
-                                labels: Object.keys(fineTotals),
-                                datasets: [{
-                                    data: Object.values(fineTotals),
-                                    backgroundColor: backgroundColors,
-                                    hoverOffset: 10,
-                                }],
-                            }}
-                            options={{
-                                plugins: {
-                                    legend: { position: 'bottom' },
-                                    tooltip: {
-                                        callbacks: {
-                                            label: (context) => {
-                                                const label = context.label;
-                                                const val = context.raw;
-                                                const pct = ((val / totalFines) * 100).toFixed(1);
-                                                return `${label}: $${val.toFixed(2)} (${pct}%)`;
-                                            },
-                                        },
-                                    },
-                                },
-                            }}
-                        />
+                        <div style={{ display: 'flex', gap: '40px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                            {param1 == '' && renderPieChart("All Fines", totalFinesAll, totalsAll, true)}
+                            {((param1 == '' || param1 == '0') && (totalUnpaid > 0)) && <div>{renderPieChart("Unpaid Fines", totalUnpaid, totalsUnpaid, true)}</div>}
+                            {((param1 == '' || param1 == '1') && (totalPaid > 0)) &&  <div>{renderPieChart("Paid Fines", totalPaid, totalsPaid, true)}</div>}
+                            {((param1 == '' || param1 == '2') && (totalWaived > 0)) &&  <div>{renderPieChart("Waived Fines", totalWaived, totalsWaived, true)}</div>}
+                        </div>
                     </div>
                 );
             }
@@ -645,8 +593,7 @@ function Reports() {
                     <p>{reportTypeOptions.find(t => t.key === selectedType)?.description}</p>
                 </div>
                 {renderFilterOptions()}
-                {renderPieChart()}
-                
+                {renderCharts()}
                 <div className="report-content">
                     <div className="report-search">
                         <input

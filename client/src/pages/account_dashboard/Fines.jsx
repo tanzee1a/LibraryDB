@@ -6,8 +6,6 @@ const Fines = () => {
   const [fines, setFines] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // New state variables for payment UI
   const [showPayFineSheet, setShowPayFineSheet] = useState(false);
   const [selectedFineId, setSelectedFineId] = useState(null);
   const [paymentDetails, setPaymentDetails] = useState({
@@ -20,9 +18,7 @@ const Fines = () => {
   const [isPaying, setIsPaying] = useState(false);
   const [paymentError, setPaymentError] = useState(null);
 
-  // --- Fetch Fines ---
   const fetchFines = () => {
-    // 1. Retrieve the token from storage
     const token = localStorage.getItem('authToken'); 
 
     if (!token) {
@@ -31,8 +27,6 @@ const Fines = () => {
         setLoading(false);
         return; 
     }
-
-    // 2. Construct the headers object with the Authorization header
     const headers = {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}` 
@@ -60,9 +54,7 @@ const Fines = () => {
     fetchFines();
   }, []); 
 
-  // --- Handle Pay Button Click ---
   const handlePayFine = (fineId) => {
-    // 1. Retrieve the token from storage
     const token = localStorage.getItem('authToken'); 
 
     if (!token) {
@@ -70,14 +62,11 @@ const Fines = () => {
         alert('Error: You must be logged in to pay a fine.');
         return; 
     }
-
-    // 2. Construct the headers object
     const headers = {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
     };
 
-    // 3. Call the new user-specific endpoint
     return fetch(`${API_BASE_URL}/api/my-fines/${fineId}/pay`, { 
       method: 'POST',
       headers: headers
@@ -95,7 +84,6 @@ const Fines = () => {
       });
   };
 
-  // Handle opening payment sheet
   const openPayFineSheet = (fineId) => {
     setSelectedFineId(fineId);
     setPaymentDetails({
@@ -109,13 +97,11 @@ const Fines = () => {
     setShowPayFineSheet(true);
   };
 
-  // Handle input changes in payment form
   const handlePaymentInputChange = (e) => {
     const { name, value } = e.target;
     setPaymentDetails(prev => ({ ...prev, [name]: value }));
   };
 
-  // Validate payment form fields
   const validatePaymentDetails = () => {
     const { nameOnCard, cardNumber, expirationDate, cvv, billingAddress } = paymentDetails;
     if (!nameOnCard.trim()) return 'Name on Card is required.';
@@ -126,7 +112,6 @@ const Fines = () => {
     return null;
   };
 
-  // Handle payment form submission
   const handlePaymentSubmit = (e) => {
     e.preventDefault();
     const validationError = validatePaymentDetails();
@@ -149,7 +134,6 @@ const Fines = () => {
       });
   };
 
-  // --- Render Logic ---
   if (loading) return <div className="dashboard-section"><h3>Fines</h3><p>Loading fines...</p></div>;
   if (error) return <div className="dashboard-section"><h3>Fines</h3><p>Error loading fines: {error}</p></div>;
 
@@ -208,7 +192,6 @@ const Fines = () => {
         )}
       </div>
 
-      {/* Payment Sheet Modal */}
       {showPayFineSheet && (
         <div className="sheet-overlay" onClick={() => !isPaying && setShowPayFineSheet(false)}>
           <div className="sheet-container" onClick={(e) => e.stopPropagation()}>

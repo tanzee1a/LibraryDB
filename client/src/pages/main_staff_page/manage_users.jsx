@@ -365,18 +365,8 @@ function ManageUsers() {
                                                 )}
                                                 </p>
                                             </div>
-                                            {/* --- TODO: Fetch these counts separately if needed --- */}
-                                            {/* <div className="result-details">
-                                                <p><strong>Current Borrows:</strong> {user.current_borrows || 0}</p>
-                                                <p><strong>Active Holds:</strong> {user.active_holds || 0}</p>
-                                                <p><strong>Outstanding Fines:</strong> {currencyFormatter.format(user.outstanding_fines || 0)}</p>
-                                            </div> */}
                                         </div>
                                     </div>
-                                    {/* Optional Actions Column */}
-                                    {/* <div className="result-actions">
-                                        <button className="btn secondary">Edit</button> 
-                                    </div> */}
                                 </div>
                                 <hr className="thin-divider" />
                             </div>

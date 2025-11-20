@@ -367,10 +367,6 @@ function ManageHolds() {
                 <div className="sheet-container" onClick={(e) => e.stopPropagation()}>
                     <h2>Cancel Hold Confirmation</h2>
                     <p>Are you sure you want to cancel <strong>Hold #{cancelTargetHold.hold_id}</strong>?</p>
-                    {/* ...details... */}
-
-                    {/* No need for {cancelError} p tag here anymore */}
-
                     <div className="sheet-actions">
                         <button 
                             type="button" 

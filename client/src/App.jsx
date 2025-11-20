@@ -13,7 +13,6 @@ import ManageWaitlist from './pages/main_staff_page/manage_waitlist.jsx';
 import ManageFines from './pages/main_staff_page/manage_fines.jsx';
 import Notifications from './pages/main_staff_page/notifications.jsx';
 import AccountDashboard from './pages/account_dashboard/AccountDashboard.jsx';
-import StaffDashboard from './pages/staff_dashboard/StaffDashboard.jsx';
 import Reports from './pages/reports/Reports.jsx';
 import Navbar from './pages/navbar/navbar.jsx';
 import Footer from './pages/footer/footer.jsx';
@@ -23,7 +22,7 @@ import AssistLibRoute from "./pages/staffAuthRoutes/AssistLibRoute.jsx";
 import ClerkRoute from "./pages/staffAuthRoutes/ClerkRoute.jsx";
 import StaffProfile from './pages/staff_dashboard/StaffProfile.jsx'; 
 import ScrollToTop from "../src/utils/ScrollToTop.jsx";
-import { ToastContainer, toast, Bounce } from 'react-toastify';
+import { ToastContainer, Bounce } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useState, useEffect } from 'react';
 import './App.css';
@@ -31,13 +30,12 @@ import './App.css';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 const getToken = () => localStorage.getItem('authToken');
 function App() {
-  const [loading, setLoading] = useState(true); // Start loading
+  const [loading, setLoading] = useState(true);
   const [isStaff, setIsStaff] = useState(false); 
   const [isLoggedIn, setIsLoggedIn] = useState(false); 
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
-    // Read localStorage to set initial state
     const token = localStorage.getItem('authToken');
     const role = localStorage.getItem('userRole');
 
@@ -252,7 +250,7 @@ function App() {
         draggable
         pauseOnHover
         theme="light"
-        transition={Bounce} // This is now correctly defined
+        transition={Bounce}
       />
     </BrowserRouter>
   );

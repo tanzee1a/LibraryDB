@@ -582,7 +582,7 @@ function UserProfile() {
                     </div>
                 </div>
             </div>
-            {/* Deactivate User Confirmation Sheet */}
+        {/* Deactivate User Confirmation Sheet */}
         {showDeactivateSheet && (
             <div className="sheet-overlay" onClick={() => !isSaving && setShowDeactivateSheet(false)}>
                 <div className="sheet-container" onClick={(e) => e.stopPropagation()}>

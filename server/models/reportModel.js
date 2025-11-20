@@ -3,7 +3,7 @@ const db = require('../config/db');
 
 async function mostPopularItems() {
     let sql = `
-        SELECT 
+        SELECT
             i.item_id,
             i.thumbnail_url,
             COALESCE(bk.title, m.title, d.device_name) AS item_name,
@@ -42,7 +42,7 @@ async function mostPopularItems() {
 
 async function mostPopularGenres() {
     let sql = `
-        SELECT 
+        SELECT
             t.tag_name AS genre_name,
             COUNT(b.borrow_id) AS total_borrows
         FROM TAG t
@@ -81,7 +81,7 @@ async function similarItems({ item_id = null }) {
   // If no tags, then fallback to most popular items in same category
   if (!tagIds.length) {
     const sqlFallback = `
-      SELECT 
+      SELECT
           i.item_id,
           i.thumbnail_url,
           COALESCE(bk.title, m.title, d.device_name) AS item_name,
@@ -154,7 +154,7 @@ async function similarItems({ item_id = null }) {
 
 async function popularGenresReport({ filterType = 'date', start = null, end = null, category = null } = {}) {
     let sql = `
-        SELECT 
+        SELECT
             t.tag_name AS genre_name,
             COUNT(b.borrow_id) AS total_borrows
         FROM TAG t
@@ -202,7 +202,7 @@ async function popularGenresReport({ filterType = 'date', start = null, end = nu
 
 async function popularItemReport({ filterType = 'date', start = null, end = null, category = null } = {}) {
     let sql = `
-        SELECT 
+        SELECT
             i.item_id,
             i.category,
             COALESCE(bk.title, m.title, d.device_name) AS item_name,
@@ -257,7 +257,7 @@ async function popularItemReport({ filterType = 'date', start = null, end = null
 async function overdueItemsReport({ filterType = 'date', start = null, end = null, category = null } = {}) {
     const loanedOutStatusId = 2; // Assuming 2 = 'Loaned Out' from BORROW_STATUS
     let sql = `
-        SELECT 
+        SELECT
             b.borrow_id,
             b.item_id,
             i.category,
@@ -318,7 +318,7 @@ async function overdueItemsReport({ filterType = 'date', start = null, end = nul
 
 async function finesReport({ filterType = 'date', start = null, end = null, paid_status = null, fee_type = null } = {}) {
     let sql = `
-        SELECT 
+        SELECT
             f.fee_type,
             f.fine_id,
             u.email,
@@ -327,6 +327,12 @@ async function finesReport({ filterType = 'date', start = null, end = null, paid
             f.amount AS amount_due,
             f.date_issued,
             f.date_paid,
+            f.waived_at AS date_waived,
+            CASE
+                WHEN f.date_paid IS NULL AND f.waived_at IS NULL THEN 'Unpaid'
+                WHEN f.date_paid IS NOT NULL THEN 'Paid'
+                WHEN f.waived_at IS NOT NULL THEN 'Waived'
+            END AS paid_status,
             f.notes
         FROM FINE f
         JOIN USER u ON f.user_id = u.user_id
@@ -341,6 +347,9 @@ async function finesReport({ filterType = 'date', start = null, end = null, paid
     }
     if (paid_status === '1') {
         sql += ' AND f.date_paid IS NOT NULL';
+    }
+    if (paid_status === '2') {
+        sql += ' AND f.date_paid IS NULL AND f.waived_at IS NOT NULL';
     }
 
     if (fee_type !== null && fee_type !== '') {
@@ -376,7 +385,7 @@ async function finesReport({ filterType = 'date', start = null, end = null, paid
 
 async function activeUsersReport({ filterType = 'date', start = null, end = null, role = null, minBorrow = null, maxBorrow = null } = {}) {
     let sql = `
-        SELECT 
+        SELECT
             u.email,
             u.firstName,
             u.lastName,
@@ -449,10 +458,10 @@ async function membershipReport({ filterType = 'date', start = null, end = null,
             u.lastName,
             CASE
                 WHEN r.requires_membership_fee = 0 THEN NULL
-                WHEN pm.user_id IS NULL THEN 'Not Enrolled'
+                WHEN pm.user_id IS NULL THEN 'Not Subscribed'
                 WHEN pm.expires_at < NOW() THEN 'Expired'
-                WHEN pm.auto_renew = 0 THEN 'Canceled'
-                ELSE 'Active'
+                WHEN pm.auto_renew = 0 THEN 'Auto Renew off'
+                ELSE 'Active/Subscribed'
             END AS membership_status,
             pm.auto_renew,
             pm.signup_date,

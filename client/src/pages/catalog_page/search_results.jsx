@@ -608,7 +608,6 @@ function SearchResults({ isStaff }) {
                         <option value="Author">Author</option>
                         <option value="Director">Director</option>
                         <option value="Tag">Tag</option>
-                        {/* <option value="User">User</option> -- Only if you implement user search */}
                     </select>
 
                 </div>
@@ -800,7 +799,6 @@ function SearchResults({ isStaff }) {
 
                     {newItem.category === 'BOOK' && (
                     <>
-                        {/* <label>ISBN: <input type="text" name="isbn" value={newItem.isbn} onChange={handleItemInputChange} className="edit-input" /></label> */}
                         <label>Authors (comma-separated): <input type="text" name="authors" value={newItem.authors} onChange={handleItemInputChange} className="edit-input" /></label>
                         <label>Publisher: <input type="text" name="publisher" value={newItem.publisher} onChange={handleItemInputChange} className="edit-input" /></label>
                         <label>Published Date: <input type="date" name="published_date" value={newItem.published_date} onChange={handleItemInputChange} className="edit-input" required/></label>
