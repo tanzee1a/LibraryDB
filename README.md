@@ -16,5 +16,31 @@ Our library collection consists of books, movies, and electronic devices. Each i
 
 ---
 ## Installation/Set up:
-1. Clone the repository
+1. Clone the repository and navigate into the repo folder
+   ```
+   git clone git clone https://github.com/ArsalJafri/MuseumDB.git
+   cd https://github.com/tanzee1a/LibraryDB.git
+   ```
+2. Set up the backend
+   ```
+   cd server
+   npm install
+   ```
+ 3. Set up front end
+    ```
+    cd client
+    npm install
+    ```
+  4. TBC (need to make sure set up steps are for sure what im thinking LOL)
+---
+## Technologies:
+* **Frontend**: React, Vite, CSS, Toastify 
+* **Backend**: Node.js
+* **Database**: MySQL on AWS
+* **Authentication**: JWT
+* **Hosting**: Vercel (frontend), Render/AWS (backend)
+---
+## User Authentication
+   
+
 
