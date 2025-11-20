@@ -31,7 +31,21 @@ Our library collection consists of books, movies, and electronic devices. Each i
     cd client
     npm install
     ```
-  4. TBC (need to make sure set up steps are for sure what im thinking LOL)
+  4. Create a .env file:
+     ```
+     REACT_APP_API_URL=http://localhost:8000
+     ```
+  5. Run backend
+     ```
+     cd server
+     npm start
+     ```
+  6. Run Frontend
+     ``` 
+     cd client
+     npm run dev
+     ```
+
 ---
 ## Technologies:
 * **Frontend**: React, Vite, CSS, Toastify 
