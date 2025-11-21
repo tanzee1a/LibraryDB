@@ -255,7 +255,7 @@ async function popularItemReport({ filterType = 'date', start = null, end = null
 }
 
 async function overdueItemsReport({ filterType = 'date', start = null, end = null, category = null } = {}) {
-    const loanedOutStatusId = 2; // Assuming 2 = 'Loaned Out' from BORROW_STATUS
+    const loanedOutStatusId = 2;
     let sql = `
         SELECT
             b.borrow_id,
@@ -342,13 +342,13 @@ async function finesReport({ filterType = 'date', start = null, end = null, paid
 
     const params = [];
 
-    if (paid_status === '0') {
+    if (paid_status === 'Unpaid') {
         sql += ' AND f.date_paid IS NULL AND f.waived_at IS NULL';
     }
-    if (paid_status === '1') {
+    if (paid_status === 'Paid') {
         sql += ' AND f.date_paid IS NOT NULL';
     }
-    if (paid_status === '2') {
+    if (paid_status === 'Waived') {
         sql += ' AND f.date_paid IS NULL AND f.waived_at IS NOT NULL';
     }
 
@@ -499,9 +499,9 @@ async function membershipReport({ filterType = 'date', start = null, end = null,
             AND (
                 CASE
                     WHEN r.requires_membership_fee = 0 THEN NULL
-                    WHEN pm.user_id IS NULL THEN 'Not Enrolled'
+                    WHEN pm.user_id IS NULL THEN 'Not Subscribed'
                     WHEN pm.expires_at < NOW() THEN 'Expired'
-                    WHEN pm.auto_renew = 0 THEN 'Canceled'
+                    WHEN pm.auto_renew = 0 THEN 'Auto Renew off'
                     ELSE 'Active'
                 END
             ) = ?

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import './Reports.css';
 import { IoInformationCircleOutline } from 'react-icons/io5';
-import { Pie } from 'react-chartjs-2';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-ChartJS.register(ArcElement, Tooltip, Legend);
+import { Pie, Bar } from 'react-chartjs-2';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, BarElement, CategoryScale, LinearScale } from 'chart.js';
+ChartJS.register(ArcElement, Tooltip, Legend, BarElement, CategoryScale, LinearScale);
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; 
 
@@ -25,7 +25,7 @@ const reportTypeOptions = [
   { key: 'items', label: 'Popular Items', endpoint: '/api/reports/popular-items', description: 'Shows which items get borrowed the most. Used to identify what our users want. Note: \'Borrow Count\' is the total number of times an item has been borrowed. \'Wishlist Count\' indicates how many users have added the item to their wishlist.' },
   { key: 'genres', label: 'Popular Genres', endpoint: '/api/reports/popular-genres', description: 'Shows which genres get borrowed the most. Note: One or more items can share the same genres. Hence, borrow counts may overlap.' },
   { key: 'active_users', label: 'Users', endpoint: '/api/reports/active-users', description: 'Shows how active users are based on how often they borrow.' },
-  { key: 'memberships', label: 'Patrons', endpoint: '/api/reports/memberships', description: 'Provide an overview of patron memberships. Note: \'Auto Renew off\' status indicates the user has unsubscribed their membership from auto renew but still has their membership active until the end of the current period.' },
+  { key: 'memberships', label: 'Memberships', endpoint: '/api/reports/memberships', description: 'Provide an overview of patron memberships. Note: \'Auto Renew off\' status indicates the user has unsubscribed their membership from auto renew but still has their membership active until the end of the current period.' },
   { key: 'overdues', label: 'Overdue Items', endpoint: '/api/reports/overdue-items', description: 'Lists items that are late and who has them.' },
   { key: 'fines', label: 'Fines', endpoint: '/api/reports/fines', description: 'Overall breakdown of fines.' },
   { key: 'revenue', label: 'Revenue', endpoint: '/api/reports/revenue', description: 'Breakdown of revenue collected from fines and memberships.' },
@@ -46,6 +46,7 @@ function Reports() {
     const [param1, setParam1] = useState('');
     const [param2, setParam2] = useState('');
     const [param3, setParam3] = useState('');
+    const [showParamWarning, setShowParamWarning] = useState(false);
     const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
     const [searchQuery, setSearchQuery] = useState('');
     const [loggedInUserStaffRole, setLoggedInUserStaffRole] = useState(null); 
@@ -65,9 +66,9 @@ function Reports() {
     const availableReportOptions = React.useMemo(() => {
         if (isAssistantLibrarian) {
             const filteredOptions = reportTypeOptions.filter(
-                (option) => option.key !== 'revenue'
+                (option) => option.key !== 'revenue' && option.key !== 'fines'
             );
-            if (selectedType === 'revenue') {
+            if (selectedType === 'revenue' || selectedType === 'fines') {
                 setSelectedType(filteredOptions[0].key);
             }
             return filteredOptions;
@@ -151,7 +152,10 @@ function Reports() {
                 specificFilters.push(
                     <div className="filter-group" key="category-filter">
                         <label>Category:</label>
-                        <select value={param1} onChange={e => setParam1(e.target.value)}>
+                        <select value={param1} onChange={e => {
+                            setParam1(e.target.value);
+                            setShowParamWarning(true);
+                        }}>
                             <option value="">All</option>
                             <option value="BOOK">Book</option>
                             <option value="MOVIE">Movie</option>
@@ -164,7 +168,10 @@ function Reports() {
                 specificFilters.push(
                     <div className="filter-group" key="category-filter">
                         <label>User Role:</label>
-                        <select value={param1} onChange={e => setParam1(e.target.value)}>
+                        <select value={param1} onChange={e => {
+                            setParam1(e.target.value);
+                            setShowParamWarning(true);
+                        }}>
                             <option value="">All</option>
                             <option value="1">Student</option>
                             <option value="2">Patron</option>
@@ -179,7 +186,10 @@ function Reports() {
                             type="number"
                             min="0"
                             value={param2}
-                            onChange={e => setParam2(e.target.value)}
+                            onChange={e => {
+                                setParam2(e.target.value);
+                                setShowParamWarning(true);
+                            }}
                         />
                     </div>
                 );
@@ -190,7 +200,10 @@ function Reports() {
                             type="number"
                             min="0"
                             value={param3}
-                            onChange={e => setParam3(e.target.value)}
+                            onChange={e => {
+                                setParam3(e.target.value);
+                                setShowParamWarning(true);
+                            }}
                         />
                     </div>
                 );
@@ -199,11 +212,14 @@ function Reports() {
                 specificFilters.push(
                     <div className="filter-group" key="category-filter">
                         <label>Status:</label>
-                        <select value={param1 || ""} onChange={e => setParam1(e.target.value)}>
+                        <select value={param1 || ""} onChange={e => {
+                            setParam1(e.target.value);
+                            setShowParamWarning(true);
+                        }}>
                             <option value="">All</option>
-                            <option value="Not Enrolled">Not Enrolled</option>
+                            <option value="Not Subscribed">Not Subscribed</option>
                             <option value="Active">Active</option>
-                            <option value="Canceled">Canceled</option>
+                            <option value="Auto Renew off">Auto Renew off</option>
                             <option value="Expired">Expired</option>
                         </select>
                     </div>
@@ -213,7 +229,10 @@ function Reports() {
                 specificFilters.push(
                     <div className="filter-group" key="category-filter">
                         <label>Revenue Type:</label>
-                        <select value={param1} onChange={e => setParam1(e.target.value)}>
+                        <select value={param1} onChange={e => {
+                            setParam1(e.target.value);
+                            setShowParamWarning(true);
+                        }}>
                             <option value="">All</option>
                             <option value="Fine">Fine</option>
                             <option value="Membership">Membership</option>
@@ -226,18 +245,24 @@ function Reports() {
                 specificFilters.push(
                     <div className="filter-group" key="category-filter">
                         <label>Paid Status:</label>
-                        <select value={param1} onChange={e => setParam1(e.target.value)}>
+                        <select value={param1} onChange={e => {
+                            setParam1(e.target.value);
+                            setShowParamWarning(true);
+                        }}>
                             <option value="">All</option>
-                            <option value="0">Unpaid</option>
-                            <option value="1">Paid</option>
-                            <option value="2">Waived</option>
+                            <option value="Unpaid">Unpaid</option>
+                            <option value="Paid">Paid</option>
+                            <option value="Waived">Waived</option>
                         </select>
                     </div>
                 );
                 specificFilters.push(
                     <div className="filter-group" key="category-filter">
                         <label>Fee Type:</label>
-                        <select value={param2} onChange={e => setParam2(e.target.value)}>
+                        <select value={param2} onChange={e => {
+                            setParam2(e.target.value);
+                            setShowParamWarning(true);
+                        }}>
                             <option value="">All</option>
                             <option value="LATE">Late</option>
                             <option value="DAMAGED">Damaged</option>
@@ -263,7 +288,10 @@ function Reports() {
                     {specificFilters}
                 </div>
                 <div className="filter-group">
-                    <button className="action-button primary-button" onClick={fetchReportData}>
+                    <button className="action-button primary-button" onClick={() => {
+                        fetchReportData();
+                        setShowParamWarning(false);
+                    }}>
                         Generate Report
                     </button>
                     <button 
@@ -274,10 +302,14 @@ function Reports() {
                         setYearRange({ from: currentYear, to: currentYear });
                         setParam1('');
                         setParam2('');
+                        setShowParamWarning(true);
                         }}
                     >
                         Clear Filters
                     </button>
+                    {showParamWarning && (
+                        <p>The data will not reflect your filter changes until you click "Generate Report".</p>
+                    )}
                 </div>
             </div>
         );
@@ -429,6 +461,46 @@ function Reports() {
         );
     };
 
+const renderGroupedBarChart = (title, total, dataset, isCurrency) => {
+    const feeTypes = Object.keys(dataset);
+    const statuses = ["Paid", "Unpaid", "Waived"];
+
+    return (
+        <div>
+            <h4>{title}: {isCurrency ? `$${total.toFixed(2)}` : `${total}`}</h4>
+            <Bar
+                data={{
+                    labels: feeTypes,
+                    datasets: statuses.map((status, index) => ({
+                        label: status,
+                        data: feeTypes.map(ft => dataset[ft][status] || 0),
+                        backgroundColor: backgroundColors[index % backgroundColors.length],
+                    })),
+                }}
+                options={{
+                    responsive: true,
+                    plugins: {
+                        legend: { position: "bottom" },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.dataset.label || '';
+                                    const val = context.raw || 0;
+                                    const pct = ((val / total) * 100).toFixed(1);
+                                    return `${label}: `+`${isCurrency ? `$${val.toFixed(2)}` : val} (${pct}%)`;
+                                }
+                            }
+                        },
+                    },
+                    scales: {
+                        y: { beginAtZero: true },
+                    },
+                }}
+            />
+        </div>
+    );
+};
+
     const renderCharts = () => {
         switch (selectedType) {
             case 'revenue': {
@@ -513,16 +585,66 @@ function Reports() {
                 const totalPaid = Object.values(totalsPaid).reduce((a, b) => a + b, 0);
                 const totalUnpaid = Object.values(totalsUnpaid).reduce((a, b) => a + b, 0);
                 const totalWaived = Object.values(totalsWaived).reduce((a, b) => a + b, 0);
-                console.log({totalFinesAll, totalPaid, totalUnpaid, totalWaived});
 
+                const groupedData = {};
+                sortedReportData.forEach(row => {
+                    const type = row.fee_type || "Unknown";
+                    if (!groupedData[type]) {
+                        groupedData[type] = { Paid: 0, Unpaid: 0, Waived: 0 };
+                    }
+                    const amount = Number(row.amount_due || 0);
+                    if (row.date_waived) {
+                        groupedData[type].Waived += amount;
+                    } else if (!row.date_paid) {
+                        groupedData[type].Unpaid += amount;
+                    } else {
+                        groupedData[type].Paid += amount;
+                    }
+                });
+
+                let chartToRender = null;
+                // If both filters empty, then default view with grouped bar chart
+                if (param1 === '' && param2 === '') {
+                    chartToRender = (
+                        <div>
+                            {renderGroupedBarChart("Total Fines", totalFinesAll, groupedData, true)}
+                        </div>
+                    );
+                }
+                // If paid_status selected and fee_type empty, then pie breakdown by fee_type
+                else if (param1 !== '' && param2 === '') {
+                    chartToRender = (
+                        <div style={{ display: 'flex', justifyContent: 'center' }}>
+                            {renderPieChart(`Total ${param1} fines`, totalFinesAll, totalsAll, true)}
+                        </div>
+                    );
+                }
+                // If paid_status empty and fee_type selected, then pie breakdown by paid_status
+                else if (param1 === '' && param2 !== '') {
+                    const paidStatusTotals = {
+                        Paid: totalPaid,
+                        Unpaid: totalUnpaid,
+                        Waived: totalWaived
+                    };
+                    const totalPaidStatus = totalPaid + totalUnpaid + totalWaived;
+
+                    chartToRender = (
+                        <div style={{ display: 'flex', justifyContent: 'center' }}>
+                            {renderPieChart(`Total ${param2} fines`, totalPaidStatus, paidStatusTotals, true)}
+                        </div>
+                    );
+                }
+                // If both filters selected, then no chart, only total displayed
+                else if (param1 !== '' && param2 !== '') {
+                    chartToRender = (
+                        <div>
+                            <h4>Total {param1} {param2} fines: ${totalFinesAll.toFixed(2)}</h4>
+                        </div>
+                    );
+                }
                 return (
                     <div className="revenue-summary">
-                        <div style={{ display: 'flex', gap: '40px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                            {param1 == '' && renderPieChart("All Fines", totalFinesAll, totalsAll, true)}
-                            {((param1 == '' || param1 == '0') && (totalUnpaid > 0)) && <div>{renderPieChart("Unpaid Fines", totalUnpaid, totalsUnpaid, true)}</div>}
-                            {((param1 == '' || param1 == '1') && (totalPaid > 0)) &&  <div>{renderPieChart("Paid Fines", totalPaid, totalsPaid, true)}</div>}
-                            {((param1 == '' || param1 == '2') && (totalWaived > 0)) &&  <div>{renderPieChart("Waived Fines", totalWaived, totalsWaived, true)}</div>}
-                        </div>
+                        {chartToRender}
                     </div>
                 );
             }
@@ -581,7 +703,10 @@ function Reports() {
                     <button
                     key={type.key}
                     className={`tab-button ${selectedType === type.key ? 'active' : ''}`}
-                    onClick={() => setSelectedType(type.key)}
+                    onClick={() => {
+                        setSelectedType(type.key);
+                        setShowParamWarning(false);
+                    }}
                     >
                     {type.label}
                     </button>
