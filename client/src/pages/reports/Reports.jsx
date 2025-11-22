@@ -66,9 +66,9 @@ function Reports() {
     const availableReportOptions = React.useMemo(() => {
         if (isAssistantLibrarian) {
             const filteredOptions = reportTypeOptions.filter(
-                (option) => option.key !== 'revenue' && option.key !== 'fines'
+                (option) => option.key !== 'revenue'
             );
-            if (selectedType === 'revenue' || selectedType === 'fines') {
+            if (selectedType === 'revenue') {
                 setSelectedType(filteredOptions[0].key);
             }
             return filteredOptions;
