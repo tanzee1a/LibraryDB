@@ -64,7 +64,52 @@ Our library collection consists of books, movies, and electronic devices. Each i
 * **Assistant Librarian**: manages borrows, holds, items, fines, and users (not staff). Can generate _some_ reports pertaining to their duties, and can change their own password.
 * **Librarian**: manages borrows, holds, items fines, and users (including staff). Can generate _all_ reports, and can update staff details (except their own).
 ---
-## Data Entry Forms
+## Types of Data That Can Be Added/Modified
+
+Both users and staff are able to manipulate data in our system.
+
+### **On the User Side**
+- Users can request pickup for items, which creates a hold on the item and decrements its available count.
+- Users can join waitlists for items that are unavailable, and they can also remove themselves from the waitlist.
+- Users can pay off their fines.
+- Users can change/update their profile details and password.
+
+### **On the Staff Side**
+
+#### **Clerk**
+- Can manage borrows:
+  - Mark items as returned (increases available count).
+  - Manually create a borrow (“Direct Checkout”) for in-person checkout.
+- Can mark items as **lost** (reduces item quantity by 1).
+- Can mark items as **found** (increases item quantity by 1).
+- Can manage holds:
+  - Cancel a hold (delete it).
+  - Resolve a hold by marking the item as picked up (converts hold into a borrow/loan).
+- Can manage the waitlist:
+  - Add users to the waitlist manually.
+  - Remove users from the waitlist.
+
+#### **Assistant Librarian**
+*Includes everything a Clerk can do, plus:*
+- Can **create users** (patrons, students, faculty).
+- Can manage users:
+  - Edit user details.
+  - “Deactivate” users (soft delete).
+  - “Reactivate” users.
+- Can manage items:
+  - Add new items to the catalog.
+  - Edit item details.
+  - “Delete” items (soft delete) — deleted items are hidden from users.  
+    *Note: Items currently loaned out or on hold cannot be deleted.*
+- Can manage fines:
+  - Create new fines.
+  - Modify fines by manually marking them paid or waiving them.
+
+#### **Head Librarian**
+*Includes everything an Assistant Librarian can do, plus:*
+- Can create staff accounts.
+- Can edit staff.
+- Can “delete” staff.
 ---
 ## Triggers 
 ---
