@@ -55,6 +55,25 @@ Our library collection consists of books, movies, and electronic devices. Each i
 * **Hosting**: Vercel (frontend), Render/AWS (backend)
 ---
 ## User Authentication
-   
+* **Guest**: can only browse our catalog, login, or register as a new user
+* **Inactive Patron**: users that have created a non-student or non-faculty account but have not signed up for a membership, only able to browse our catalog, add items to save for later, change profile details, and signup for a membership through the profile page.
+* **Active Patron**: users that have put a card on file for their membership, are able to request items for pickups, save for later, join waitlist, pay fines, change profile details, and have items on loan (max 10 items) or hold
+* **Student**: users who are not able to register (must be done through librarian or assistant librarian), do not have to pay a membership fee, can change profile password, are able to request items for pickups, save for later, join waitlist, pay fines, change profile details, and have items on loan (max 10 items) or hold
+* **Faculty**: users who are not able to register (must be done through librarian or assistant librarian), do not have to pay a membership fee, can change profile password, are able to request items for pickups, save for later, join waitlist, pay fines, change profile details, and have items on loan (max 10 items) or hold
+* **Clerk**: manages borrows and holds, can change password
+* **Assistant Librarian**: manages borrows, holds, items, fines, and users (not staff). Can generate _some_ reports pertaining to their duties, and can change their own password.
+* **Librarian**: manages borrows, holds, items fines, and users (including staff). Can generate _all_ reports, and can update staff details (except their own).
+---
+## Data Entry Forms
+---
+## Triggers 
+---
+## Queries 
+---
+## Reports
+---
+## Hosted Weblink Information:
+
+
 
 
