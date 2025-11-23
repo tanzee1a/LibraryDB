@@ -167,7 +167,7 @@ CREATE DEFINER=`tan_group5`@`%` TRIGGER `trg_Create_Late_Fine_After_Return` AFTE
 END
 ```
 ### Trigger #2: Enforcement of Waitlist Priority
-Semantic Constraint: If an item becomes available (e.g., returned by a previous borrower), it must not return to the general Available pool if a waitlist exists. Instead, it must be atomically reserved for the highest-priority user on the waitlist.
+Semantic Constraint: If an item becomes available (e.g., returned by a previous borrower), it must not return to the general Available pool if a waitlist exists. Instead, it must be automically reserved for the highest-priority user on the waitlist.
 
 This constraint requires intercepting a database operation before it completes, which is impossible using standard foreign keys or constraints. We implemented a `BEFORE UPDATE` trigger to enforce this rule. When the system attempts to increment the available count of an item:
 
