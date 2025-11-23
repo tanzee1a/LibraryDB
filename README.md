@@ -105,7 +105,7 @@ Both users and staff are able to manipulate data in our system.
   - Create new fines.
   - Modify fines by manually marking them paid or waiving them.
 
-#### **Head Librarian**
+#### **Librarian**
 *Includes everything an Assistant Librarian can do, plus:*
 - Can create staff accounts.
 - Can edit staff.
