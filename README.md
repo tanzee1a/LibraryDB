@@ -226,6 +226,16 @@ END
 ## Queries 
 ---
 ## Reports
+
+### Revenue Report
+The revenue report is only accessible by the librarian. The library has two streams of income: memberships and fines. This revenue report summarizes how much revenue was generated and the split between membership fees and fines. This is useful for budgeting and monitoring the financial health of the subscription-based service (i.e. memberships).
+Tables joined: `USER`, `FINE`, `MEMBERSHIP_PAYMENT`.
+
+<img width="3414" height="1872" alt="revenue report 1/2" src="https://github.com/user-attachments/assets/17828eda-e944-4757-b2af-c4fa9b881215" />
+<img width="3414" height="1894" alt="revenue report 2/2" src="https://github.com/user-attachments/assets/451eba9f-5667-41f1-8b6c-71859aad193e" />
+
+
+
 ---
 ## Hosted Weblink Information:
 
