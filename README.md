@@ -223,14 +223,26 @@ CREATE DEFINER=`tan_group5`@`%` TRIGGER `trg_Process_Waitlist_On_Availability` B
 END
 ```
 ---
-## Queries 
----
-## Reports
-
-### Revenue Report
+## Queries & Reports
+### Revenue Report 
 The revenue report is only accessible by the librarian. The library has two streams of income: memberships and fines. This revenue report summarizes how much revenue was generated and the split between membership fees and fines. This is useful for budgeting and monitoring the financial health of the subscription-based service (i.e. memberships).
 Tables joined: `USER`, `FINE`, `MEMBERSHIP_PAYMENT`.
 
+``` sql
+SELECT 'Fine' AS type, u.email AS user_email, f.amount, f.date_paid
+FROM FINE f
+JOIN USER u ON f.user_id = u.user_id
+WHERE f.date_paid IS NOT NULL
+-- (Date filtering for Fines is inserted here)
+
+UNION ALL
+
+SELECT 'Membership' AS type, u.email AS user_email, m.amount, m.payment_date AS date_paid
+FROM MEMBERSHIP_PAYMENT m
+JOIN USER u ON m.user_id = u.user_id
+WHERE m.payment_date IS NOT NULL
+-- (Date filtering for Memberships is inserted here)
+```
 <img width="3414" height="1872" alt="revenue report 1/2" src="https://github.com/user-attachments/assets/17828eda-e944-4757-b2af-c4fa9b881215" />
 <img width="3414" height="1894" alt="revenue report 2/2" src="https://github.com/user-attachments/assets/451eba9f-5667-41f1-8b6c-71859aad193e" />
 
