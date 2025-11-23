@@ -112,6 +112,116 @@ Both users and staff are able to manipulate data in our system.
 - Can “delete” staff.
 ---
 ## Triggers 
+### Trigger 1: Automatic Creation of Fines for Overdue Items
+
+**Semantic Constraint**: We must ensure that any item returned after its due date automatically generates a fine record upon return. This fine must be calculated based on the specific daily_late_fee associated with the item’s category and the user’s role.
+
+Standard schema constraints cannot validate data based on changes such as comparing a previous status to a new status or perform calculations involving multiple tables.
+We implemented an `AFTER UPDATE` trigger that activates only when a `BORROW` record’s status transitions from Loaned Out to Returned. The trigger performs the following logic:
+
+1. Calculates the daysLate (return_date - due_date).
+2. If late, it queries the LOAN_POLICY table to determine the correct fee rate for the user's specific role.
+3. It calculates the total fine and inserts a new record into the `FINE` table.
+
+
+``` sql
+CREATE DEFINER=`tan_group5`@`%` TRIGGER `trg_Create_Late_Fine_After_Return` AFTER UPDATE ON `BORROW` FOR EACH ROW BEGIN
+    DECLARE loanedOutStatusId TINYINT UNSIGNED DEFAULT 2;
+    DECLARE returnedStatusId TINYINT UNSIGNED DEFAULT 3;
+    
+    DECLARE daysLate INT;
+    DECLARE feePerDay DECIMAL(10, 2);
+    DECLARE totalFine DECIMAL(10, 2);
+    DECLARE user_role_id TINYINT UNSIGNED;
+
+    IF NEW.status_id = returnedStatusId AND OLD.status_id = loanedOutStatusId THEN
+
+        SET daysLate = DATEDIFF(NEW.return_date, OLD.due_date);
+
+        IF daysLate > 0 THEN
+
+            SELECT role_id INTO user_role_id
+            FROM USER
+            WHERE user_id = NEW.user_id
+            LIMIT 1;
+
+            SELECT lp.daily_late_fee INTO feePerDay
+            FROM ITEM i
+            JOIN LOAN_POLICY lp ON i.category = lp.category
+            WHERE i.item_id = NEW.item_id AND lp.role_id = user_role_id;
+
+            IF feePerDay > 0 THEN
+                SET totalFine = daysLate * feePerDay;
+                
+                INSERT INTO FINE (borrow_id, user_id, fee_type, amount, notes)
+                VALUES (
+                    NEW.borrow_id,
+                    NEW.user_id,
+                    'LATE',
+                    totalFine,
+                    CONCAT('Returned ', daysLate, ' day(s) late.')
+                );
+            END IF;
+        END IF;
+    END IF;
+END
+```
+### Trigger #2: Enforcement of Waitlist Priority
+Semantic Constraint: If an item becomes available (e.g., returned by a previous borrower), it must not return to the general Available pool if a waitlist exists. Instead, it must be atomically reserved for the highest-priority user on the waitlist.
+
+This constraint requires intercepting a database operation before it completes, which is impossible using standard foreign keys or constraints. We implemented a `BEFORE UPDATE` trigger to enforce this rule. When the system attempts to increment the available count of an item:
+
+1. The trigger checks the `WAITLIST` table for the highest-priority user.
+2. If a user is found, the trigger modifies the update operation: it prevents the available count from increasing and instead increments the on_hold count.
+3.  It simultaneously moves the user from the `WAITLIST` to the `HOLD` table and generates a `NOTIFICATION`.
+
+This guarantees data integrity between the item’s status and the waitlist queue, and prevents a case where a returned item might be snatched by a random user borrowing our website before the waitlisted user can get it.
+
+``` sql
+CREATE DEFINER=`tan_group5`@`%` TRIGGER `trg_Process_Waitlist_On_Availability` BEFORE UPDATE ON `ITEM` FOR EACH ROW BEGIN
+    DECLARE top_user_id VARCHAR(13);
+    DECLARE top_waitlist_id INT;
+    DECLARE item_title_or_name VARCHAR(255);
+
+    IF NEW.available > OLD.available THEN
+
+        SELECT user_id, waitlist_id INTO top_user_id, top_waitlist_id
+        FROM `WAITLIST`
+        WHERE item_id = NEW.item_id
+        ORDER BY start_date ASC, waitlist_id ASC
+        LIMIT 1;
+
+        IF top_user_id IS NOT NULL THEN
+        
+            SET NEW.available = NEW.available - 1;  
+            SET NEW.on_hold = NEW.on_hold + 1;    
+            
+            INSERT INTO `HOLD` (user_id, item_id, expires_at, status_id)
+            VALUES (top_user_id, NEW.item_id, NOW() + INTERVAL 3 DAY, 1); 
+
+            DELETE FROM `WAITLIST` WHERE waitlist_id = top_waitlist_id;
+
+            SELECT COALESCE(b.title, m.title, d.device_name)
+            INTO item_title_or_name
+            FROM ITEM i
+            LEFT JOIN BOOK b ON i.item_id = b.item_id
+            LEFT JOIN MOVIE m ON i.item_id = m.item_id
+            LEFT JOIN DEVICE d ON i.item_id = d.item_id
+            WHERE i.item_id = NEW.item_id
+            LIMIT 1;
+
+            INSERT INTO `NOTIFICATION` (target_user_id, title, message, link)
+            VALUES (
+                top_user_id,
+                'Your Waitlisted Item is Ready!',
+                CONCAT('Your waitlisted item, "', COALESCE(item_title_or_name, 'Untitled Item'), '", is now ready for pickup. You have 3 days to collect it.'),
+                '/account?section=holds'
+            );
+            
+        END IF;
+    END IF;
+END
+```
 ---
 ## Queries 
 ---
