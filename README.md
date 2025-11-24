@@ -226,6 +226,7 @@ END
 ## Queries & Reports
 ### Revenue Report 
 The revenue report is only accessible by the librarian. The library has two streams of income: memberships and fines. This revenue report summarizes how much revenue was generated and the split between membership fees and fines. This is useful for budgeting and monitoring the financial health of the subscription-based service (i.e. memberships).
+
 Tables joined: `USER`, `FINE`, `MEMBERSHIP_PAYMENT`.
 
 ``` sql
@@ -246,7 +247,55 @@ WHERE m.payment_date IS NOT NULL
 <img width="3414" height="1872" alt="revenue report 1/2" src="https://github.com/user-attachments/assets/17828eda-e944-4757-b2af-c4fa9b881215" />
 <img width="3414" height="1894" alt="revenue report 2/2" src="https://github.com/user-attachments/assets/451eba9f-5667-41f1-8b6c-71859aad193e" />
 
+### Popular Items Report 
+The popular items report identifies which individual items in the library are borrowed the most. It tracks two major counts:
+* Borrow Count: Total number of times an item has been checked out.
+* Wishlist Count: How many users have added the item to their wishlist.
+  
+Together, these metrics reveal demand patterns. Besides that, it also shows the current quantity of the item. Staff can use this report to guide purchasing decisions, expand popular collections, and forecast inventory needs. The application also uses the same query to display the top 5 items on the homepage.
 
+Tables joined: `ITEM`, `BOOK`, `MOVIE`, `DEVICE`, `BORROW`, `WISHLIST`.
+
+``` sql
+SELECT 
+   i.item_id,
+   i.category,
+   COALESCE(bk.title, m.title, d.device_name) AS item_name,
+   i.quantity,
+   COUNT(DISTINCT b.borrow_id) AS borrow_count,
+   COUNT(DISTINCT w.user_id) AS total_saved
+FROM ITEM i
+LEFT JOIN BOOK bk ON i.item_id = bk.item_id AND i.category = 'BOOK'
+LEFT JOIN MOVIE m ON i.item_id = m.item_id AND i.category = 'MOVIE'
+LEFT JOIN DEVICE d ON i.item_id = d.item_id AND i.category = 'DEVICE'
+LEFT JOIN BORROW b ON i.item_id = b.item_id
+LEFT JOIN WISHLIST w ON i.item_id = w.item_id
+WHERE 1=1
+-- (Date filtering inserted here)
+GROUP BY i.item_id, i.category, item_name, i.quantity
+ORDER BY borrow_count DESC;
+```
+<img width="3420" height="1962" alt="Popular Items Report" src="https://github.com/user-attachments/assets/06d66e1a-3ed3-49c1-8be2-af10e5050441" />
+
+### Popular Genres Report
+
+The popular genres report aggregates borrowing activity by genre instead of by individual item.  This helps librarians understand broader trends, for example, whether students lean toward STEM materials, fiction, or multimedia categories. The application also uses the same query to display the top 20 genres on the homepage. 
+
+Tables joined: `TAG`, `ITEM_TAG`, `ITEM`, `BORROW`.
+
+``` sql
+SELECT 
+   t.tag_name AS genre_name,
+   COUNT(b.borrow_id) AS total_borrows
+FROM TAG t
+JOIN ITEM_TAG it ON t.tag_id = it.tag_id
+JOIN ITEM i ON it.item_id = i.item_id
+LEFT JOIN BORROW b ON i.item_id = b.item_id
+-- (Date filtering inserted here)
+GROUP BY t.tag_name
+ORDER BY total_borrows DESC;
+```
+<img width="3420" height="1960" alt="image" src="https://github.com/user-attachments/assets/638ea1f3-dc22-4600-b9b9-e40f0468953e" />
 
 ---
 ## Hosted Weblink Information:
