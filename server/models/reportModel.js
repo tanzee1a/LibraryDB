@@ -1,4 +1,3 @@
-// models/reportModel.js
 const db = require('../config/db');
 
 async function mostPopularItems() {

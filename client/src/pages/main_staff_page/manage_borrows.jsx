@@ -66,15 +66,6 @@ function ManageBorrows() {
                 buttons.push(<button key="return" onClick={() => handleReturn(borrow.borrow_id)} className="action-button primary-button">Mark as Returned</button>);
                 buttons.push(<button key="lost" onClick={() => handleMarkLost(borrow.borrow_id)} className="action-button secondary-button">Mark as Lost</button>);
                 break;
-            // -- Cases based on HOLD table status (Need to fetch Holds separately if managing them here) --
-            // case 'Pending': // This status is for BORROW, but action relates to HOLD
-            //     buttons.push(<button key="ready" onClick={() => handleReadyForPickup(borrow.hold_id)} className="action-button primary-button">Ready for Pickup</button>);
-            //     buttons.push(<button key="cancel" onClick={() => handleCancelRequest(borrow.hold_id)} className="action-button secondary-button">Cancel Request</button>);
-            //     break;
-             // case 'Ready for Pickup': // This isn't a BORROW_STATUS, maybe a HOLD status?
-                // buttons.push(<button key="cancel" onClick={() => handleCancelRequest(borrow.hold_id)} className="action-button secondary-button">Cancel Request</button>);
-                // break;
-             // -- End Hold logic --
             case 'Lost':
                 buttons.push(<button key="found" onClick={() => handleMarkFound(borrow.borrow_id)} className="action-button secondary-button">Mark as Found</button>);
                 break;

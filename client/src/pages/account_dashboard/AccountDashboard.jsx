@@ -34,7 +34,6 @@ export default function AccountDashboard({ isLoggedIn, setIsLoggedIn, isStaff, s
 
     const [active, setActive] = useState(sectionFromURL || 'overview');
 
-    // Optional: sync URL change dynamically
     useEffect(() => {
       if (sectionFromURL && sectionFromURL !== active) {
         setActive(sectionFromURL);

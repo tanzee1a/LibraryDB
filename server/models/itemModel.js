@@ -1,6 +1,5 @@
 const db = require('../config/db'); 
 
-// --- Helper: Find or Create Author ID ---
 async function findOrCreateAuthorId(conn, authorName) {
   const names = authorName.trim().split(' ');
   const firstName = names[0];
@@ -51,26 +50,23 @@ async function findOrCreateTagId(conn, tagName) {
 }
 
 
-// --- FIND ALL ITEMS (Basic for now) ---
+// --- FIND ALL ITEMS  ---
 async function findAll() {
     const sql = 'SELECT * FROM ITEM'; // Keep it simple for now
     const [rows] = await db.query(sql);
     return rows;
 }
 
-// --- FIND ITEM BY ID (Basic for now) ---
 async function findById(id) {
-    // 1. Get base item data and category
     const baseSql = 'SELECT * FROM ITEM WHERE item_id = ?';
     const [baseRows] = await db.query(baseSql, [id]);
     if (baseRows.length === 0) {
-        return undefined; // Item not found
+        return undefined;
     }
     const item = baseRows[0];
 
-    // 2. Get category-specific details and creators
     let details = {};
-    let creators = []; // For authors/directors
+    let creators = [];
     
     if (item.category === 'BOOK') {
         const bookSql = `
@@ -82,7 +78,6 @@ async function findById(id) {
         const [bookRows] = await db.query(bookSql, [id]);
         if (bookRows.length > 0) details = bookRows[0];
 
-        // Get Authors
         const authorSql = `
             SELECT a.first_name, a.middle_name, a.last_name 
             FROM BOOK_AUTHOR ba 
@@ -104,13 +99,12 @@ async function findById(id) {
         const [movieRows] = await db.query(movieSql, [id]);
          if (movieRows.length > 0) details = movieRows[0];
          
-        // Get Directors
         const directorSql = `
              SELECT d.first_name, d.middle_name, d.last_name 
              FROM MOVIE_DIRECTOR md 
              JOIN DIRECTOR d ON md.director_id = d.director_id 
              WHERE md.item_id = ? 
-        `; // Assuming MOVIE_DIRECTOR now uses item_id
+        `;
         const [directorRows] = await db.query(directorSql, [id]);
         creators = directorRows.map(d => [d.first_name, d.middle_name, d.last_name].filter(Boolean).join(' '));
 
@@ -126,7 +120,6 @@ async function findById(id) {
          if (details.manufacturer) creators = [details.manufacturer];
     }
 
-    // 3. Get Tags
     const tagSql = `
         SELECT t.tag_name 
         FROM ITEM_TAG it 
@@ -136,18 +129,15 @@ async function findById(id) {
     const [tagRows] = await db.query(tagSql, [id]);
     const tags = tagRows.map(t => t.tag_name);
 
-    // 4. Combine all data
     const fullItemDetails = {
-        ...item,      // Includes item_id, available, category, description, etc. from ITEM table
-        ...details,   // Includes title, publisher/runtime, page_number/format_name etc. from BOOK/MOVIE/DEVICE
-        creators: creators, // Array of author/director names
-        tags: tags          // Array of tag names
+        ...item,
+        ...details,
+        creators: creators,
+        tags: tags
     };
 
-    // The specific table's value will overwrite the ITEM table's value if spread last.
-    // Ensure `title` is always present, taking it from details if possible.
     if (!fullItemDetails.title && item.category === 'DEVICE') {
-        fullItemDetails.title = details.device_name; // Use device_name as title for devices
+        fullItemDetails.title = details.device_name;
     }
 
 
@@ -169,23 +159,19 @@ async function softDeleteById(id) {
 
 // --- REACTIVATE ITEM (Mark as 'ACTIVE') ---
 async function reactivateById(id) {
-    // This query sets the status back to 'ACTIVE'
     const sql = "UPDATE ITEM SET status = 'ACTIVE' WHERE item_id = ? AND status = 'DELETED'";
-    
-    // We can use db.query and check affectedRows
+
     const [result] = await db.query(sql, [id]);
-    return result.affectedRows; // Will be 1 if successful, 0 if not found or already active
+    return result.affectedRows;
 }
 
 async function findAllLanguages() {
-    // Select only the needed columns from the LANGUAGE table
     const sql = 'SELECT language_id, name FROM LANGUAGE ORDER BY name'; 
     const [rows] = await db.query(sql);
     return rows;
 }
 
 async function findAllTags() {
-    // Select only the needed columns from the LANGUAGE table
     const sql = `
         SELECT 
             t.tag_id, 
@@ -213,17 +199,15 @@ async function createBook(bookData) {
     try {
         await conn.beginTransaction();
 
-        // 1. Insert into ITEM
         const itemSql = `
             INSERT INTO ITEM (item_id, available, category, description, thumbnail_url, shelf_location)
             VALUES (?, ?, 'BOOK', ?, ?, ?) 
         `;
         await conn.query(itemSql, [
             bookData.item_id, bookData.quantity, bookData.description, 
-            bookData.thumbnail_url, bookData.shelf_location // Note: shelf_location is now in ITEM
+            bookData.thumbnail_url, bookData.shelf_location
         ]);
 
-        // 2. Insert into BOOK
         const bookSql = `
             INSERT INTO BOOK ( item_id, title, publisher, published_date, language_id, page_number)
             VALUES (?, ?, ?, ?, ?, ?)
@@ -233,7 +217,6 @@ async function createBook(bookData) {
             bookData.published_date, bookData.language_id, bookData.page_number
         ]);
 
-        // 3. Handle Authors (Find or Create IDs, then Insert into BOOK_AUTHOR)
         if (bookData.authors && bookData.authors.length > 0) {
             const authorIds = await Promise.all(
               bookData.authors.map(name => findOrCreateAuthorId(conn, name))
@@ -243,7 +226,6 @@ async function createBook(bookData) {
             if (authorValues.length > 0) await conn.query(authorSql, [authorValues]);
         }
         
-        // 4. Handle Tags (Find or Create IDs, then Insert into ITEM_TAG)
         if (bookData.tags && bookData.tags.length > 0) {
             const tagIds = await Promise.all(
               bookData.tags.map(name => findOrCreateTagId(conn, name))
@@ -265,13 +247,12 @@ async function createBook(bookData) {
     }
 }
 
-// --- UPDATE BOOK (Updated for new schema) ---
+// --- UPDATE BOOK ---
 async function updateBook(id, bookData) {
     const conn = await db.getConnection();
     try {
         await conn.beginTransaction();
 
-        // 1. Update ITEM
         const itemSql = `
           UPDATE ITEM 
           SET available = ?, description = ?, thumbnail_url = ?, shelf_location = ?
@@ -282,7 +263,6 @@ async function updateBook(id, bookData) {
             bookData.shelf_location, id
         ]);
 
-        // 2. Update BOOK
         const bookSql = `
             UPDATE BOOK
             SET title = ?, publisher = ?, published_date = ?, 
@@ -294,7 +274,6 @@ async function updateBook(id, bookData) {
             bookData.language_id, bookData.page_number, id
         ]);
 
-        // 3. Update Authors (Delete all, Find or Create, Re-insert)
         await conn.query('DELETE FROM BOOK_AUTHOR WHERE item_id = ?', [id]);
         if (bookData.authors && bookData.authors.length > 0) {
            const authorIds = await Promise.all(
@@ -305,7 +284,6 @@ async function updateBook(id, bookData) {
              if (authorValues.length > 0) await conn.query(authorSql, [authorValues]);
         }
 
-        // 4. Update Tags (Delete all, Find or Create, Re-insert)
         await conn.query('DELETE FROM ITEM_TAG WHERE item_id = ?', [id]);
         if (bookData.tags && bookData.tags.length > 0) {
             const tagIds = await Promise.all(
@@ -329,7 +307,7 @@ async function updateBook(id, bookData) {
 }
 
 
-// --- CREATE MOVIE (Updated for new schema) ---
+// --- CREATE MOVIE ---
 async function createMovie(movieData) {
     const conn = await db.getConnection();
     try {
@@ -387,7 +365,7 @@ async function createMovie(movieData) {
     }
 }
 
-// --- UPDATE MOVIE (Updated for new schema) ---
+// --- UPDATE MOVIE ---
 async function updateMovie(id, movieData) {
     const conn = await db.getConnection();
     try {
@@ -450,7 +428,7 @@ async function updateMovie(id, movieData) {
     }
 }
 
-// --- CREATE DEVICE (Updated for new schema) ---
+// --- CREATE DEVICE ---
 async function createDevice(deviceData) {
     const conn = await db.getConnection();
     try {
@@ -497,7 +475,7 @@ async function createDevice(deviceData) {
     }
 }
 
-// --- UPDATE DEVICE (Updated for new schema) ---
+// --- UPDATE DEVICE ---
 async function updateDevice(id, deviceData) {
     const conn = await db.getConnection();
     try {
