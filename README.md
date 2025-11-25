@@ -18,7 +18,7 @@ Our library collection consists of books, movies, and electronic devices. Each i
 ## Installation/Set up:
 1. Clone the repository and navigate into the repo folder
    ```
-   git clone git clone https://github.com/tanzee1a/LibraryDB.git
+   git clone https://github.com/tanzee1a/LibraryDB.git
    cd LibraryDB
    ```
 2. Set up the backend
