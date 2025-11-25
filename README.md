@@ -10,7 +10,7 @@ Our library revolves around two main types of users:
 
 * ***Patrons***: which include guests, paid members, students, and faculty. All patrons of the library are able to browse our item catalog, but only paid members, students, and faculty have the ability to checkout and join the waitlist for items. Our system enables Patrons to register, join/cancel/renew a membership, login, manage profile details, incur/pay off fines, and join waitlists. 
 
-* ***Staff*** : which includes clerks, assistant librarians, and the librarian. Clerks are able to manage borrows and holds, Assistant Librarians can manage items and users (except staff), generate some reports, and also manage borrows and holds. Librarians can do do all of the previous operations while also generating revenue reports and managing staff.
+* ***Staff*** : which includes clerks, assistant librarians, and the librarian. Clerks are able to manage borrows and holds, Assistant Librarians can manage items and users (except staff), generate some reports, and also manage borrows and holds. Librarians can do all of the previous operations while also generating revenue reports and managing staff.
 
 Our library collection consists of books, movies, and electronic devices. Each item type has its own details (e.g., author, genre, director, or device type). Multiple copies of an item may exist, and each copy can be tracked as Available, On Loan, or On Hold.
 
@@ -120,7 +120,7 @@ Standard schema constraints cannot validate data based on changes such as compar
 We implemented an `AFTER UPDATE` trigger that activates only when a `BORROW` record’s status transitions from Loaned Out to Returned. The trigger performs the following logic:
 
 1. Calculates the daysLate (return_date - due_date).
-2. If late, it queries the LOAN_POLICY table to determine the correct fee rate for the user's specific role.
+2. If late, it queries the `LOAN_POLICY` table to determine the correct fee rate for the user's specific role.
 3. It calculates the total fine and inserts a new record into the `FINE` table.
 
 
